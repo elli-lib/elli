@@ -3,7 +3,7 @@
 -include("elli.hrl").
 -include("elli_util.hrl").
 
--define(i2b(I), list_to_binary(integer_to_list(I))).
+-define(I2B(I), list_to_binary(integer_to_list(I))).
 -define(README, "README.md").
 
 elli_test_() ->
@@ -205,35 +205,35 @@ chunked() ->
                 {"content-type", "text/event-stream"}], headers(Response)),
   ?assertEqual(Expected, body(Response)).
 
-sendfile() ->
-  {ok, Response} = httpc:request("http://localhost:3001/sendfile"),
-  F              = ?README,
-  {ok, Expected} = file:read_file(F),
-  ?assertEqual(200, status(Response)),
-  ?assertEqual([{"connection", "Keep-Alive"},
-                {"content-length", integer_to_list(size(Expected))}],
-               headers(Response)),
-  ?assertEqual(binary_to_list(Expected), body(Response)).
+%% sendfile() ->
+%%   {ok, Response} = httpc:request("http://localhost:3001/sendfile"),
+%%   F              = ?README,
+%%   {ok, Expected} = file:read_file(F),
+%%   ?assertEqual(200, status(Response)),
+%%   ?assertEqual([{"connection", "Keep-Alive"},
+%%                 {"content-length", integer_to_list(size(Expected))}],
+%%                headers(Response)),
+%%   ?assertEqual(binary_to_list(Expected), body(Response)).
 
-sendfile_range() ->
-  Url            = "http://localhost:3001/sendfile/range",
-  Headers        = [{"Range", "bytes=300-699"}],
-  {ok, Response} = httpc:request(get, {Url, Headers}, [], []),
-  F              = ?README,
-  {ok, Fd}       = file:open(F, [read, raw, binary]),
-  {ok, Expected} = file:pread(Fd, 300, 400),
-  file:close(Fd),
-  Size = elli_util:file_size(F),
-  ?assertEqual(206, status(Response)),
-  ?assertEqual([{"connection", "Keep-Alive"},
-                {"content-length", "400"},
-                {"content-range", "bytes 300-699/" ++ ?i2l(Size)}],
-               headers(Response)),
-  ?assertEqual(binary_to_list(Expected), body(Response)).
+%% sendfile_range() ->
+%%   Url            = "http://localhost:3001/sendfile/range",
+%%   Headers        = [{"Range", "bytes=300-699"}],
+%%   {ok, Response} = httpc:request(get, {Url, Headers}, [], []),
+%%   F              = ?README,
+%%   {ok, Fd}       = file:open(F, [read, raw, binary]),
+%%   {ok, Expected} = file:pread(Fd, 300, 400),
+%%   file:close(Fd),
+%%   Size = elli_util:file_size(F),
+%%   ?assertEqual(206, status(Response)),
+%%   ?assertEqual([{"connection", "Keep-Alive"},
+%%                 {"content-length", "400"},
+%%                 {"content-range", "bytes 300-699/" ++ ?I2L(Size)}],
+%%                headers(Response)),
+%%   ?assertEqual(binary_to_list(Expected), body(Response)).
 
 slow_client() ->
   Body = <<"name=foobarbaz">>,
-  Headers = <<"Content-Length: ",(?i2b(size(Body)))/binary, "\r\n\r\n">>,
+  Headers = <<"Content-Length: ",(?I2B(size(Body)))/binary, "\r\n\r\n">>,
   Client = start_slow_client(3001, "/hello"),
   send(Client, Headers, 1),
   send(Client, Body, size(Body)),
@@ -246,7 +246,7 @@ slow_client() ->
 
 post_pipeline() ->
   Body         = <<"name=elli&city=New%20York">>,
-  Headers      = <<"Content-Length: ",(?i2b(size(Body)))/binary, "\r\n",
+  Headers      = <<"Content-Length: ",(?I2B(size(Body)))/binary, "\r\n",
                    "Content-Type: application/x-www-form-urlencoded", "\r\n",
                    "\r\n">>,
   {ok, Socket} = gen_tcp:connect("127.0.0.1", 3001, [{active, false}, binary]),

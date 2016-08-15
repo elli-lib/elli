@@ -1,8 +1,6 @@
 -module(elli_handover_tests).
 -include_lib("eunit/include/eunit.hrl").
--include("elli.hrl").
-
--define(i2b(I), list_to_binary(integer_to_list(I))).
+-include("elli_test.hrl").
 
 elli_test_() ->
   {setup,
@@ -17,7 +15,8 @@ setup() ->
   application:start(public_key),
   application:start(ssl),
   inets:start(),
-  {ok, P} = elli:start_link([{callback, elli_example_callback_handover}, {port, 3003}]),
+  {ok, P} = elli:start_link([{callback, elli_example_callback_handover},
+                             {port, 3003}]),
   unlink(P),
   [P].
 
@@ -37,9 +36,3 @@ echo() ->
   {ok, Response} = httpc:request("http://localhost:3003/hello?name=knut"),
   ?assertEqual(200, status(Response)),
   ?assertEqual("Hello knut", body(Response)).
-
-%%% Helpers
-
-status({{_, Status, _}, _, _}) -> Status.
-body({_, _, Body})             -> Body.
-headers({_, Headers, _})       -> lists:sort(Headers).

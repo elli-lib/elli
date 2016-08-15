@@ -160,7 +160,7 @@ parse_range_set(<<ByteRangeSet/binary>>) ->
 -spec parse_range(Bin::binary()) -> http_range() | parse_error.
 parse_range(<<$-, SuffixBin/binary>>) ->
   %% suffix-byte-range
-  try {suffix, ?b2i(SuffixBin)}
+  try {suffix, ?B2I(SuffixBin)}
   catch
     error:badarg -> parse_error
   end;
@@ -168,13 +168,13 @@ parse_range(<<ByteRange/binary>>) ->
   case binary:split(ByteRange, <<"-">>) of
     %% byte-range without last-byte-pos
     [FirstBytePosBin, <<>>] ->
-      try {offset, ?b2i(FirstBytePosBin)}
+      try {offset, ?B2I(FirstBytePosBin)}
       catch
         error:badarg -> parse_error
       end;
     %% full byte-range
     [FirstBytePosBin, LastBytePosBin] ->
-      try {bytes, ?b2i(FirstBytePosBin), ?b2i(LastBytePosBin)}
+      try {bytes, ?B2I(FirstBytePosBin), ?B2I(LastBytePosBin)}
       catch
         error:badarg -> parse_error
       end;

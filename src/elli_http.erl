@@ -380,7 +380,7 @@ get_body(Socket, Headers, Buffer, Opts, Callback) ->
   case proplists:get_value(<<"Content-Length">>, Headers, undefined) of
     undefined -> {<<>>, Buffer};
     ContentLengthBin ->
-      ContentLength = ?b2i(binary:replace(ContentLengthBin,
+      ContentLength = ?B2I(binary:replace(ContentLengthBin,
                                           <<" ">>, <<>>, [global])),
       ok = check_max_size(Socket, ContentLength, Buffer, Opts, Callback),
       case ContentLength - byte_size(Buffer) of
@@ -461,7 +461,7 @@ encode_headers([[] | H]) -> encode_headers(H);
 encode_headers([{K, V} | H]) ->
   [encode_value(K), <<": ">>, encode_value(V), <<"\r\n">>, encode_headers(H)].
 
-encode_value(V) when is_integer(V) -> ?i2l(V);
+encode_value(V) when is_integer(V) -> ?I2L(V);
 encode_value(V) when is_binary(V)  -> V;
 encode_value(V) when is_list(V)    -> list_to_binary(V).
 

@@ -1,5 +1,6 @@
 -module(elli_ssl_tests).
 -include_lib("eunit/include/eunit.hrl").
+-include("elli_test.hrl").
 
 elli_ssl_test_() ->
   {setup,
@@ -42,5 +43,3 @@ teardown(Pids) ->
   application:stop(public_key),
   application:stop(crypto),
   [elli:stop(P) || P <- Pids].
-
-status({{_, Status, _}, _, _}) -> Status.

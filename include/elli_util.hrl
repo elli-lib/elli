@@ -1,2 +1,2 @@
--define(i2l(I), integer_to_list(I)).
--define(b2i(I), list_to_integer(binary_to_list(I))).
+-define(I2L(I), integer_to_list(I)).
+-define(B2I(I), list_to_integer(binary_to_list(I))).

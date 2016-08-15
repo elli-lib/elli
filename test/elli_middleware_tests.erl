@@ -1,6 +1,6 @@
 -module(elli_middleware_tests).
 -include_lib("eunit/include/eunit.hrl").
--include("elli.hrl").
+-include("elli_test.hrl").
 
 elli_test_() ->
   {setup,
@@ -56,10 +56,6 @@ compress() ->
                body(Response3)).
 
 %%% Helpers
-
-status({{_, Status, _}, _, _}) -> Status.
-body({_, _, Body})             ->  Body.
-headers({_, Headers, _})       -> lists:sort(Headers).
 
 setup() ->
   application:start(crypto),
