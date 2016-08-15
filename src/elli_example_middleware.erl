@@ -2,25 +2,14 @@
 -export([handle/2, handle_event/3]).
 -behaviour(elli_handler).
 
+%%% Elli handler callbacks
 
-%%
-%% ELLI
-%%
+handle(Req, _Args) -> do_handle(elli_request:path(Req)).
 
-handle(Req, _Args) ->
-    case elli_request:path(Req) of
-        [<<"middleware">>, <<"short-circuit">>] ->
-            {200, [], <<"short circuit!">>};
-        _ ->
-            ignore
-    end.
+do_handle([<<"middleware">>, <<"short-circuit">>]) ->
+  {200, [], <<"short circuit!">>};
+do_handle(_) ->ignore.
 
+%%% Elli event callbacks
 
-
-%%
-%% ELLI EVENT CALLBACKS
-%%
-
-
-handle_event(_Event, _Data, _Args) ->
-    ok.
+handle_event(_Event, _Data, _Args) -> ok.

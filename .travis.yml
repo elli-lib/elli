@@ -1,11 +1,17 @@
+sudo: false
 language: erlang
-notifications:
-  email: knutin@gmail.com
+install: true
+before_script:
+- wget https://s3.amazonaws.com/rebar3/rebar3
+- chmod +x rebar3
+env: PATH=$PATH:.
+script: make travis
+cache:
+  directories:
+  - $HOME/.cache/rebar3/
 otp_release:
-  - R16B02
-  - R16B01
-  - R16B
-  - R15B03
-  - R15B02
-  - R15B01
-  - R15B
+- 19.0
+- 18.3
+- 17.5
+- R16B02
+- R15B03

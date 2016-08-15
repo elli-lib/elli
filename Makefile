@@ -1,12 +1,5 @@
-compile:
-	./rebar compile
-	./rebar xref skip_deps=true
-
-eunit:
-	./rebar eunit skip_deps=true
-
-init_dialyzer:
-	dialyzer --apps stdlib kernel erts crypto ssl public_key --build_plt --output_plt .dialyzer.plt
-
-dialyzer: compile
-	dialyzer --no_native -Wno_return -r ebin --plt .dialyzer.plt
+compile:       ; rebar3 do compile, xref
+eunit:         ; rebar3 do eunit
+init_dialyzer: ; rebar3 dialyzer -s false
+dialyzer:      ; rebar3 dialyzer -u false
+travis:        ; rebar3 do lint, xref, dialyzer, eunit

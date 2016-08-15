@@ -1,6 +1,6 @@
 # elli - Erlang web server for HTTP APIs
 
-[![Travis CI](https://travis-ci.org/knutin/elli.png)](https://travis-ci.org/knutin/elli)
+[![Travis CI](https://travis-ci.org/elli-lib/elli.png)](https://travis-ci.org/elli-lib/elli)
 
 Elli is a webserver you can run inside your Erlang application to
 expose an HTTP API. Elli is a aimed exclusively at building
@@ -17,11 +17,11 @@ R15 or newer.
 
 Here's the features Elli *does* have:
 
- * Rack-style request-response. Your handler function gets a complete
-   request and returns a complete response. There's no messaging, no
-   receiving data directly from the socket, no writing responses
-   directly to the socket. It's a very simple and straightforward
-   API. Have a look at `src/elli_example_callback.erl` for examples.
+ * Rack-style request-response. Your handler function gets a complete request
+   and returns a complete response. There's no messaging, no receiving data
+   directly from the socket, no writing responses directly to the socket. It's a
+   very simple and straightforward API. Have a look at
+   [src/elli_example_callback.erl](src/elli_example_callback.erl) for examples.
 
  * Middlewares allows you to add useful features like compression,
    encoding, stats, but only have it used when needed. No features you
@@ -64,7 +64,7 @@ Here's the features Elli *does* have:
    nginx, stunnel or ELB if you're on AWS.
 
  * Implement your own connection handling, for WebSockets, streaming
-   uploads, etc. See `src/elli_example_callback_handover.erl`
+   uploads, etc. See [src/elli_example_callback_handover.erl](src/elli_example_callback_handover.erl)
 
 
 ## Extensions
@@ -74,9 +74,11 @@ Here's the features Elli *does* have:
  * Basic auth: https://github.com/martinrehfeld/elli_basicauth
  * Static content: https://github.com/chrisavl/elli_fileserve
  * "Date" header: https://github.com/knutin/elli_date
- * Cookies: https://github.com/drfloob/elli_cookie
  * Real-time statistics dashboard: https://github.com/knutin/elli_stats
-
+ * CloudFront signed URLs: https://github.com/elli-lib/elli_cloudfront
+ * Cookies: https://github.com/elli-lib/elli_cookie
+ * Prometheus: https://github.com/elli-lib/elli_prometheus
+ * X-Powered-By LFE: https://github.com/elli-lib/elli_xpblfe
 
 
 ## About
@@ -156,8 +158,8 @@ rebar config.
 ```erlang
 % rebar.config:
 {deps, [
-    {elli, "", {git, "git://github.com/knutin/elli.git"}},
-    % ...
+  {elli, {git, "git://github.com/elli-lib/elli.git", {branch, "develop"}}},
+  % ...
 ]}.
 ```
 
@@ -180,8 +182,8 @@ $: erl -pa deps/*/ebin ebin
 ## Callback module
 
 The best source of documentation for how to write a callback module is
-[src/elli_example_callback.erl](https://github.com/knutin/elli/blob/master/src/elli_example_callback.erl). It
-has a bunch of examples used in the tests.
+[src/elli_example_callback.erl](src/elli_example_callback.erl). It has a bunch
+of examples used in the tests.
 
 A minimal callback module could look like this:
 
