@@ -22,7 +22,7 @@
 %% @see handle/3
 -spec handle(Req, _Args) -> Result when
     Req    :: elli:req(),
-    _Args  :: callback_args(),
+    _Args  :: elli_handler:callback_args(),
     Result :: elli_handler:result().
 handle(Req, _Args) -> handle(Req#req.method, elli_request:path(Req), Req).
 
@@ -100,7 +100,7 @@ handle('GET', [<<"headers.html">>], _Req) ->
   %% Set custom headers, for example 'Content-Type'
   {ok, [{<<"X-Custom">>, <<"foobar">>}], <<"see headers">>};
 
-%% See note in function doc re: override Elli's default behaviour
+%% See note in function doc re: overriding Elli's default behaviour
 %% via Connection and Content-Length headers.
 handle('GET', [<<"user">>, <<"defined">>, <<"behaviour">>], _Req) ->
   {304, [{<<"Connection">>, <<"close">>},
@@ -201,8 +201,8 @@ handle('GET', [<<"invalid_return">>], _Req) -> {invalid_return};
 handle(_, _, _Req) -> {404, [], <<"Not Found">>}.
 
 %% @doc Send 10 separate chunks to the client.
-%% @equiv chunk_loop(Ref, 10)
 chunk_loop(Ref) -> chunk_loop(Ref, 10).
+%% @equiv chunk_loop(Ref, 10)
 
 %% @doc If `N > 0', send a chunk to the client, checking for errors,
 %% as the user might have disconnected.
@@ -278,8 +278,8 @@ chunk_loop(Ref, N) ->
 %% `file_error' is sent when the user wants to return a file as a
 %% response, but for some reason it cannot be opened.
 -spec handle_event(Event, Args, Config) -> ok when
-    Event  :: elli_event(),
-    Args   :: [term()],
+    Event  :: elli:event(),
+    Args   :: elli_handler:callback_args(),
     Config :: [tuple()].
 handle_event(elli_startup,     [],           _) -> ok;
 handle_event(request_complete, [_Request,

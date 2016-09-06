@@ -23,7 +23,7 @@
     Server       :: pid(),
     ListenSocket :: elli_tcp:socket(),
     Options      :: proplists:proplist(),
-    Callback     :: callback().
+    Callback     :: elli_handler:callback().
 start_link(Server, ListenSocket, Options, Callback) ->
   proc_lib:spawn_link(?MODULE, accept,
                       [Server, ListenSocket, Options, Callback]).
@@ -32,7 +32,11 @@ start_link(Server, ListenSocket, Options, Callback) ->
 %% Handle the request, then loop if we're using keep alive or chunked transfer.
 %% If {@link elli_tcp:accept/3} doesn't return a socket within a configurable
 %% timeout, loop to allow code upgrades of this module.
--spec accept(pid(), elli_tcp:socket(), proplists:proplist(), callback()) -> ok.
+-spec accept(Server, ListenSocket, Options, Callback) -> ok when
+    Server       :: pid(),
+    ListenSocket :: elli_tcp:socket(),
+    Options      :: proplists:proplist(),
+    Callback     :: elli_handler:callback().
 accept(Server, ListenSocket, Options, Callback) ->
   case catch elli_tcp:accept(ListenSocket, Server, accept_timeout(Options)) of
     {ok, Socket} ->
@@ -68,7 +72,7 @@ keepalive_loop(Socket, NumRequests, Buffer, Options, Callback) ->
     Socket    :: elli_tcp:socket(),
     PrevBin   :: binary(),
     Options   :: proplists:proplist(),
-    Callback  :: callback(),
+    Callback  :: elli_handler:callback(),
     ConnToken :: {'keep_alive' | 'close', binary()}.
 handle_request(S, PrevB, Opts, {Mod, Args} = Callback) ->
   {Method, RawPath, V, B0} =
@@ -318,11 +322,11 @@ get_request(Socket, Buffer, Options, {Mod, Args} = Callback) ->
   end.
 
 -spec get_headers(Socket, V, Buffer, Opts, Callback) -> {headers(), any()} when
-    Socket    :: elli_tcp:socket(),
-    V         :: version(),
-    Buffer    :: binary(),
-    Opts      :: proplists:proplist(),
-    Callback :: callback().
+    Socket   :: elli_tcp:socket(),
+    V        :: version(),
+    Buffer   :: binary(),
+    Opts     :: proplists:proplist(),
+    Callback :: elli_handler:callback().
 get_headers(_Socket, {0, 9}, _, _, _) ->
   {[], <<>>};
 get_headers(Socket, {1, _}, Buffer, Opts, Callback) ->
@@ -374,7 +378,7 @@ get_headers(Socket, Buffer, Headers, Count, Opts, {Mod,Args} = Callback) ->
     Headers  :: headers(),
     Buffer   :: binary(),
     Opts     :: proplists:proplist(),
-    Callback :: callback(),
+    Callback :: elli_handler:callback(),
     FullBody :: {body(), binary()}.
 get_body(Socket, Headers, Buffer, Opts, Callback) ->
   case proplists:get_value(<<"Content-Length">>, Headers, undefined) of
@@ -436,7 +440,7 @@ check_max_size(Socket, ContentLength, Buffer, Opts, {Mod, Args}) ->
     Body      :: body(),
     V         :: version(),
     Socket    :: elli_tcp:socket() | undefined,
-    Callback  :: callback(),
+    Callback  :: elli_handler:callback(),
     Req       :: elli:req().
 mk_req(Method, RawPath, Headers, Body, V, Socket, Callback) ->
   {Mod, Args} = Callback,

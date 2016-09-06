@@ -4,12 +4,15 @@
 * [Function Index](#index)
 * [Function Details](#functions)
 
+__Behaviours:__ [`elli_handler`](elli_handler.md).
+
 <a name="index"></a>
 
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#handle-2">handle/2</a></td><td></td></tr><tr><td valign="top"><a href="#handle-4">handle/4*</a></td><td></td></tr><tr><td valign="top"><a href="#handle_event-3">handle_event/3</a></td><td></td></tr><tr><td valign="top"><a href="#init-2">init/2</a></td><td></td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#handle-2">handle/2</a></td><td></td></tr><tr><td valign="top"><a href="#init-2">init/2</a></td><td>Return <code>{ok, handover}</code> if <code>Req</code>'s path is <code>/hello/world</code>, otherwise
+<code>ignore</code>.</td></tr></table>
 
 
 <a name="functions"></a>
@@ -20,23 +23,18 @@
 
 ### handle/2 ###
 
-`handle(Req, Args) -> any()`
+<pre><code>
+handle(Req, Args) -&gt; Result
+</code></pre>
 
-<a name="handle-4"></a>
-
-### handle/4 * ###
-
-`handle(X1, X2, Req, Args) -> any()`
-
-<a name="handle_event-3"></a>
-
-### handle_event/3 ###
-
-`handle_event(X1, X2, X3) -> any()`
+<ul class="definitions"><li><code>Req = <a href="elli.md#type-req">elli:req()</a></code></li><li><code>Args = <a href="elli_handler.md#type-callback_args">elli_handler:callback_args()</a></code></li><li><code>Result = <a href="elli_handler.md#type-result">elli_handler:result()</a></code></li></ul>
 
 <a name="init-2"></a>
 
 ### init/2 ###
 
 `init(Req, Args) -> any()`
+
+Return `{ok, handover}` if `Req`'s path is `/hello/world`, otherwise
+`ignore`.
 

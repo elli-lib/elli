@@ -1,7 +1,3 @@
--type callback_mod()  :: module().
--type callback_args() :: any().
--type callback()      :: {callback_mod(), callback_args()}.
-
 -type path()        :: binary().
 -type args()        :: binary().
 -type version()     :: {0,9} | {1,0} | {1,1}.
@@ -23,13 +19,6 @@
 -type range() :: {Offset::non_neg_integer(), Length::non_neg_integer()}.
 
 -type timestamp()  :: {integer(), integer(), integer()}.
--type elli_event() :: elli_startup
-                    | bad_request    | file_error
-                    | chunk_complete | request_complete
-                    | request_throw  | request_error       | request_exit
-                    | request_closed | request_parse_error
-                    | client_closed  | client_timeout
-                    | invalid_return.
 
 -record(req, {method   :: http_method(),
               path     :: [binary()],
@@ -40,7 +29,7 @@
               body     :: body(),
               pid      :: pid(),
               socket   :: undefined | elli_tcp:socket(),
-              callback :: callback()
+              callback :: elli_handler:callback()
              }).
 
 -define(EXAMPLE_CONF, [{callback, elli_example_callback},

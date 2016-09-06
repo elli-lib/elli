@@ -13,7 +13,7 @@
 -export([call/5]).
 
 -spec call(Method, Path, Headers, Body, Opts) -> elli:req() when
-    Method  :: http_method(),
+    Method  :: elli:http_method(),
     Path    :: binary(),
     Headers :: headers(),
     Body    :: body(),

@@ -9,7 +9,7 @@
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#encode_range-2">encode_range/2</a></td><td> Encode Range to a Content-Range value.</td></tr><tr><td valign="top"><a href="#encode_range_bytes-1">encode_range_bytes/1*</a></td><td></td></tr><tr><td valign="top"><a href="#file_size-1">file_size/1</a></td><td> Get the size in bytes of the file.</td></tr><tr><td valign="top"><a href="#normalize_range-2">normalize_range/2</a></td><td> If a valid byte-range, or byte-range-set of size 1
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#encode_range-2">encode_range/2</a></td><td> Encode Range to a Content-Range value.</td></tr><tr><td valign="top"><a href="#file_size-1">file_size/1</a></td><td> Get the size in bytes of the file.</td></tr><tr><td valign="top"><a href="#normalize_range-2">normalize_range/2</a></td><td> If a valid byte-range, or byte-range-set of size 1
 is supplied, returns a normalized range in the format
 {Offset, Length}.</td></tr></table>
 
@@ -28,12 +28,6 @@ encode_range(Range::<a href="#type-range">range()</a> | invalid_range, Size::non
 <br />
 
 Encode Range to a Content-Range value.
-
-<a name="encode_range_bytes-1"></a>
-
-### encode_range_bytes/1 * ###
-
-`encode_range_bytes(X1) -> any()`
 
 <a name="file_size-1"></a>
 

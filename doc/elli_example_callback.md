@@ -21,8 +21,7 @@ threw an error, [`handle_event/3`](#handle_event-3) is called.<a name="index"></
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#chunk_loop-1">chunk_loop/1</a></td><td>Send 10 separate chunks to the client.</td></tr><tr><td valign="top"><a href="#chunk_loop-2">chunk_loop/2*</a></td><td>If <code>N > 0</code>, send a chunk to the client, checking for errors,
-as the user might have disconnected.</td></tr><tr><td valign="top"><a href="#handle-2">handle/2</a></td><td>Handle a <code>Req</code>uest.</td></tr><tr><td valign="top"><a href="#handle-3">handle/3*</a></td><td>Route <code>Method</code> and <code>Path</code> to the appropriate clause.</td></tr><tr><td valign="top"><a href="#handle_event-3">handle_event/3</a></td><td>Handle Elli events, fired throughout processing a request.</td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#chunk_loop-1">chunk_loop/1</a></td><td>Send 10 separate chunks to the client.</td></tr><tr><td valign="top"><a href="#handle-2">handle/2</a></td><td>Handle a <code>Req</code>uest.</td></tr><tr><td valign="top"><a href="#handle_event-3">handle_event/3</a></td><td>Handle Elli events, fired throughout processing a request.</td></tr></table>
 
 
 <a name="functions"></a>
@@ -35,19 +34,7 @@ as the user might have disconnected.</td></tr><tr><td valign="top"><a href="#han
 
 `chunk_loop(Ref) -> any()`
 
-Equivalent to [`chunk_loop(Ref, 10)`](#chunk_loop-2).
-
 Send 10 separate chunks to the client.
-
-<a name="chunk_loop-2"></a>
-
-### chunk_loop/2 * ###
-
-`chunk_loop(Ref, N) -> any()`
-
-If `N > 0`, send a chunk to the client, checking for errors,
-as the user might have disconnected.
-When `N == 0`, call [  elli_request:close_chunk(Ref)](elli_request.md#close_chunk-1).
 
 <a name="handle-2"></a>
 
@@ -57,44 +44,12 @@ When `N == 0`, call [  elli_request:close_chunk(Ref)](elli_request.md#close_chun
 handle(Req, _Args) -&gt; Result
 </code></pre>
 
-<ul class="definitions"><li><code>Req = <a href="elli.md#type-req">elli:req()</a></code></li><li><code>_Args = <a href="#type-callback_args">callback_args()</a></code></li><li><code>Result = <a href="elli_handler.md#type-result">elli_handler:result()</a></code></li></ul>
+<ul class="definitions"><li><code>Req = <a href="elli.md#type-req">elli:req()</a></code></li><li><code>_Args = <a href="elli_handler.md#type-callback_args">elli_handler:callback_args()</a></code></li><li><code>Result = <a href="elli_handler.md#type-result">elli_handler:result()</a></code></li></ul>
 
 Handle a `Req`uest.
 Delegate to our handler function.
 
 __See also:__ [handle/3](#handle-3).
-
-<a name="handle-3"></a>
-
-### handle/3 * ###
-
-<pre><code>
-handle(Method, Path, Req) -&gt; <a href="elli_handler.md#type-result">elli_handler:result()</a>
-</code></pre>
-
-<ul class="definitions"><li><code>Method = <a href="elli.md#type-http_method">elli:http_method()</a></code></li><li><code>Path = [binary()]</code></li><li><code>Req = <a href="elli.md#type-req">elli:req()</a></code></li></ul>
-
-Route `Method` and `Path` to the appropriate clause.
-
-`ok` can be used instead of `200` to signal success.
-
-If you return any of the following HTTP headers, you can
-override the default behaviour of Elli:
-
-* **Connection**:     By default Elli will use `keep-alive` if the protocol
-supports it, setting `<<"close">>` will close the
-connection immediately after Elli has sent the
-response. If the client has already sent pipelined
-requests, these will be discarded.
-
-* **Content-Length**: By default Elli looks at the size of the body you
-returned to determine the `Content-Length` header.
-Explicitly including your own `Content-Length` (with
-the value as `integer()`, `binary()` or `list()`)
-allows you to return an empty body. Useful for
-implementing the `"304 Not Modified"` response.
-
-__See also:__ [chunk_loop/1](#chunk_loop-1), [elli_request:chunk_ref/1](elli_request.md#chunk_ref-1), [elli_request:encode_range/2](elli_request.md#encode_range-2), [elli_request:get_arg/3](elli_request.md#get_arg-3), [elli_request:get_arg_decoded/3](elli_request.md#get_arg_decoded-3), [elli_request:get_args_decoded/1](elli_request.md#get_args_decoded-1), [elli_request:get_header/3](elli_request.md#get_header-3), [elli_request:get_range/1](elli_request.md#get_range-1), [elli_request:normalize_range/2](elli_request.md#normalize_range-2), [elli_request:post_arg/3](elli_request.md#post_arg-3), [elli_request:post_arg_decoded/3](elli_request.md#post_arg_decoded-3), [elli_util:file_size/1](elli_util.md#file_size-1).
 
 <a name="handle_event-3"></a>
 
@@ -104,7 +59,7 @@ __See also:__ [chunk_loop/1](#chunk_loop-1), [elli_request:chunk_ref/1](elli_req
 handle_event(Event, Args, Config) -&gt; ok
 </code></pre>
 
-<ul class="definitions"><li><code>Event = <a href="#type-elli_event">elli_event()</a></code></li><li><code>Args = [term()]</code></li><li><code>Config = [tuple()]</code></li></ul>
+<ul class="definitions"><li><code>Event = <a href="elli.md#type-event">elli:event()</a></code></li><li><code>Args = <a href="elli_handler.md#type-callback_args">elli_handler:callback_args()</a></code></li><li><code>Config = [tuple()]</code></li></ul>
 
 Handle Elli events, fired throughout processing a request.
 

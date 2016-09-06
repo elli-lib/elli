@@ -20,7 +20,7 @@ The unit tests below test `elli_example_callback`.<a name="index"></a>
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#call-5">call/5</a></td><td></td></tr><tr><td valign="top"><a href="#hello_world_test-0">hello_world_test/0*</a></td><td></td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#call-5">call/5</a></td><td></td></tr></table>
 
 
 <a name="functions"></a>
@@ -35,11 +35,5 @@ The unit tests below test `elli_example_callback`.<a name="index"></a>
 call(Method, Path, Headers, Body, Opts) -&gt; <a href="elli.md#type-req">elli:req()</a>
 </code></pre>
 
-<ul class="definitions"><li><code>Method = <a href="#type-http_method">http_method()</a></code></li><li><code>Path = binary()</code></li><li><code>Headers = <a href="#type-headers">headers()</a></code></li><li><code>Body = <a href="#type-body">body()</a></code></li><li><code>Opts = <a href="proplists.md#type-proplist">proplists:proplist()</a></code></li></ul>
-
-<a name="hello_world_test-0"></a>
-
-### hello_world_test/0 * ###
-
-`hello_world_test() -> any()`
+<ul class="definitions"><li><code>Method = <a href="elli.md#type-http_method">elli:http_method()</a></code></li><li><code>Path = binary()</code></li><li><code>Headers = <a href="#type-headers">headers()</a></code></li><li><code>Body = <a href="#type-body">body()</a></code></li><li><code>Opts = <a href="proplists.md#type-proplist">proplists:proplist()</a></code></li></ul>
 

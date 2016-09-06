@@ -12,10 +12,47 @@ __This module defines the `elli_handler` behaviour.__<br /> Required callback fu
 
 
 
+### <a name="type-callback">callback()</a> ###
+
+
+__abstract datatype__: `callback()`
+
+A tuple of a <code><a href="#type-callback_mod">callback_mod()</a></code> and <code><a href="#type-callback_args">callback_args()</a></code>.
+
+
+
+### <a name="type-callback_args">callback_args()</a> ###
+
+
+__abstract datatype__: `callback_args()`
+
+Arguments to pass to a <code><a href="#type-callback_mod">callback_mod()</a></code>.
+
+
+
+### <a name="type-callback_mod">callback_mod()</a> ###
+
+
+__abstract datatype__: `callback_mod()`
+
+A callback module.
+
+
+
+### <a name="type-event">event()</a> ###
+
+
+__abstract datatype__: `event()`
+
+Fired throughout processing a request.
+See [`elli_example_callback:handle_event/3`](elli_example_callback.md#handle_event-3) for descriptions.
+
+
+
 ### <a name="type-result">result()</a> ###
 
 
 <pre><code>
-result() = ignore | {<a href="elli.md#type-response_code">elli:response_code()</a> | ok, [tuple()], binary()}
+result() = {<a href="elli.md#type-response_code">elli:response_code()</a> | ok, <a href="elli.md#type-body">elli:body()</a>} | {<a href="elli.md#type-response_code">elli:response_code()</a> | ok, <a href="elli.md#type-headers">elli:headers()</a>, <a href="elli.md#type-body">elli:body()</a>} | ignore
 </code></pre>
 

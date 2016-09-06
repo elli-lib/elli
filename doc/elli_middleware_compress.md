@@ -7,43 +7,29 @@
 
 Response compression as Elli middleware.
 
-<a name="description"></a>
-
-## Description ##
-Postprocesses all requests and compresses bodies larger than
-`compress_byte_size` (`1024` by default).<a name="index"></a>
+<a name="index"></a>
 
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#accepted_encoding-1">accepted_encoding/1*</a></td><td></td></tr><tr><td valign="top"><a href="#compress-2">compress/2*</a></td><td></td></tr><tr><td valign="top"><a href="#postprocess-3">postprocess/3</a></td><td></td></tr><tr><td valign="top"><a href="#should_compress-2">should_compress/2*</a></td><td></td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#postprocess-3">postprocess/3</a></td><td>Postprocess all requests and compress bodies larger than
+<code>compress_byte_size</code> (<code>1024</code> by default).</td></tr></table>
 
 
 <a name="functions"></a>
 
 ## Function Details ##
 
-<a name="accepted_encoding-1"></a>
-
-### accepted_encoding/1 * ###
-
-`accepted_encoding(Req) -> any()`
-
-<a name="compress-2"></a>
-
-### compress/2 * ###
-
-`compress(Body, Req) -> any()`
-
 <a name="postprocess-3"></a>
 
 ### postprocess/3 ###
 
-`postprocess(Req, Res, Config) -> any()`
+<pre><code>
+postprocess(Req, Result, Config) -&gt; Result
+</code></pre>
 
-<a name="should_compress-2"></a>
+<ul class="definitions"><li><code>Req = <a href="elli.md#type-req">elli:req()</a></code></li><li><code>Result = <a href="elli_handler.md#type-result">elli_handler:result()</a></code></li><li><code>Config = [{compress_byte_size, non_neg_integer()} | tuple()]</code></li></ul>
 
-### should_compress/2 * ###
-
-`should_compress(Body, S) -> any()`
+Postprocess all requests and compress bodies larger than
+`compress_byte_size` (`1024` by default).
 

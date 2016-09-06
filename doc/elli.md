@@ -25,124 +25,127 @@ acceptor.
 
 
 
+### <a name="type-body">body()</a> ###
+
+
+__abstract datatype__: `body()`
+
+A binary or iolist.
+
+
+
+### <a name="type-http_method">http_method()</a> ###
+
+
+__abstract datatype__: `http_method()`
+
+An uppercase atom representing a known HTTP verb or a
+binary for other verbs.
+
+
+
 ### <a name="type-req">req()</a> ###
 
 
-<pre><code>
-req() = #req{}
-</code></pre>
+__abstract datatype__: `req()`
+
+A record representing an HTTP request.
+
+
+
+### <a name="type-state">state()</a> ###
+
+
+__abstract datatype__: `state()`
+
+Internal state.
 
 <a name="index"></a>
 
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#code_change-3">code_change/3</a></td><td></td></tr><tr><td valign="top"><a href="#get_acceptors-1">get_acceptors/1</a></td><td></td></tr><tr><td valign="top"><a href="#get_open_reqs-1">get_open_reqs/1</a></td><td></td></tr><tr><td valign="top"><a href="#get_open_reqs-2">get_open_reqs/2</a></td><td></td></tr><tr><td valign="top"><a href="#handle_call-3">handle_call/3</a></td><td></td></tr><tr><td valign="top"><a href="#handle_cast-2">handle_cast/2</a></td><td></td></tr><tr><td valign="top"><a href="#handle_info-2">handle_info/2</a></td><td></td></tr><tr><td valign="top"><a href="#init-1">init/1</a></td><td></td></tr><tr><td valign="top"><a href="#remove_acceptor-2">remove_acceptor/2*</a></td><td></td></tr><tr><td valign="top"><a href="#required_opt-2">required_opt/2*</a></td><td></td></tr><tr><td valign="top"><a href="#set_callback-3">set_callback/3</a></td><td></td></tr><tr><td valign="top"><a href="#start_add_acceptor-1">start_add_acceptor/1*</a></td><td></td></tr><tr><td valign="top"><a href="#start_link-0">start_link/0</a></td><td></td></tr><tr><td valign="top"><a href="#start_link-1">start_link/1</a></td><td></td></tr><tr><td valign="top"><a href="#stop-1">stop/1</a></td><td></td></tr><tr><td valign="top"><a href="#terminate-2">terminate/2</a></td><td></td></tr><tr><td valign="top"><a href="#valid_callback-1">valid_callback/1*</a></td><td></td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#get_acceptors-1">get_acceptors/1</a></td><td></td></tr><tr><td valign="top"><a href="#get_open_reqs-1">get_open_reqs/1</a></td><td>Equivalent to <a href="#get_open_reqs-2"><tt>get_open_reqs(S, 5000)</tt></a>.</td></tr><tr><td valign="top"><a href="#get_open_reqs-2">get_open_reqs/2</a></td><td></td></tr><tr><td valign="top"><a href="#set_callback-3">set_callback/3</a></td><td></td></tr><tr><td valign="top"><a href="#start_link-0">start_link/0</a></td><td>Create an Elli server process as part of a supervision tree, using the
+default configuration.</td></tr><tr><td valign="top"><a href="#start_link-1">start_link/1</a></td><td></td></tr><tr><td valign="top"><a href="#stop-1">stop/1</a></td><td>Stop <code>Server</code>.</td></tr></table>
 
 
 <a name="functions"></a>
 
 ## Function Details ##
 
-<a name="code_change-3"></a>
-
-### code_change/3 ###
-
-`code_change(OldVsn, State, Extra) -> any()`
-
 <a name="get_acceptors-1"></a>
 
 ### get_acceptors/1 ###
 
-`get_acceptors(S) -> any()`
+<pre><code>
+get_acceptors(S::atom()) -&gt; {reply, {ok, [<a href="ets.md#type-tid">ets:tid()</a>]}, <a href="#type-state">state()</a>}
+</code></pre>
+<br />
 
 <a name="get_open_reqs-1"></a>
 
 ### get_open_reqs/1 ###
 
-`get_open_reqs(S) -> any()`
+<pre><code>
+get_open_reqs(S::atom()) -&gt; {reply, {ok, non_neg_integer()}, <a href="#type-state">state()</a>}
+</code></pre>
+<br />
+
+Equivalent to [`get_open_reqs(S, 5000)`](#get_open_reqs-2).
 
 <a name="get_open_reqs-2"></a>
 
 ### get_open_reqs/2 ###
 
-`get_open_reqs(S, Timeout) -> any()`
+<pre><code>
+get_open_reqs(S::atom(), Timeout::non_neg_integer()) -&gt; Reply
+</code></pre>
 
-<a name="handle_call-3"></a>
-
-### handle_call/3 ###
-
-`handle_call(X1, From, State) -> any()`
-
-<a name="handle_cast-2"></a>
-
-### handle_cast/2 ###
-
-`handle_cast(Msg, State) -> any()`
-
-<a name="handle_info-2"></a>
-
-### handle_info/2 ###
-
-`handle_info(X1, State) -> any()`
-
-<a name="init-1"></a>
-
-### init/1 ###
-
-`init(X1) -> any()`
-
-<a name="remove_acceptor-2"></a>
-
-### remove_acceptor/2 * ###
-
-`remove_acceptor(State, Pid) -> any()`
-
-<a name="required_opt-2"></a>
-
-### required_opt/2 * ###
-
-`required_opt(Name, Opts) -> any()`
+<ul class="definitions"><li><code>Reply = {reply, {ok, non_neg_integer()}, <a href="#type-state">state()</a>}</code></li></ul>
 
 <a name="set_callback-3"></a>
 
 ### set_callback/3 ###
 
-`set_callback(S, Callback, CallbackArgs) -> any()`
+<pre><code>
+set_callback(S, Callback, CallbackArgs) -&gt; Reply
+</code></pre>
 
-<a name="start_add_acceptor-1"></a>
-
-### start_add_acceptor/1 * ###
-
-`start_add_acceptor(State) -> any()`
+<ul class="definitions"><li><code>S = atom()</code></li><li><code>Callback = <a href="elli_handler.md#type-callback_mod">elli_handler:callback_mod()</a></code></li><li><code>CallbackArgs = <a href="elli_handler.md#type-callback_args">elli_handler:callback_args()</a></code></li><li><code>Reply = {reply, ok, <a href="#type-state">state()</a>}</code></li></ul>
 
 <a name="start_link-0"></a>
 
 ### start_link/0 ###
 
-`start_link() -> any()`
+<pre><code>
+start_link() -&gt; Result
+</code></pre>
+
+<ul class="definitions"><li><code>Result = {ok, Pid} | ignore | {error, Error}</code></li><li><code>Pid = pid()</code></li><li><code>Error = {already_started, Pid} | term()</code></li></ul>
+
+Equivalent to [`start_link([{callback, elli_example_callback},{callback_args, []}])`](#start_link-1).
+
+Create an Elli server process as part of a supervision tree, using the
+default configuration.
 
 <a name="start_link-1"></a>
 
 ### start_link/1 ###
 
-`start_link(Opts) -> any()`
+<pre><code>
+start_link(Opts) -&gt; Result
+</code></pre>
+
+<ul class="definitions"><li><code>Opts = [{term(), term()}]</code></li><li><code>Result = {ok, Pid} | ignore | {error, Error}</code></li><li><code>Pid = pid()</code></li><li><code>Error = {already_started, Pid} | term()</code></li></ul>
 
 <a name="stop-1"></a>
 
 ### stop/1 ###
 
-`stop(S) -> any()`
+<pre><code>
+stop(Server::atom()) -&gt; {stop, normal, ok, <a href="#type-state">state()</a>}
+</code></pre>
+<br />
 
-<a name="terminate-2"></a>
-
-### terminate/2 ###
-
-`terminate(Reason, State) -> any()`
-
-<a name="valid_callback-1"></a>
-
-### valid_callback/1 * ###
-
-`valid_callback(Mod) -> any()`
+Stop `Server`.
 
