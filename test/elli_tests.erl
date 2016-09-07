@@ -231,9 +231,9 @@ chunked() ->
 %%   ?assertEqual(binary_to_list(Expected), body(Response)).
 
 slow_client() ->
-  Body = <<"name=foobarbaz">>,
-  Headers = <<"Content-Length: ",(?I2B(size(Body)))/binary, "\r\n\r\n">>,
-  Client = start_slow_client(3001, "/hello"),
+  Body    = <<"name=foobarbaz">>,
+  Headers = <<"Content-Length: ", (?I2B(size(Body)))/binary, "\r\n\r\n">>,
+  Client  = start_slow_client(3001, "/hello"),
   send(Client, Headers, 1),
   send(Client, Body, size(Body)),
   ?assertEqual({ok, <<"HTTP/1.1 200 OK\r\n"
@@ -245,7 +245,7 @@ slow_client() ->
 
 post_pipeline() ->
   Body         = <<"name=elli&city=New%20York">>,
-  Headers      = <<"Content-Length: ",(?I2B(size(Body)))/binary, "\r\n",
+  Headers      = <<"Content-Length: ", (?I2B(size(Body)))/binary, "\r\n",
                    "Content-Type: application/x-www-form-urlencoded", "\r\n",
                    "\r\n">>,
   {ok, Socket} = gen_tcp:connect("127.0.0.1", 3001, [{active, false}, binary]),
@@ -334,22 +334,22 @@ to_proplist_test() ->
   Req  = #req{method   = 'GET',
               path     = [<<"crash">>],
               args     = [],
-              version  = {1,1},
+              version  = {1, 1},
               raw_path = <<"/crash">>,
-              headers  = [{<<"Host">>,<<"localhost:3001">>}],
+              headers  = [{<<"Host">>, <<"localhost:3001">>}],
               body     = <<>>,
               pid      = self(),
               socket   = socket,
               callback = {mod, []}},
-  Prop = [{method,'GET'},
-          {path,[<<"crash">>]},
-          {args,[]},
-          {raw_path,<<"/crash">>},
-          {version,{1,1}},
-          {headers,[{<<"Host">>,<<"localhost:3001">>}]},
-          {body,<<>>},
-          {pid,self()},
-          {socket,socket},
+  Prop = [{method,   'GET'},
+          {path,     [<<"crash">>]},
+          {args,     []},
+          {raw_path, <<"/crash">>},
+          {version,  {1, 1}},
+          {headers,  [{<<"Host">>, <<"localhost:3001">>}]},
+          {body,     <<>>},
+          {pid,      self()},
+          {socket,   socket},
           {callback, {mod, []}}],
   ?assertEqual(Prop, elli_request:to_proplist(Req)).
 
@@ -369,10 +369,10 @@ query_str_test_() ->
   ].
 
 get_range_test_() ->
-  Req       = #req{headers = [{<<"Range">>,<<"bytes=0-99 ,500-999 , -800">>}]},
-  OffsetReq = #req{headers = [{<<"Range">>,<<"bytes=200-">>}]},
+  Req       = #req{headers = [{<<"Range">>, <<"bytes=0-99 ,500-999 , -800">>}]},
+  OffsetReq = #req{headers = [{<<"Range">>, <<"bytes=200-">>}]},
   UndefReq  = #req{headers = []},
-  BadReq    = #req{headers = [{<<"Range">>,<<"bytes=--99,hallo-world">>}]},
+  BadReq    = #req{headers = [{<<"Range">>, <<"bytes=--99,hallo-world">>}]},
   ByteRangeSet = [{bytes, 0, 99}, {bytes, 500, 999}, {suffix, 800}],
   [?_assertEqual(ByteRangeSet,    elli_request:get_range(Req)),
    ?_assertEqual([{offset, 200}], elli_request:get_range(OffsetReq)),

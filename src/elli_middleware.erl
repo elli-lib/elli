@@ -41,7 +41,7 @@
 -export([init/2, handle/2, handle_event/3]).
 
 %% Macros.
--define(IF_NOT_EXPORTED(M,F,A,T,E),
+-define(IF_NOT_EXPORTED(M, F, A, T, E),
         case erlang:function_exported(M, F, A) of true -> E; false -> T end).
 
 %%% Elli callbacks
@@ -67,7 +67,7 @@ handle(CleanReq, Config) ->
     Config :: [tuple()].
 handle_event(elli_startup, Args, Config) ->
   Callbacks = callbacks(Config),
-  [code:ensure_loaded(M) || {M,_} <- Callbacks],
+  [code:ensure_loaded(M) || {M, _} <- Callbacks],
   forward_event(elli_startup, Args, Callbacks);
 handle_event(Event, Args, Config) ->
   forward_event(Event, Args, lists:reverse(callbacks(Config))).
@@ -90,7 +90,7 @@ do_init(Req, [{Mod, Args}|Mods]) ->
     Callbacks :: [Callback :: elli_handler:callback()],
     Result    :: elli_handler:result().
 process(_Req, []) -> {404, [], <<"Not Found">>};
-process(Req, [{Mod,Args}|Mods]) ->
+process(Req, [{Mod, Args} | Mods]) ->
   ?IF_NOT_EXPORTED(Mod, handle, 2, process(Req, Mods),
                    case Mod:handle(Req, Args) of
                      ignore   -> process(Req, Mods);
@@ -102,7 +102,7 @@ process(Req, [{Mod,Args}|Mods]) ->
     Callbacks :: [elli_handler:callback()],
     Req2      :: elli:req().
 preprocess(Req, []) -> Req;
-preprocess(Req, [{Mod,Args}|Mods]) ->
+preprocess(Req, [{Mod, Args} | Mods]) ->
   ?IF_NOT_EXPORTED(Mod, preprocess, 2, preprocess(Req, Mods),
                    preprocess(Mod:preprocess(Req, Args), Mods)).
 
@@ -112,7 +112,7 @@ preprocess(Req, [{Mod,Args}|Mods]) ->
     Callbacks :: [elli_handler:callback()],
     Res2      :: elli_handler:result().
 postprocess(_Req, Res, []) -> Res;
-postprocess(Req, Res, [{Mod,Args}|Mods]) ->
+postprocess(Req, Res, [{Mod, Args} | Mods]) ->
   ?IF_NOT_EXPORTED(Mod, postprocess, 3, postprocess(Req, Res, Mods),
                    postprocess(Req, Mod:postprocess(Req, Res, Args), Mods)).
 
@@ -122,11 +122,11 @@ postprocess(Req, Res, [{Mod,Args}|Mods]) ->
     Callbacks :: [elli_handler:callback()].
 forward_event(Event, Args, Callbacks) ->
   [?IF_NOT_EXPORTED(M, handle_event, 3, ok, M:handle_event(Event, Args, XArgs))
-   || {M,XArgs} <- Callbacks],
+   || {M, XArgs} <- Callbacks],
   ok.
 
 %%% Internal helpers
 
--spec callbacks(Config :: [{mod,Callbacks}|tuple()]) -> Callbacks when
+-spec callbacks(Config :: [{mod, Callbacks} | tuple()]) -> Callbacks when
     Callbacks :: [elli_handler:callback()].
 callbacks(Config) -> proplists:get_value(mods, Config, []).

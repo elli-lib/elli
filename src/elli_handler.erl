@@ -1,6 +1,6 @@
 -module(elli_handler).
 
--export_type([callback/0,callback_mod/0,callback_args/0,event/0,result/0]).
+-export_type([callback/0, callback_mod/0, callback_args/0, event/0, result/0]).
 
 %% @type callback(). A tuple of a {@type callback_mod()} and {@type
 %% callback_args()}.

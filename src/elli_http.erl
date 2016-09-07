@@ -21,8 +21,8 @@
 
 -export_type([version/0]).
 
-%% @type version(). HTTP version as a tuple, i.e. `{0,9} | {1,0} | {1,1}'.
--type version() :: {0,9} | {1,0} | {1,1}.
+%% @type version(). HTTP version as a tuple, i.e. `{0, 9} | {1, 0} | {1, 1}'.
+-type version() :: {0, 9} | {1, 0} | {1, 1}.
 
 %% TODO: use this
 %% -type connection_token() :: keep_alive | close.
@@ -173,7 +173,7 @@ send_response(Req, Code, Headers, UserBody) ->
     Headers  :: elli:headers(),
     Filename :: file:filename(),
     Range    :: elli_util:range().
-send_file(#req{callback={Mod,Args}} = Req, Code, Headers, Filename, Range) ->
+send_file(#req{callback={Mod, Args}} = Req, Code, Headers, Filename, Range) ->
   ResponseHeaders = [<<"HTTP/1.1 ">>, status(Code), <<"\r\n">>,
                      encode_headers(Headers), <<"\r\n">>],
   case file:open(Filename, [read, raw, binary]) of
@@ -182,7 +182,7 @@ send_file(#req{callback={Mod,Args}} = Req, Code, Headers, Filename, Range) ->
   end,
   ok.
 
-do_send_file(Fd, {Offset,Length}, #req{callback={Mod,Args}} = Req, Headers) ->
+do_send_file(Fd, {Offset, Length}, #req{callback={Mod, Args}} = Req, Headers) ->
   try elli_tcp:send(Req#req.socket, Headers) of
       ok ->
       case elli_tcp:sendfile(Fd, Req#req.socket, Offset, Length, []) of
@@ -209,35 +209,46 @@ send_bad_request(Socket) ->
 %% @doc Execute the user callback, translating failure into a proper response.
 execute_callback(#req{callback = {Mod, Args}} = Req) ->
   try Mod:handle(Req, Args) of
-      {ok,Headers,{file,Filename}}       -> {file,200,Headers,Filename,{0,0}};
-      {ok,Headers,{file,Filename,Range}} -> {file,200,Headers,Filename,Range};
-      {ok,Headers,Body}                  -> {response,200,Headers,Body};
-      {ok,Body}                          -> {response,200,[],Body};
-      {chunk,Headers}                    -> {chunk,Headers,<<"">>};
-      {chunk,Headers,Initial}            -> {chunk,Headers,Initial};
-      {HttpCode,Headers,{file,Filename}} ->
-      {file,HttpCode,Headers,Filename,{0,0}};
-      {HttpCode,Headers,{file,Filename,Range}} ->
-      {file,HttpCode,Headers,Filename,Range};
-      {HttpCode,Headers,Body}            -> {response,HttpCode,Headers,Body};
-      {HttpCode,Body}                    -> {response,HttpCode,[],Body};
-      Unexpected                         ->
-      handle_event(Mod, invalid_return, [Req,Unexpected], Args),
-      {response,500,[],<<"Internal server error">>}
+      %% {ok,...{file,...}}
+      {ok, Headers, {file, Filename}} -> {file, 200, Headers, Filename, {0, 0}};
+      {ok, Headers, {file, Filename, Range}} ->
+      {file, 200, Headers, Filename, Range};
+      %% ok simple
+      {ok, Headers, Body} -> {response, 200, Headers, Body};
+      {ok, Body}          -> {response, 200, [], Body};
+      %% Chunk
+      {chunk, Headers}          -> {chunk, Headers, <<"">>};
+      {chunk, Headers, Initial} -> {chunk, Headers, Initial};
+      %% File
+      {HttpCode, Headers, {file, Filename}} ->
+      {file, HttpCode, Headers, Filename, {0, 0}};
+      {HttpCode, Headers, {file, Filename, Range}} ->
+      {file, HttpCode, Headers, Filename, Range};
+      %% Simple
+      {HttpCode, Headers, Body} -> {response, HttpCode, Headers, Body};
+      {HttpCode, Body}          -> {response, HttpCode, [], Body};
+      %% Unexpected
+      Unexpected ->
+      handle_event(Mod, invalid_return, [Req, Unexpected], Args),
+      {response, 500, [], <<"Internal server error">>}
   catch
-    throw:{ResponseCode,Headers,Body} when is_integer(ResponseCode) ->
-      {response,ResponseCode,Headers,Body};
+    throw:{ResponseCode, Headers, Body} when is_integer(ResponseCode) ->
+      {response, ResponseCode, Headers, Body};
     throw:Exc ->
-      handle_event(Mod, request_throw, [Req,Exc,erlang:get_stacktrace()], Args),
-      {response,500,[],<<"Internal server error">>};
+      handle_event(Mod, request_throw,
+                   [Req, Exc, erlang:get_stacktrace()],
+                   Args),
+      {response, 500, [], <<"Internal server error">>};
     error:Error ->
       handle_event(Mod, request_error,
-                   [Req,Error,erlang:get_stacktrace()],
+                   [Req, Error, erlang:get_stacktrace()],
                    Args),
-      {response,500,[],<<"Internal server error">>};
+      {response, 500, [], <<"Internal server error">>};
     exit:Exit ->
-      handle_event(Mod, request_exit, [Req,Exit,erlang:get_stacktrace()], Args),
-      {response,500,[],<<"Internal server error">>}
+      handle_event(Mod, request_exit,
+                   [Req, Exit, erlang:get_stacktrace()],
+                   Args),
+      {response, 500, [], <<"Internal server error">>}
   end.
 
 %%% Chunked-transfer
@@ -347,7 +358,7 @@ get_headers(Socket, _, Headers, HeadersCount, _Opts, {Mod, Args})
   send_bad_request(Socket),
   elli_tcp:close(Socket),
   exit(normal);
-get_headers(Socket, Buffer, Headers, Count, Opts, {Mod,Args} = Callback) ->
+get_headers(Socket, Buffer, Headers, Count, Opts, {Mod, Args} = Callback) ->
   case erlang:decode_packet(httph_bin, Buffer, []) of
     {ok, {http_header, _, Key, _, Value}, Rest} ->
       NewHeaders = [{ensure_binary(Key), Value} | Headers],

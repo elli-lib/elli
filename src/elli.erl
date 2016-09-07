@@ -39,7 +39,7 @@
 -record(state, {socket         :: elli_tcp:socket(),
                 acceptors      :: ets:tid(),
                 open_reqs = 0  :: non_neg_integer(),
-                options   = [] :: [{_,_}],
+                options   = [] :: [{_, _}],     % TODO: refine
                 callback       :: elli_handler:callback()
                }).
 %% @type state(). Internal state.
@@ -52,19 +52,19 @@
 %%%===================================================================
 
 -spec start_link() -> Result when
-    Result :: {ok,Pid} | ignore | {error,Error},
+    Result :: {ok, Pid} | ignore | {error, Error},
     Pid    :: pid(),
-    Error  :: {already_started,Pid} | term().
+    Error  :: {already_started, Pid} | term().
 %% @equiv start_link({@EXAMPLE_CONF})
 %% @doc Create an Elli server process as part of a supervision tree, using the
 %% default configuration.
 start_link() -> start_link(?EXAMPLE_CONF).
 
 -spec start_link(Opts) -> Result when
-    Opts   :: [{_,_}],
-    Result :: {ok,Pid} | ignore | {error,Error},
+    Opts   :: [{_, _}],                         % TODO: refine
+    Result :: {ok, Pid} | ignore | {error, Error},
     Pid    :: pid(),
-    Error  :: {already_started,Pid} | term().
+    Error  :: {already_started, Pid} | term().
 start_link(Opts) ->
   valid_callback(required_opt(callback, Opts)) orelse throw(invalid_callback),
   case proplists:get_value(name, Opts) of
@@ -72,28 +72,28 @@ start_link(Opts) ->
     Name      -> gen_server:start_link(Name, ?MODULE, [Opts], [])
   end.
 
--spec get_acceptors(atom()) -> {reply,{ok,[ets:tid()]},state()}.
+-spec get_acceptors(atom()) -> {reply, {ok, [ets:tid()]}, state()}.
 get_acceptors(S) -> gen_server:call(S, get_acceptors).
 
--spec get_open_reqs(S :: atom()) -> {reply,{ok,non_neg_integer()},state()}.
+-spec get_open_reqs(S :: atom()) -> {reply, {ok, non_neg_integer()}, state()}.
 %% @equiv get_open_reqs(S, 5000)
 get_open_reqs(S) -> get_open_reqs(S, 5000).
 
 -spec get_open_reqs(S :: atom(), Timeout :: non_neg_integer()) -> Reply when
-    Reply :: {reply,{ok,non_neg_integer()},state()}.
+    Reply :: {reply, {ok, non_neg_integer()}, state()}.
 get_open_reqs(S, Timeout) -> gen_server:call(S, get_open_reqs, Timeout).
 
 -spec set_callback(S, Callback, CallbackArgs) -> Reply when
     S            :: atom(),
     Callback     :: elli_handler:callback_mod(),
     CallbackArgs :: elli_handler:callback_args(),
-    Reply        :: {reply,ok,state()}.
+    Reply        :: {reply, ok, state()}.
 set_callback(S, Callback, CallbackArgs) ->
   valid_callback(Callback) orelse throw(invalid_callback),
   gen_server:call(S, {set_callback, Callback, CallbackArgs}).
 
 %% @doc Stop `Server'.
--spec stop(Server :: atom()) -> {stop,normal,ok,state()}.
+-spec stop(Server :: atom()) -> {stop, normal, ok, state()}.
 stop(S) -> gen_server:call(S, stop).
 
 %%%===================================================================
@@ -101,7 +101,7 @@ stop(S) -> gen_server:call(S, stop).
 %%%===================================================================
 
 %% @hidden
--spec init([Opts :: [{_,_}]]) -> {ok,state()}.
+-spec init([Opts :: [{_, _}]]) -> {ok, state()}.
 init([Opts]) ->
   %% Use the exit signal from the acceptor processes to know when
   %% they exit
@@ -117,7 +117,7 @@ init([Opts]) ->
   KeyFile        = proplists:get_value(keyfile, Opts),
   CertFile       = proplists:get_value(certfile, Opts),
   SockType       = ?IF(UseSSL, ssl, plain),
-  SSLSockOpts    = ?IF(UseSSL, [{keyfile,KeyFile},{certfile,CertFile}], []),
+  SSLSockOpts    = ?IF(UseSSL, [{keyfile, KeyFile}, {certfile, CertFile}], []),
 
   AcceptTimeout  = proplists:get_value(accept_timeout, Opts, 10000),
   RequestTimeout = proplists:get_value(request_timeout, Opts, 60000),
@@ -159,54 +159,54 @@ init([Opts]) ->
               callback  = {Callback, CallbackArgs}}}.
 
 %% @hidden
--spec handle_call(get_acceptors, {pid(),_Tag}, state()) ->
-                     {reply,{ok,[ets:tid()]},state()};
-                 (get_open_reqs, {pid(),_Tag}, state()) ->
-                     {reply,{ok,OpenReqs :: non_neg_integer()},state()};
-                 (stop, {pid(),_tag}, state()) -> {stop,normal,ok,state()};
-                 ({set_callback,Mod,Args}, {pid(),_Tag}, state()) ->
-                     {reply,ok,state()} when
+-spec handle_call(get_acceptors, {pid(), _Tag}, state()) ->
+                     {reply, {ok, [ets:tid()]}, state()};
+                 (get_open_reqs, {pid(), _Tag}, state()) ->
+                     {reply, {ok, OpenReqs :: non_neg_integer()}, state()};
+                 (stop, {pid(), _tag}, state()) -> {stop, normal, ok, state()};
+                 ({set_callback, Mod, Args}, {pid(), _Tag}, state()) ->
+                     {reply, ok, state()} when
     Mod  :: elli_handler:callback_mod(),
     Args :: elli_handler:callback_args().
 handle_call(get_acceptors, _From, State) ->
   Acceptors = [Pid || {Pid} <- ets:tab2list(State#state.acceptors)],
-  {reply,{ok,Acceptors},State};
+  {reply, {ok, Acceptors}, State};
 handle_call(get_open_reqs, _From, #state{open_reqs=OpenReqs} = State) ->
-  {reply,{ok,OpenReqs},State};
-handle_call({set_callback,Callback,CallbackArgs}, _From, State) ->
+  {reply, {ok, OpenReqs}, State};
+handle_call({set_callback, Callback, CallbackArgs}, _From, State) ->
   ok = Callback:handle_event(elli_reconfigure, [], CallbackArgs),
-  {reply,ok,State#state{callback={Callback,CallbackArgs}}};
-handle_call(stop, _From, State) -> {stop,normal,ok,State}.
+  {reply, ok, State#state{callback={Callback, CallbackArgs}}};
+handle_call(stop, _From, State) -> {stop, normal, ok, State}.
 
 %% @hidden
--spec handle_cast(accepted | _Msg, State0) -> {noreply,State1} when
+-spec handle_cast(accepted | _Msg, State0) -> {noreply, State1} when
     State0 :: state(),
     State1 :: state().
-handle_cast(accepted, State) -> {noreply,start_add_acceptor(State)};
-handle_cast(_Msg, State)     -> {noreply,State}.
+handle_cast(accepted, State) -> {noreply, start_add_acceptor(State)};
+handle_cast(_Msg, State)     -> {noreply, State}.
 
 %% @hidden
--spec handle_info({'EXIT',_Pid,Reason}, State0) -> Result when
+-spec handle_info({'EXIT', _Pid, Reason}, State0) -> Result when
     State0 :: state(),
-    Reason :: {error,emfile},
-    Result :: {stop,emfile,State0}
-            | {noreply,State1::state()}.
-handle_info({'EXIT',_Pid,{error,emfile}}, State) ->
+    Reason :: {error, emfile},
+    Result :: {stop, emfile, State0}
+            | {noreply, State1 :: state()}.
+handle_info({'EXIT', _Pid, {error, emfile}}, State) ->
   ?ERROR("No more file descriptors, shutting down~n"),
-  {stop,emfile,State};
-handle_info({'EXIT',Pid,normal}, State) ->
-  {noreply,remove_acceptor(State, Pid)};
-handle_info({'EXIT',Pid,Reason}, State) ->
-  ?ERROR("Elli request (pid ~p) unexpectedly crashed:~n~p~n", [Pid,Reason]),
-  {noreply,remove_acceptor(State, Pid)}.
+  {stop, emfile, State};
+handle_info({'EXIT', Pid, normal}, State) ->
+  {noreply, remove_acceptor(State, Pid)};
+handle_info({'EXIT', Pid, Reason}, State) ->
+  ?ERROR("Elli request (pid ~p) unexpectedly crashed:~n~p~n", [Pid, Reason]),
+  {noreply, remove_acceptor(State, Pid)}.
 
 %% @hidden
 -spec terminate(_Reason, _State) -> ok.
 terminate(_Reason, _State) -> ok.
 
 %% @hidden
--spec code_change(_OldVsn, State, _Extra) -> {ok,State} when State :: state().
-code_change(_OldVsn, State, _Extra) -> {ok,State}.
+-spec code_change(_OldVsn, State, _Extra) -> {ok, State} when State :: state().
+code_change(_OldVsn, State, _Extra) -> {ok, State}.
 
 %%%===================================================================
 %%% Internal functions
