@@ -15,8 +15,8 @@
 -spec call(Method, Path, Headers, Body, Opts) -> elli:req() when
     Method  :: elli:http_method(),
     Path    :: binary(),
-    Headers :: headers(),
-    Body    :: body(),
+    Headers :: elli:headers(),
+    Body    :: elli:body(),
     Opts    :: proplists:proplist().
 call(Method, Path, Headers, Body, Opts) ->
   Callback     = proplists:get_value(callback, Opts),

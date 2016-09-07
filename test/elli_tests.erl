@@ -1,7 +1,6 @@
 -module(elli_tests).
 -include_lib("eunit/include/eunit.hrl").
 -include("elli.hrl").
--include("elli_util.hrl").
 
 -define(I2B(I), list_to_binary(integer_to_list(I))).
 -define(README, "README.md").

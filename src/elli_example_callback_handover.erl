@@ -1,10 +1,11 @@
 -module(elli_example_callback_handover).
+-behaviour(elli_handler).
+-include("elli_util.hrl").
+
 -export([init/2, handle/2, handle_event/3]).
 
--behaviour(elli_handler).
-
-%% @doc Return `{ok, handover}' if `Req''s path is `/hello/world', otherwise
-%% `ignore'.
+%% @doc Return `{ok, handover}' if `Req''s path is `/hello/world',
+%% otherwise `ignore'.
 init(Req, _Args) ->
   case elli_request:path(Req) of
     [<<"hello">>, <<"world">>] -> {ok, handover};
@@ -21,7 +22,7 @@ handle(Req, Args) ->
 
 handle('GET', [<<"hello">>, <<"world">>], Req, _Args) ->
   Body    = <<"Hello World!">>,
-  Size    = list_to_binary(integer_to_list(size(Body))),
+  Size    = list_to_binary(?I2L(size(Body))),
   Headers = [{"Connection", "close"}, {"Content-Length", Size}],
   elli_http:send_response(Req, 200, Headers, Body),
   {close, <<>>};

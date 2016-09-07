@@ -19,6 +19,14 @@
 -export([accept/4, handle_request/4, chunk_loop/1, split_args/1,
          parse_path/1, keepalive_loop/3, keepalive_loop/5]).
 
+-export_type([version/0]).
+
+%% @type version(). HTTP version as a tuple, i.e. `{0,9} | {1,0} | {1,1}'.
+-type version() :: {0,9} | {1,0} | {1,1}.
+
+%% TODO: use this
+%% -type connection_token() :: keep_alive | close.
+
 -spec start_link(Server, ListenSocket, Options, Callback) -> pid() when
     Server       :: pid(),
     ListenSocket :: elli_tcp:socket(),
@@ -161,10 +169,10 @@ send_response(Req, Code, Headers, UserBody) ->
 %% and headers.
 -spec send_file(Req, Code, Headers, Filename, Range) -> ok when
     Req      :: elli:req(),
-    Code     :: response_code(),
-    Headers  :: headers(),
+    Code     :: elli:response_code(),
+    Headers  :: elli:headers(),
     Filename :: file:filename(),
-    Range    :: range().
+    Range    :: elli_util:range().
 send_file(#req{callback={Mod,Args}} = Req, Code, Headers, Filename, Range) ->
   ResponseHeaders = [<<"HTTP/1.1 ">>, status(Code), <<"\r\n">>,
                      encode_headers(Headers), <<"\r\n">>],
@@ -321,12 +329,13 @@ get_request(Socket, Buffer, Options, {Mod, Args} = Callback) ->
       exit(normal)
   end.
 
--spec get_headers(Socket, V, Buffer, Opts, Callback) -> {headers(), any()} when
+-spec get_headers(Socket, V, Buffer, Opts, Callback) -> Headers when
     Socket   :: elli_tcp:socket(),
     V        :: version(),
     Buffer   :: binary(),
     Opts     :: proplists:proplist(),
-    Callback :: elli_handler:callback().
+    Callback :: elli_handler:callback(),
+    Headers  :: {elli:headers(), any()}. % TODO: refine
 get_headers(_Socket, {0, 9}, _, _, _) ->
   {[], <<>>};
 get_headers(Socket, {1, _}, Buffer, Opts, Callback) ->
@@ -375,11 +384,11 @@ get_headers(Socket, Buffer, Headers, Count, Opts, {Mod,Args} = Callback) ->
 %% that case, push it back in the buffer and handle the first request.
 -spec get_body(Socket, Headers, Buffer, Opts, Callback) -> FullBody when
     Socket   :: elli_tcp:socket(),
-    Headers  :: headers(),
+    Headers  :: elli:headers(),
     Buffer   :: binary(),
     Opts     :: proplists:proplist(),
     Callback :: elli_handler:callback(),
-    FullBody :: {body(), binary()}.
+    FullBody :: {elli:body(), binary()}.
 get_body(Socket, Headers, Buffer, Opts, Callback) ->
   case proplists:get_value(<<"Content-Length">>, Headers, undefined) of
     undefined -> {<<>>, Buffer};
@@ -434,10 +443,10 @@ check_max_size(Socket, ContentLength, Buffer, Opts, {Mod, Args}) ->
   end.
 
 -spec mk_req(Method, PathTuple, Headers, Body, V, Socket, Callback) -> Req when
-    Method    :: http_method(),
+    Method    :: elli:http_method(),
     PathTuple :: {PathType :: atom(), RawPath :: binary()},
-    Headers   :: headers(),
-    Body      :: body(),
+    Headers   :: elli:headers(),
+    Body      :: elli:body(),
     V         :: version(),
     Socket    :: elli_tcp:socket() | undefined,
     Callback  :: elli_handler:callback(),
@@ -549,9 +558,8 @@ handle_event(Mod, Name, EventArgs, ElliArgs) ->
     Mod:handle_event(Name, EventArgs, ElliArgs)
   catch
     EvClass:EvError ->
-      error_logger:error_msg("~p:handle_event/3 crashed ~p:~p~n~p",
-                             [Mod, EvClass, EvError,
-                              erlang:get_stacktrace()])
+      ?ERROR("~p:handle_event/3 crashed ~p:~p~n~p",
+             [Mod, EvClass, EvError, erlang:get_stacktrace()])
   end.
 
 %%% Timing helpers

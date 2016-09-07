@@ -33,6 +33,13 @@
         , is_request/1
         ]).
 
+-export_type([http_range/0]).
+
+-type http_range() :: {First::non_neg_integer(), Last::non_neg_integer()}
+                    | {offset, Offset::non_neg_integer()}
+                    | {suffix, Length::pos_integer()}.
+
+
 %%% Helpers for working with a #req{}
 
 %% @doc Return `path' split into binary parts.

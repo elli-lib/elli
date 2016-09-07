@@ -8,6 +8,7 @@
 -module(elli).
 -behaviour(gen_server).
 -include("elli.hrl").
+-include("elli_util.hrl").
 
 %% API
 -export([start_link/0, start_link/1, stop/1]).
@@ -17,15 +18,23 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
+-export_type([req/0, http_method/0, body/0, headers/0, response_code/0]).
+
 %% @type req(). A record representing an HTTP request.
 -type req() :: #req{}.
 
 %% @type http_method(). An uppercase atom representing a known HTTP verb or a
 %% binary for other verbs.
+-type http_method() :: 'OPTIONS' | 'GET' | 'HEAD' | 'POST'
+                     | 'PUT' | 'DELETE' | 'TRACE' | binary().
 
 %% @type body(). A binary or iolist.
+-type body() :: binary() | iolist().
 
--export_type([req/0, http_method/0, body/0, headers/0, response_code/0]).
+-type header()  :: {Key::binary(), Value::binary() | string()}.
+-type headers() :: [header()].
+
+-type response_code() :: 100..999.
 
 -record(state, {socket         :: elli_tcp:socket(),
                 acceptors      :: ets:tid(),
@@ -36,13 +45,6 @@
 %% @type state(). Internal state.
 -opaque state() :: #state{}.
 -export_type([state/0]).
-
-%% Macros.
--define(ERROR(Str), error_logger:error_msg(Str)).
--define(ERROR(Format,Data), error_logger:error_msg(Format, Data)).
-
-%% Bloody useful
--define(IF(Test,True,False), case Test of true -> True; false -> False end).
 
 
 %%%===================================================================

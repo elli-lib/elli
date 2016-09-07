@@ -7,13 +7,13 @@
 %%% threw an error, {@link handle_event/3} is called.
 
 -module(elli_example_callback).
+-behaviour(elli_handler).
+-include("elli.hrl").
+-include("elli_util.hrl").
+-include_lib("kernel/include/file.hrl").
+
 -export([handle/2, handle_event/3]).
 -export([chunk_loop/1]).
-
--include("elli.hrl").
--behaviour(elli_handler).
-
--include_lib("kernel/include/file.hrl").
 
 %%% Elli request callback
 
@@ -211,10 +211,9 @@ chunk_loop(Ref) -> chunk_loop(Ref, 10).
 chunk_loop(Ref, 0) -> elli_request:close_chunk(Ref);
 chunk_loop(Ref, N) ->
   timer:sleep(10),
-  case elli_request:send_chunk(Ref, [<<"chunk">>, integer_to_list(N)]) of
-    ok -> ok;
-    {error, Reason} ->
-      error_logger:format("error in sending chunk: ~p~n", [Reason])
+  case elli_request:send_chunk(Ref, [<<"chunk">>, ?I2L(N)]) of
+    ok              -> ok;
+    {error, Reason} -> ?ERROR("error in sending chunk: ~p~n", [Reason])
   end,
   chunk_loop(Ref, N-1).
 
