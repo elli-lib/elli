@@ -425,22 +425,25 @@ ensure_binary(Atom) when is_atom(Atom) -> atom_to_binary(Atom, latin1).
 %% sending. To avoid allowing clients to use all our bandwidth, if the request
 %% size is too big, we simply close the socket.
 check_max_size(Socket, ContentLength, Buffer, Opts, {Mod, Args}) ->
-  case ContentLength > max_body_size(Opts) of
-    true ->
-      handle_event(Mod, bad_request, [{body_size, ContentLength}], Args),
-      case ContentLength < max_body_size(Opts) * 2 of
-        true ->
-          OnSocket = ContentLength - size(Buffer),
-          elli_tcp:recv(Socket, OnSocket, 60000),
-          Response = [<<"HTTP/1.1 ">>, status(413), <<"\r\n">>,
-                      <<"Content-Length: 0">>, <<"\r\n\r\n">>],
-          elli_tcp:send(Socket, Response);
-        false -> ok
-      end,
-      elli_tcp:close(Socket),
-      exit(normal);
-    false -> ok
-  end.
+  MaxSize = max_body_size(Opts),
+  do_check_max_size(Socket, ContentLength, Buffer, MaxSize, {Mod, Args}).
+
+do_check_max_size(Socket, ContentLength, Buffer, MaxSize, {Mod, Args})
+  when ContentLength > MaxSize ->
+  handle_event(Mod, bad_request, [{body_size, ContentLength}], Args),
+  do_check_max_size_2x(Socket, ContentLength, Buffer, MaxSize),
+  elli_tcp:close(Socket),
+  exit(normal);
+do_check_max_size(_, _, _, _, _) -> ok.
+
+do_check_max_size_2x(Socket, ContentLength, Buffer, MaxSize)
+  when ContentLength < MaxSize * 2 ->
+  OnSocket = ContentLength - size(Buffer),
+  elli_tcp:recv(Socket, OnSocket, 60000),
+  Response = [<<"HTTP/1.1 ">>, status(413), <<"\r\n">>,
+              <<"Content-Length: 0">>, <<"\r\n\r\n">>],
+  elli_tcp:send(Socket, Response);
+do_check_max_size_2x(_, _, _, _) -> ok.
 
 -spec mk_req(Method, PathTuple, Headers, Body, V, Socket, Callback) -> Req when
     Method    :: elli:http_method(),
@@ -451,8 +454,7 @@ check_max_size(Socket, ContentLength, Buffer, Opts, {Mod, Args}) ->
     Socket    :: elli_tcp:socket() | undefined,
     Callback  :: elli_handler:callback(),
     Req       :: elli:req().
-mk_req(Method, RawPath, Headers, Body, V, Socket, Callback) ->
-  {Mod, Args} = Callback,
+mk_req(Method, RawPath, Headers, Body, V, Socket, {Mod, Args} = Callback) ->
   case parse_path(RawPath) of
     {ok, {Path, URL, URLArgs}} ->
       #req{method   = Method, path     = URL,    args    = URLArgs,
