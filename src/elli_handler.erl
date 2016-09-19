@@ -29,6 +29,6 @@
 -callback handle(Req :: elli:req(), callback_args()) -> result().
 
 -callback handle_event(Event, Args, Config) -> ok when
-    Event  :: event(),
-    Args   :: callback_args(),
-    Config :: [tuple()].
+      Event  :: event(),
+      Args   :: callback_args(),
+      Config :: [tuple()].

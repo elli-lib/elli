@@ -44,89 +44,110 @@
 -define(IF_NOT_EXPORTED(M, F, A, T, E),
         case erlang:function_exported(M, F, A) of true -> E; false -> T end).
 
-%%% Elli callbacks
+%%
+%% ELLI CALLBACKS
+%%
 
 %% @hidden
 -spec init(Req, Args) -> {ok, standard | handover} when
-    Req  :: elli:req(),
-    Args :: elli_handler:callback_args().
-init(Req, Args) -> do_init(Req, callbacks(Args)).
+      Req  :: elli:req(),
+      Args :: elli_handler:callback_args().
+init(Req, Args) ->
+    do_init(Req, callbacks(Args)).
+
 
 %% @hidden
 -spec handle(Req :: elli:req(), Config :: [tuple()]) -> elli_handler:result().
 handle(CleanReq, Config) ->
-  Callbacks = callbacks(Config),
-  PreReq    = preprocess(CleanReq, Callbacks),
-  Res       = process(PreReq, Callbacks),
-  postprocess(PreReq, Res, lists:reverse(Callbacks)).
+    Callbacks = callbacks(Config),
+    PreReq    = preprocess(CleanReq, Callbacks),
+    Res       = process(PreReq, Callbacks),
+    postprocess(PreReq, Res, lists:reverse(Callbacks)).
+
 
 %% @hidden
 -spec handle_event(Event, Args, Config) -> ok when
-    Event  :: elli_handler:event(),
-    Args   :: elli_handler:callback_args(),
-    Config :: [tuple()].
+      Event  :: elli_handler:event(),
+      Args   :: elli_handler:callback_args(),
+      Config :: [tuple()].
 handle_event(elli_startup, Args, Config) ->
-  Callbacks = callbacks(Config),
-  [code:ensure_loaded(M) || {M, _} <- Callbacks],
-  forward_event(elli_startup, Args, Callbacks);
+    Callbacks = callbacks(Config),
+    [code:ensure_loaded(M) || {M, _} <- Callbacks],
+    forward_event(elli_startup, Args, Callbacks);
 handle_event(Event, Args, Config) ->
-  forward_event(Event, Args, lists:reverse(callbacks(Config))).
+    forward_event(Event, Args, lists:reverse(callbacks(Config))).
 
-%%% Middleware logic
+
+
+
+%%
+%% MIDDLEWARE LOGIC
+%%
 
 -spec do_init(Req, Callbacks) -> {ok, standard | handover} when
-    Req       :: elli:req(),
-    Callbacks :: elli_handler:callbacks().
-do_init(_, []) -> {ok, standard};
+      Req       :: elli:req(),
+      Callbacks :: elli_handler:callbacks().
+do_init(_, []) ->
+    {ok, standard};
 do_init(Req, [{Mod, Args}|Mods]) ->
-  ?IF_NOT_EXPORTED(Mod, init, 2, do_init(Req, Mods),
-                   case Mod:init(Req, Args) of
-                     ignore -> do_init(Req, Mods);
-                     Result -> Result
-                   end).
+    ?IF_NOT_EXPORTED(Mod, init, 2, do_init(Req, Mods),
+                     case Mod:init(Req, Args) of
+                         ignore -> do_init(Req, Mods);
+                         Result -> Result
+                     end).
+
 
 -spec process(Req, Callbacks) -> Result when
-    Req       :: elli:req(),
-    Callbacks :: [Callback :: elli_handler:callback()],
-    Result    :: elli_handler:result().
-process(_Req, []) -> {404, [], <<"Not Found">>};
+      Req       :: elli:req(),
+      Callbacks :: [Callback :: elli_handler:callback()],
+      Result    :: elli_handler:result().
+process(_Req, []) ->
+    {404, [], <<"Not Found">>};
 process(Req, [{Mod, Args} | Mods]) ->
-  ?IF_NOT_EXPORTED(Mod, handle, 2, process(Req, Mods),
-                   case Mod:handle(Req, Args) of
-                     ignore   -> process(Req, Mods);
-                     Response -> Response
-                   end).
+    ?IF_NOT_EXPORTED(Mod, handle, 2, process(Req, Mods),
+                     case Mod:handle(Req, Args) of
+                         ignore   -> process(Req, Mods);
+                         Response -> Response
+                     end).
 
 -spec preprocess(Req1, Callbacks) -> Req2 when
-    Req1      :: elli:req(),
-    Callbacks :: [elli_handler:callback()],
-    Req2      :: elli:req().
-preprocess(Req, []) -> Req;
+      Req1      :: elli:req(),
+      Callbacks :: [elli_handler:callback()],
+      Req2      :: elli:req().
+preprocess(Req, []) ->
+    Req;
 preprocess(Req, [{Mod, Args} | Mods]) ->
-  ?IF_NOT_EXPORTED(Mod, preprocess, 2, preprocess(Req, Mods),
-                   preprocess(Mod:preprocess(Req, Args), Mods)).
+    ?IF_NOT_EXPORTED(Mod, preprocess, 2, preprocess(Req, Mods),
+                     preprocess(Mod:preprocess(Req, Args), Mods)).
 
 -spec postprocess(Req, Res1, Callbacks) -> Res2 when
-    Req       :: elli:req(),
-    Res1      :: elli_handler:result(),
-    Callbacks :: [elli_handler:callback()],
-    Res2      :: elli_handler:result().
-postprocess(_Req, Res, []) -> Res;
+      Req       :: elli:req(),
+      Res1      :: elli_handler:result(),
+      Callbacks :: [elli_handler:callback()],
+      Res2      :: elli_handler:result().
+postprocess(_Req, Res, []) ->
+    Res;
 postprocess(Req, Res, [{Mod, Args} | Mods]) ->
-  ?IF_NOT_EXPORTED(Mod, postprocess, 3, postprocess(Req, Res, Mods),
-                   postprocess(Req, Mod:postprocess(Req, Res, Args), Mods)).
+    ?IF_NOT_EXPORTED(Mod, postprocess, 3, postprocess(Req, Res, Mods),
+                     postprocess(Req, Mod:postprocess(Req, Res, Args), Mods)).
+
 
 -spec forward_event(Event, Args, Callbacks) -> ok when
-    Event     :: elli_handler:event(),
-    Args      :: elli_handler:callback_args(),
-    Callbacks :: [elli_handler:callback()].
+      Event     :: elli_handler:event(),
+      Args      :: elli_handler:callback_args(),
+      Callbacks :: [elli_handler:callback()].
 forward_event(Event, Args, Callbacks) ->
-  [?IF_NOT_EXPORTED(M, handle_event, 3, ok, M:handle_event(Event, Args, XArgs))
-   || {M, XArgs} <- Callbacks],
-  ok.
+    [?IF_NOT_EXPORTED(M, handle_event, 3, ok,
+                      M:handle_event(Event, Args, XArgs))
+     || {M, XArgs} <- Callbacks],
+    ok.
 
-%%% Internal helpers
+
+%%
+%% INTERNAL HELPERS
+%%
 
 -spec callbacks(Config :: [{mod, Callbacks} | tuple()]) -> Callbacks when
-    Callbacks :: [elli_handler:callback()].
-callbacks(Config) -> proplists:get_value(mods, Config, []).
+      Callbacks :: [elli_handler:callback()].
+callbacks(Config) ->
+    proplists:get_value(mods, Config, []).

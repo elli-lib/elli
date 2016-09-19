@@ -4,4 +4,4 @@
  (erlang-mode . ((flycheck-erlang-include-path . ("../include"))
                  (flycheck-erlang-library-path . ("../_build/default/lib/elli"
                                                   "../_build/default/lib/elli/ebin"))
-                 (erlang-indent-level          . 2))))
+                 (erlang-indent-level          . 4))))

@@ -4,16 +4,19 @@
 
 -include_lib("kernel/include/file.hrl").
 
--export([normalize_range/2, encode_range/2, file_size/1]).
+-export([normalize_range/2
+        , encode_range/2
+        , file_size/1
+        ]).
 
 -export_type([range/0]).
 
 -type range() :: {Offset::non_neg_integer(), Length::non_neg_integer()}.
 
 -spec normalize_range(RangeOrSet, Size) -> Normalized when
-    RangeOrSet :: any(),
-    Size       :: integer(),
-    Normalized :: range() | undefined | invalid_range.
+      RangeOrSet :: any(),
+      Size       :: integer(),
+      Normalized :: range() | undefined | invalid_range.
 %% @doc: If a valid byte-range, or byte-range-set of size 1
 %% is supplied, returns a normalized range in the format
 %% {Offset, Length}. Returns undefined when an empty byte-range-set

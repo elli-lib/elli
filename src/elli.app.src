@@ -1,11 +1,16 @@
-{application, elli, [
-  {description,  "Erlang web server for HTTP APIs"},
-  {vsn,          "1.1.5"},
-  {registered,   []},
-  {applications, [kernel, stdlib, inets]},
-  {env,          []},
+{application, elli,
+ [
+  {description, "Erlang web server for HTTP APIs"},
+  {vsn, "1.1.5"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  inets
+                 ]},
+  {env, []},
 
-  {maintainers,  ["Eric Bailey", "Knut Nesheim"]},
-  {licenses,     ["MIT"]},
-  {links,        [{"Github","https://github.com/elli-lib/elli"}]}
-]}.
+  {maintainers,["Eric Bailey", "Knut Nesheim"]},
+  {licenses,["MIT"]},
+  {links,[{"Github","https://github.com/elli-lib/elli"}]}
+ ]}.
