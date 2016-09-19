@@ -156,27 +156,28 @@ Add elli to your application by adding it as a dependency to your
 rebar config.
 
 ```erlang
-% rebar.config:
+%% rebar.config:
 {deps, [
   {elli, {git, "git://github.com/elli-lib/elli.git", {branch, "develop"}}},
-  % ...
+  %% ...
 ]}.
 ```
 
 Afterwards you can run:
 
-```
-$: ./rebar get-deps
-$: ./rebar compile
+```sh
+$ rebar3 compile
 ```
 
 
 ## Usage
+```sh
+$ rebar3 shell
 ```
-$: erl -pa deps/*/ebin ebin
 
-% starting elli
-1>: {ok, Pid} = elli:start_link([{callback, elli_example_callback}, {port, 3000}]).
+```erlang
+%% starting elli
+1> {ok, Pid} = elli:start_link([{callback, elli_example_callback}, {port, 3000}]).
 ```
 
 ## Callback module
