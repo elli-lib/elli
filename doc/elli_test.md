@@ -35,5 +35,5 @@ The unit tests below test `elli_example_callback`.<a name="index"></a>
 call(Method, Path, Headers, Body, Opts) -&gt; <a href="elli.md#type-req">elli:req()</a>
 </code></pre>
 
-<ul class="definitions"><li><code>Method = <a href="elli.md#type-http_method">elli:http_method()</a></code></li><li><code>Path = binary()</code></li><li><code>Headers = <a href="#type-headers">headers()</a></code></li><li><code>Body = <a href="#type-body">body()</a></code></li><li><code>Opts = <a href="proplists.md#type-proplist">proplists:proplist()</a></code></li></ul>
+<ul class="definitions"><li><code>Method = <a href="elli.md#type-http_method">elli:http_method()</a></code></li><li><code>Path = binary()</code></li><li><code>Headers = <a href="elli.md#type-headers">elli:headers()</a></code></li><li><code>Body = <a href="elli.md#type-body">elli:body()</a></code></li><li><code>Opts = <a href="proplists.md#type-proplist">proplists:proplist()</a></code></li></ul>
 

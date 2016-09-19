@@ -34,6 +34,8 @@ threw an error, [`handle_event/3`](#handle_event-3) is called.<a name="index"></
 
 `chunk_loop(Ref) -> any()`
 
+Equivalent to [`chunk_loop(Ref, 10)`](#chunk_loop-2).
+
 Send 10 separate chunks to the client.
 
 <a name="handle-2"></a>

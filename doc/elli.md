@@ -34,6 +34,26 @@ A binary or iolist.
 
 
 
+### <a name="type-header">header()</a> ###
+
+
+<pre><code>
+header() = {Key::binary(), Value::binary() | string()}
+</code></pre>
+
+
+
+
+### <a name="type-headers">headers()</a> ###
+
+
+<pre><code>
+headers() = [<a href="#type-header">header()</a>]
+</code></pre>
+
+
+
+
 ### <a name="type-http_method">http_method()</a> ###
 
 
@@ -50,6 +70,16 @@ binary for other verbs.
 __abstract datatype__: `req()`
 
 A record representing an HTTP request.
+
+
+
+### <a name="type-response_code">response_code()</a> ###
+
+
+<pre><code>
+response_code() = 100..999
+</code></pre>
+
 
 
 

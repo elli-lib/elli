@@ -11,8 +11,8 @@ __Behaviours:__ [`elli_handler`](elli_handler.md).
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#handle-2">handle/2</a></td><td></td></tr><tr><td valign="top"><a href="#init-2">init/2</a></td><td>Return <code>{ok, handover}</code> if <code>Req</code>'s path is <code>/hello/world</code>, otherwise
-<code>ignore</code>.</td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#handle-2">handle/2</a></td><td></td></tr><tr><td valign="top"><a href="#init-2">init/2</a></td><td>Return <code>{ok, handover}</code> if <code>Req</code>'s path is <code>/hello/world</code>,
+otherwise <code>ignore</code>.</td></tr></table>
 
 
 <a name="functions"></a>
@@ -35,6 +35,6 @@ handle(Req, Args) -&gt; Result
 
 `init(Req, Args) -> any()`
 
-Return `{ok, handover}` if `Req`'s path is `/hello/world`, otherwise
-`ignore`.
+Return `{ok, handover}` if `Req`'s path is `/hello/world`,
+otherwise `ignore`.
 

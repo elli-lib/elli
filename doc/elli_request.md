@@ -1,8 +1,23 @@
 
 
 # Module elli_request #
+* [Data Types](#types)
 * [Function Index](#index)
 * [Function Details](#functions)
+
+<a name="types"></a>
+
+## Data Types ##
+
+
+
+
+### <a name="type-http_range">http_range()</a> ###
+
+
+<pre><code>
+http_range() = {First::non_neg_integer(), Last::non_neg_integer()} | {offset, Offset::non_neg_integer()} | {suffix, Length::pos_integer()}
+</code></pre>
 
 <a name="index"></a>
 

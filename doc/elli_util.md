@@ -1,8 +1,23 @@
 
 
 # Module elli_util #
+* [Data Types](#types)
 * [Function Index](#index)
 * [Function Details](#functions)
+
+<a name="types"></a>
+
+## Data Types ##
+
+
+
+
+### <a name="type-range">range()</a> ###
+
+
+<pre><code>
+range() = {Offset::non_neg_integer(), Length::non_neg_integer()}
+</code></pre>
 
 <a name="index"></a>
 
@@ -46,9 +61,10 @@ Get the size in bytes of the file.
 ### normalize_range/2 ###
 
 <pre><code>
-normalize_range(RangeOrSet::any(), Size::integer()) -&gt; <a href="#type-range">range()</a> | undefined | invalid_range
+normalize_range(RangeOrSet, Size) -&gt; Normalized
 </code></pre>
-<br />
+
+<ul class="definitions"><li><code>RangeOrSet = any()</code></li><li><code>Size = integer()</code></li><li><code>Normalized = <a href="#type-range">range()</a> | undefined | invalid_range</code></li></ul>
 
 If a valid byte-range, or byte-range-set of size 1
 is supplied, returns a normalized range in the format
