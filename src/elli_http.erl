@@ -645,11 +645,11 @@ handle_event(Mod, Name, EventArgs, ElliArgs) ->
 %% TIMING HELPERS
 %%
 
-%% @doc Record the current time in the process dictionary.
+%% @doc Record the current monotonic time in the process dictionary.
 %% This allows easily adding time tracing wherever,
 %% without passing along any variables.
 t(Key) ->
-    put({time, Key}, os:timestamp()).
+    put({time, Key}, erlang:monotonic_time()).
 
 get_timings() ->
     lists:filtermap(fun get_timings/1, get()).
