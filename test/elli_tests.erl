@@ -59,7 +59,7 @@ teardown(Pids) ->
 hello_world() ->
     {ok, Response} = httpc:request("http://localhost:3001/hello/world"),
     ?assertMatch(200, status(Response)),
-    ?assertMatch([{"connection", "Keep-Alive"},
+    ?assertMatch([{"connection", "keep-alive"},
                   {"content-length", "12"}], headers(Response)),
     ?assertMatch("Hello World!", body(Response)).
 
@@ -68,14 +68,14 @@ hello_world() ->
 not_found() ->
     {ok, Response} = httpc:request("http://localhost:3001/foobarbaz"),
     ?assertMatch(404, status(Response)),
-    ?assertMatch([{"connection", "Keep-Alive"},
+    ?assertMatch([{"connection", "keep-alive"},
                   {"content-length", "9"}], headers(Response)),
     ?assertMatch("Not Found", body(Response)).
 
 crash() ->
     {ok, Response} = httpc:request("http://localhost:3001/crash"),
     ?assertMatch(500, status(Response)),
-    ?assertMatch([{"connection", "Keep-Alive"},
+    ?assertMatch([{"connection", "keep-alive"},
                   {"content-length", "21"}], headers(Response)),
     ?assertMatch("Internal server error", body(Response)).
 
@@ -83,7 +83,7 @@ invalid_return() ->
     %% Elli should return 500 for handlers returning bogus responses.
     {ok, Response} = httpc:request("http://localhost:3001/invalid_return"),
     ?assertMatch(500, status(Response)),
-    ?assertMatch([{"connection", "Keep-Alive"},
+    ?assertMatch([{"connection", "keep-alive"},
                   {"content-length", "21"}], headers(Response)),
     ?assertMatch("Internal server error", body(Response)).
 
@@ -92,7 +92,7 @@ no_compress() ->
                                          [{"Accept-Encoding", "gzip"}]},
                                    [], []),
     ?assertMatch(200, status(Response)),
-    ?assertMatch([{"connection", "Keep-Alive"},
+    ?assertMatch([{"connection", "keep-alive"},
                   {"content-length", "1032"}], headers(Response)),
     ?assertEqual(binary:copy(<<"Hello World!">>, 86),
                  list_to_binary(body(Response))).
@@ -100,7 +100,7 @@ no_compress() ->
 exception_flow() ->
     {ok, Response} = httpc:request("http://localhost:3001/403"),
     ?assertMatch(403, status(Response)),
-    ?assertMatch([{"connection", "Keep-Alive"},
+    ?assertMatch([{"connection", "keep-alive"},
                   {"content-length", "9"}], headers(Response)),
     ?assertMatch("Forbidden", body(Response)).
 
@@ -149,7 +149,7 @@ post_args() ->
 shorthand() ->
     {ok, Response} = httpc:request("http://localhost:3001/shorthand"),
     ?assertMatch(200, status(Response)),
-    ?assertMatch([{"connection", "Keep-Alive"},
+    ?assertMatch([{"connection", "keep-alive"},
                   {"content-length", "5"}], headers(Response)),
     ?assertMatch("hello", body(Response)).
 
@@ -190,7 +190,7 @@ content_length() ->
     {ok, Response} = httpc:request("http://localhost:3001/304"),
 
     ?assertMatch(304, status(Response)),
-    ?assertMatch([{"connection", "Keep-Alive"},
+    ?assertMatch([{"connection", "keep-alive"},
                   {"content-length", "7"},
                   {"etag", "foobar"}], headers(Response)),
     ?assertMatch([], body(Response)).
@@ -200,7 +200,7 @@ user_content_length() ->
     Client  = start_slow_client(3001, "/user/content-length"),
     send(Client, Headers, 128),
     ?assertMatch({ok, <<"HTTP/1.1 200 OK\r\n"
-                        "Connection: Keep-Alive\r\n"
+                        "Connection: keep-alive\r\n"
                         "Content-Length: 123\r\n"
                         "\r\n"
                         "foobar">>},
@@ -212,7 +212,7 @@ chunked() ->
 
     {ok, Response} = httpc:request("http://localhost:3001/chunked"),
     ?assertMatch(200, status(Response)),
-    ?assertEqual([{"connection", "Keep-Alive"},
+    ?assertEqual([{"connection", "keep-alive"},
                   %% httpc adds a content-length, even though elli
                   %% does not send any for chunked transfers
                   {"content-length", integer_to_list(length(Expected))},
@@ -224,7 +224,7 @@ chunked() ->
 %%   F              = ?README,
 %%   {ok, Expected} = file:read_file(F),
 %%   ?assertMatch(200, status(Response)),
-%%   ?assertMatch([{"connection", "Keep-Alive"},
+%%   ?assertMatch([{"connection", "keep-alive"},
 %%                 {"content-length", integer_to_list(size(Expected))}],
 %%                headers(Response)),
 %%   ?assertEqual(binary_to_list(Expected), body(Response)).
@@ -239,7 +239,7 @@ chunked() ->
 %%   file:close(Fd),
 %%   Size = elli_util:file_size(F),
 %%   ?assertMatch(206, status(Response)),
-%%   ?assertEqual([{"connection", "Keep-Alive"},
+%%   ?assertEqual([{"connection", "keep-alive"},
 %%                 {"content-length", "400"},
 %%                 {"content-range", "bytes 300-699/" ++ ?I2L(Size)}],
 %%                headers(Response)),
@@ -254,7 +254,7 @@ slow_client() ->
     send(Client, Body, size(Body)),
 
     ?assertMatch({ok, <<"HTTP/1.1 200 OK\r\n"
-                        "Connection: Keep-Alive\r\n"
+                        "Connection: keep-alive\r\n"
                         "Content-Length: 15\r\n"
                         "\r\n"
                         "Hello undefined">>},
@@ -276,7 +276,7 @@ post_pipeline() ->
     gen_tcp:send(Socket, <<Req/binary, Req/binary>>),
 
     ExpectedResponse = <<"HTTP/1.1 200 OK\r\n"
-                         "Connection: Keep-Alive\r\n"
+                         "Connection: keep-alive\r\n"
                          "Content-Length: 22\r\n"
                          "\r\n"
                          "Hello elli of New York">>,
@@ -294,7 +294,7 @@ get_pipeline() ->
                                    [{active, false}, binary]),
     gen_tcp:send(Socket, <<Req/binary, Req/binary>>),
     ExpectedResponse = <<"HTTP/1.1 200 OK\r\n"
-                         "Connection: Keep-Alive\r\n"
+                         "Connection: keep-alive\r\n"
                          "Content-Length: 10\r\n"
                          "\r\n"
                          "Hello elli">>,
@@ -314,7 +314,7 @@ head() ->
     {ok, Response} = httpc:request(head, {"http://localhost:3001/head", []},
                                    [], []),
     ?assertMatch(200, status(Response)),
-    ?assertMatch([{"connection", "Keep-Alive"},
+    ?assertMatch([{"connection", "keep-alive"},
                   {"content-length", "20"}], headers(Response)),
     ?assertMatch([], body(Response)).
 
@@ -322,7 +322,7 @@ head() ->
 no_body() ->
     {ok, Response} = httpc:request("http://localhost:3001/304"),
     ?assertMatch(304, status(Response)),
-    ?assertMatch([{"connection", "Keep-Alive"},
+    ?assertMatch([{"connection", "keep-alive"},
                   {"content-length", "7"},
                   {"etag", "foobar"}], headers(Response)),
     ?assertMatch([], body(Response)).
