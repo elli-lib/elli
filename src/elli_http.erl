@@ -89,12 +89,14 @@ keepalive_loop(Socket, NumRequests, Buffer, Options, Callback) ->
 handle_request(S, PrevB, Opts, {Mod, Args} = Callback) ->
     {Method, RawPath, V, B0} = get_request(S, PrevB, Opts, Callback),
     t(request_start),
+    t(headers_start),
     {RequestHeaders, B1} = get_headers(S, V, B0, Opts, Callback),
     t(headers_end),
     Req = mk_req(Method, RawPath, RequestHeaders, <<>>, V, S, Callback),
 
     case init(Req) of
         {ok, standard} ->
+            t(body_start),
             {RequestBody, B2} = get_body(S, RequestHeaders, B1, Opts, Callback),
             t(body_end),
             Req1 = Req#req{body = RequestBody},
@@ -113,7 +115,8 @@ handle_request(S, PrevB, Opts, {Mod, Args} = Callback) ->
 
             t(request_end),
             handle_event(Mod, request_complete,
-                         [Req1, handover, [], <<>>, get_timings()], Args),
+                         [Req1, handover, [], <<>>, {get_timings(),
+                                                     get_sizes()}], Args),
             Response
     end.
 
@@ -123,11 +126,14 @@ handle_response(Req, Buffer, {response, Code, UserHeaders, Body}) ->
     Headers = [connection(Req, UserHeaders),
                content_length(UserHeaders, Body)
                | UserHeaders],
+    t(send_start),
     send_response(Req, Code, Headers, Body),
+    t(send_end),
 
     t(request_end),
     handle_event(Mod, request_complete,
-                 [Req, Code, Headers, Body, get_timings()], Args),
+                 [Req, Code, Headers, Body, {get_timings(),
+                                             get_sizes()}], Args),
     {close_or_keepalive(Req, UserHeaders), Buffer};
 
 
@@ -138,16 +144,19 @@ handle_response(Req, _Buffer, {chunk, UserHeaders, Initial}) ->
                        connection(Req, UserHeaders)
                        | UserHeaders],
     send_response(Req, 200, ResponseHeaders, <<"">>),
-    Initial =:= <<"">> orelse send_chunk(Req#req.socket, Initial),
 
+    t(send_start),
+    Initial =:= <<"">> orelse send_chunk(Req#req.socket, Initial),
     ClosingEnd = case start_chunk_loop(Req#req.socket) of
                      {error, client_closed} -> client;
                      ok                     -> server
                  end,
+    t(send_end),
 
     t(request_end),
     handle_event(Mod, chunk_complete,
-                 [Req, 200, ResponseHeaders, ClosingEnd, get_timings()],
+                 [Req, 200, ResponseHeaders, ClosingEnd, {get_timings(),
+                                                          get_sizes()}],
                  Args),
     {close, <<>>};
 
@@ -157,11 +166,35 @@ handle_response(Req, Buffer, {file, ResponseCode, UserHeaders,
     #req{callback = {Mod, Args}} = Req,
 
     ResponseHeaders = [connection(Req, UserHeaders) | UserHeaders],
-    send_file(Req, ResponseCode, ResponseHeaders, Filename, Range),
+
+    Size  = elli_util:file_size(Filename),
+
+    t(send_start),
+    case elli_util:normalize_range(Range, Size) of
+        undefined ->
+            send_file(Req, ResponseCode, [{<<"Content-Length">>, Size} |
+                                          ResponseHeaders],
+                      Filename, {0, 0});
+        {Offset, Length} ->
+            ERange = elli_util:encode_range({Offset, Length}, Size),
+            send_file(Req, 206, lists:append(ResponseHeaders,
+                                             [{<<"Content-Length">>, Length},
+                                              {<<"Content-Range">>, ERange}]),
+                      Filename, {Offset, Length});
+        invalid_range ->
+            ERange = elli_util:encode_range(invalid_range, Size),
+            send_response(Req, 416,
+                          lists:append(ResponseHeaders,
+                                       [{<<"Content-Length">>, 0},
+                                        {<<"Content-Range">>, ERange}]),
+                          [])
+    end,
+    t(send_end),
 
     t(request_end),
     handle_event(Mod, request_complete,
-                 [Req, ResponseCode, ResponseHeaders, <<>>, get_timings()],
+                 [Req, ResponseCode, ResponseHeaders, <<>>, {get_timings(),
+                                                             get_sizes()}],
                  Args),
 
     {close_or_keepalive(Req, UserHeaders), Buffer}.
@@ -170,14 +203,17 @@ handle_response(Req, Buffer, {file, ResponseCode, UserHeaders,
 
 %% @doc Generate a HTTP response and send it to the client.
 send_response(Req, Code, Headers, UserBody) ->
+    ResponseHeaders = assemble_response_headers(Code, Headers),
+
     Body     = case {Req#req.method, Code} of
                    {'HEAD', _} -> <<>>;
                    {_, 304}    -> <<>>;
                    {_, 204}    -> <<>>;
                    _           -> UserBody
                end,
-    Response = [<<"HTTP/1.1 ">>, status(Code), <<"\r\n">>,
-                encode_headers(Headers), <<"\r\n">>,
+    s(resp_body, iolist_size(Body)),
+
+    Response = [ResponseHeaders,
                 Body],
 
     case elli_tcp:send(Req#req.socket, Response) of
@@ -187,7 +223,6 @@ send_response(Req, Code, Headers, UserBody) ->
             handle_event(Mod, client_closed, [before_response], Args),
             ok
     end.
-
 
 %% @doc Send a HTTP response to the client where the body is the
 %% contents of the given file. Assumes correctly set response code
@@ -199,8 +234,7 @@ send_response(Req, Code, Headers, UserBody) ->
       Filename :: file:filename(),
       Range    :: elli_util:range().
 send_file(#req{callback={Mod, Args}} = Req, Code, Headers, Filename, Range) ->
-    ResponseHeaders = [<<"HTTP/1.1 ">>, status(Code), <<"\r\n">>,
-                       encode_headers(Headers), <<"\r\n">>],
+    ResponseHeaders = assemble_response_headers(Code, Headers),
 
     case file:open(Filename, [read, raw, binary]) of
         {ok,    Fd}        -> do_send_file(Fd, Range, Req, ResponseHeaders);
@@ -212,7 +246,7 @@ do_send_file(Fd, {Offset, Length}, #req{callback={Mod, Args}} = Req, Headers) ->
     try elli_tcp:send(Req#req.socket, Headers) of
         ok ->
             case elli_tcp:sendfile(Fd, Req#req.socket, Offset, Length, []) of
-                {ok, _BytesSent} -> ok;
+                {ok, BytesSent} -> s(file, BytesSent), ok;
                 {error, Closed} when Closed =:= closed orelse
                                      Closed =:= enotconn ->
                     handle_event(Mod, client_closed, [before_response], Args)
@@ -239,7 +273,7 @@ execute_callback(#req{callback = {Mod, Args}} = Req) ->
     try Mod:handle(Req, Args) of
         %% {ok,...{file,...}}
         {ok, Headers, {file, Filename}} ->
-            {file, 200, Headers, Filename, {0, 0}};
+            {file, 200, Headers, Filename, []};
         {ok, Headers, {file, Filename, Range}} ->
             {file, 200, Headers, Filename, Range};
         %% ok simple
@@ -345,6 +379,7 @@ send_chunk(Socket, Data) ->
         Size ->
             Response = [integer_to_list(Size, 16),
                         <<"\r\n">>, Data, <<"\r\n">>],
+            s(chunks, iolist_size(Response)),
             elli_tcp:send(Socket, Response)
     end.
 
@@ -536,6 +571,12 @@ mk_req(Method, RawPath, Headers, Body, V, Socket, {Mod, Args} = Callback) ->
 %% HEADERS
 %%
 
+assemble_response_headers(Code, Headers) ->
+    ResponseHeaders = [<<"HTTP/1.1 ">>, status(Code), <<"\r\n">>,
+                       encode_headers(Headers), <<"\r\n">>],
+    s(resp_headers, iolist_size(ResponseHeaders)),
+    ResponseHeaders.
+
 encode_headers([]) ->
     [];
 
@@ -645,11 +686,11 @@ handle_event(Mod, Name, EventArgs, ElliArgs) ->
 %% TIMING HELPERS
 %%
 
-%% @doc Record the current time in the process dictionary.
+%% @doc Record the current monotonic time in the process dictionary.
 %% This allows easily adding time tracing wherever,
 %% without passing along any variables.
 t(Key) ->
-    put({time, Key}, os:timestamp()).
+    put({time, Key}, erlang:monotonic_time()).
 
 get_timings() ->
     lists:filtermap(fun get_timings/1, get()).
@@ -661,6 +702,31 @@ get_timings({{time, Key}, Value}) ->
     {true, {Key, Value}};
 get_timings(_) ->
     false.
+
+%%
+%% SIZE HELPERS
+%%
+
+%% @doc stores response part size in bytes
+s(chunks, Size) ->
+    case get({size, chunks}) of
+        undefined ->
+            put({size, chunks}, Size);
+        Sum ->
+            put({size, chunks}, Size + Sum)
+    end;
+s(Key, Size) ->
+    put({size, Key}, Size).
+
+get_sizes() ->
+    lists:filtermap(fun get_sizes/1, get()).
+
+get_sizes({{size, Key}, Value}) ->
+    erase({size, Key}),
+    {true, {Key, Value}};
+get_sizes(_) ->
+    false.
+
 
 %%
 %% OPTIONS

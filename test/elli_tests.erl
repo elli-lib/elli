@@ -3,49 +3,76 @@
 -include("elli.hrl").
 
 -define(I2B(I), list_to_binary(integer_to_list(I))).
+-define(I2L(I), integer_to_list(I)).
 -define(README, "README.md").
+-define(VTB(T1, T2, LB, UB),
+        time_diff_to_micro_seconds(T1, T2) > LB andalso
+        time_diff_to_micro_seconds(T1, T2) < UB).
+
+time_diff_to_micro_seconds(T1, T2) ->
+    erlang:convert_time_unit(
+      get_timing_value(T2) -
+          get_timing_value(T1),
+      native,
+      micro_seconds).
 
 elli_test_() ->
     {setup,
      fun setup/0, fun teardown/1,
-     [
-      ?_test(hello_world()),
-      ?_test(not_found()),
-      ?_test(crash()),
-      ?_test(invalid_return()),
-      ?_test(no_compress()),
-      ?_test(exception_flow()),
-      ?_test(accept_content_type()),
-      ?_test(user_connection()),
-      ?_test(get_args()),
-      ?_test(decoded_get_args()),
-      ?_test(decoded_get_args_list()),
-      ?_test(post_args()),
-      ?_test(shorthand()),
-      ?_test(too_many_headers()),
-      ?_test(too_big_body()),
-      ?_test(way_too_big_body()),
-      ?_test(bad_request_line()),
-      ?_test(content_length()),
-      ?_test(user_content_length()),
-      ?_test(chunked()),
-      %% FIXME: ?_test(sendfile()),
-      %% FIXME: ?_test(sendfile_range()),
-      ?_test(slow_client()),
-      ?_test(post_pipeline()),
-      ?_test(get_pipeline()),
-      ?_test(head()),
-      ?_test(no_body())
+     [{foreach,
+       fun init_stats/0, fun clear_stats/1,
+       [?_test(hello_world()),
+        ?_test(not_found()),
+        ?_test(crash()),
+        ?_test(invalid_return()),
+        ?_test(no_compress()),
+        ?_test(exception_flow()),
+        ?_test(accept_content_type()),
+        ?_test(user_connection()),
+        ?_test(get_args()),
+        ?_test(decoded_get_args()),
+        ?_test(decoded_get_args_list()),
+        ?_test(post_args()),
+        ?_test(shorthand()),
+        ?_test(too_many_headers()),
+        ?_test(too_big_body()),
+        ?_test(way_too_big_body()),
+        ?_test(bad_request_line()),
+        ?_test(content_length()),
+        ?_test(user_content_length()),
+        ?_test(chunked()),
+        ?_test(sendfile()),
+        ?_test(sendfile_range()),
+        ?_test(slow_client()),
+        ?_test(post_pipeline()),
+        ?_test(get_pipeline()),
+        ?_test(head()),
+        ?_test(no_body())
+       ]}
      ]}.
 
+get_timing_value(Key) ->
+    [{timings, Timings}] = ets:lookup(elli_stat_table, timings),
+    proplists:get_value(Key, Timings).
 
+get_size_value(Key) ->
+    [{sizes, Sizes}] = ets:lookup(elli_stat_table, sizes),
+    proplists:get_value(Key, Sizes).
 
 setup() ->
     application:start(crypto),
     application:start(public_key),
     application:start(ssl),
     inets:start(),
-    {ok, P} = elli:start_link([{callback, elli_example_callback},
+
+    Config = [
+              {mods, [
+                      {elli_metrics_middleware, []},
+                      {elli_example_callback, []}
+                     ]}
+             ],
+    {ok, P} = elli:start_link([{callback, elli_middleware},
+                               {callback_args, Config},
                                {port, 3001}]),
     unlink(P),
     [P].
@@ -53,6 +80,11 @@ setup() ->
 teardown(Pids) ->
     [elli:stop(P) || P <- Pids].
 
+init_stats() ->
+    ets:new(elli_stat_table, [set, named_table, public]).
+
+clear_stats(_) ->
+    ets:delete(elli_stat_table).
 %%% Integration tests
 %%%   Use inets httpc to actually call Elli over the network.
 
@@ -61,9 +93,32 @@ hello_world() ->
     ?assertMatch(200, status(Response)),
     ?assertMatch([{"connection", "Keep-Alive"},
                   {"content-length", "12"}], headers(Response)),
-    ?assertMatch("Hello World!", body(Response)).
-
-
+    ?assertMatch("Hello World!", body(Response)),
+    %% sizes
+    ?assertMatch(63, get_size_value(resp_headers)),
+    ?assertMatch(12, get_size_value(resp_body)),
+    %% timings
+    ?assertNotMatch(undefined, get_timing_value(request_start)),
+    ?assertNotMatch(undefined, get_timing_value(headers_start)),
+    ?assertNotMatch(undefined, get_timing_value(headers_end)),
+    ?assertNotMatch(undefined, get_timing_value(body_start)),
+    ?assertNotMatch(undefined, get_timing_value(body_end)),
+    ?assertNotMatch(undefined, get_timing_value(user_start)),
+    ?assertNotMatch(undefined, get_timing_value(user_end)),
+    ?assertNotMatch(undefined, get_timing_value(send_start)),
+    ?assertNotMatch(undefined, get_timing_value(send_end)),
+    ?assertNotMatch(undefined, get_timing_value(request_end)),
+    %% check timings
+    ?assertMatch(true,
+                 ?VTB(request_start, request_end, 1000000, 1200000)),
+    ?assertMatch(true,
+                 ?VTB(headers_start, headers_end, 1, 100)),
+    ?assertMatch(true,
+                 ?VTB(body_start, body_end, 1, 100)),
+    ?assertMatch(true,
+                 ?VTB(user_start, user_end, 1000000, 1200000)),
+    ?assertMatch(true,
+                 ?VTB(send_start, send_end, 1, 200)).
 
 not_found() ->
     {ok, Response} = httpc:request("http://localhost:3001/foobarbaz"),
@@ -153,7 +208,6 @@ shorthand() ->
                   {"content-length", "5"}], headers(Response)),
     ?assertMatch("hello", body(Response)).
 
-
 too_many_headers() ->
     Headers = lists:duplicate(100, {"X-Foo", "Bar"}),
     {ok, Response} = httpc:request(get, {"http://localhost:3001/foo", Headers},
@@ -211,39 +265,69 @@ chunked() ->
     Expected = "chunk10chunk9chunk8chunk7chunk6chunk5chunk4chunk3chunk2chunk1",
 
     {ok, Response} = httpc:request("http://localhost:3001/chunked"),
+
     ?assertMatch(200, status(Response)),
     ?assertEqual([{"connection", "Keep-Alive"},
                   %% httpc adds a content-length, even though elli
                   %% does not send any for chunked transfers
                   {"content-length", integer_to_list(length(Expected))},
                   {"content-type", "text/event-stream"}], headers(Response)),
-    ?assertMatch(Expected, body(Response)).
+    ?assertMatch(Expected, body(Response)),
+    %% sizes
+    ?assertMatch(104, get_size_value(resp_headers)),
+    ?assertMatch(111, get_size_value(chunks)),
+    %% timings
+    ?assertNotMatch(undefined, get_timing_value(request_start)),
+    ?assertNotMatch(undefined, get_timing_value(headers_start)),
+    ?assertNotMatch(undefined, get_timing_value(headers_end)),
+    ?assertNotMatch(undefined, get_timing_value(body_start)),
+    ?assertNotMatch(undefined, get_timing_value(body_end)),
+    ?assertNotMatch(undefined, get_timing_value(user_start)),
+    ?assertNotMatch(undefined, get_timing_value(user_end)),
+    ?assertNotMatch(undefined, get_timing_value(send_start)),
+    ?assertNotMatch(undefined, get_timing_value(send_end)),
+    ?assertNotMatch(undefined, get_timing_value(request_end)).
 
-%% sendfile() ->
-%%   {ok, Response} = httpc:request("http://localhost:3001/sendfile"),
-%%   F              = ?README,
-%%   {ok, Expected} = file:read_file(F),
-%%   ?assertMatch(200, status(Response)),
-%%   ?assertMatch([{"connection", "Keep-Alive"},
-%%                 {"content-length", integer_to_list(size(Expected))}],
-%%                headers(Response)),
-%%   ?assertEqual(binary_to_list(Expected), body(Response)).
+sendfile() ->
+    {ok, Response} = httpc:request("http://localhost:3001/sendfile"),
+    F              = ?README,
+    {ok, Expected} = file:read_file(F),
 
-%% sendfile_range() ->
-%%   Url            = "http://localhost:3001/sendfile/range",
-%%   Headers        = [{"Range", "bytes=300-699"}],
-%%   {ok, Response} = httpc:request(get, {Url, Headers}, [], []),
-%%   F              = ?README,
-%%   {ok, Fd}       = file:open(F, [read, raw, binary]),
-%%   {ok, Expected} = file:pread(Fd, 300, 400),
-%%   file:close(Fd),
-%%   Size = elli_util:file_size(F),
-%%   ?assertMatch(206, status(Response)),
-%%   ?assertEqual([{"connection", "Keep-Alive"},
-%%                 {"content-length", "400"},
-%%                 {"content-range", "bytes 300-699/" ++ ?I2L(Size)}],
-%%                headers(Response)),
-%%   ?assertEqual(binary_to_list(Expected), body(Response)).
+    ?assertMatch(200, status(Response)),
+    ?assertEqual([{"connection", "Keep-Alive"},
+                  {"content-length", integer_to_list(size(Expected))}],
+                 headers(Response)),
+    ?assertEqual(binary_to_list(Expected), body(Response)),
+    %% sizes
+    ?assertEqual(size(Expected), get_size_value(file)),
+    ?assertMatch(65, get_size_value(resp_headers)),
+    %% timings
+    ?assertNotMatch(undefined, get_timing_value(request_start)),
+    ?assertNotMatch(undefined, get_timing_value(headers_start)),
+    ?assertNotMatch(undefined, get_timing_value(headers_end)),
+    ?assertNotMatch(undefined, get_timing_value(body_start)),
+    ?assertNotMatch(undefined, get_timing_value(body_end)),
+    ?assertNotMatch(undefined, get_timing_value(user_start)),
+    ?assertNotMatch(undefined, get_timing_value(user_end)),
+    ?assertNotMatch(undefined, get_timing_value(send_start)),
+    ?assertNotMatch(undefined, get_timing_value(send_end)),
+    ?assertNotMatch(undefined, get_timing_value(request_end)).
+
+sendfile_range() ->
+    Url            = "http://localhost:3001/sendfile/range",
+    Headers        = [{"Range", "bytes=300-699"}],
+    {ok, Response} = httpc:request(get, {Url, Headers}, [], []),
+    F              = ?README,
+    {ok, Fd}       = file:open(F, [read, raw, binary]),
+    {ok, Expected} = file:pread(Fd, 300, 400),
+    file:close(Fd),
+    Size = elli_util:file_size(F),
+    ?assertMatch(206, status(Response)),
+    ?assertEqual([{"connection", "Keep-Alive"},
+                  {"content-length", "400"},
+                  {"content-range", "bytes 300-699/" ++ ?I2L(Size)}],
+                 headers(Response)),
+    ?assertEqual(binary_to_list(Expected), body(Response)).
 
 slow_client() ->
     Body    = <<"name=foobarbaz">>,
@@ -258,7 +342,18 @@ slow_client() ->
                         "Content-Length: 15\r\n"
                         "\r\n"
                         "Hello undefined">>},
-                 gen_tcp:recv(Client, 0)).
+                 gen_tcp:recv(Client, 0)),
+    %% check timings
+    ?assertMatch(true,
+                 ?VTB(request_start, request_end, 30000, 70000)),
+    ?assertMatch(true,
+                 ?VTB(headers_start, headers_end, 30000, 70000)),
+    ?assertMatch(true,
+                 ?VTB(body_start, body_end, 1, 3000)),
+    ?assertMatch(true,
+                 ?VTB(user_start, user_end, 1, 100)),
+    ?assertMatch(true,
+                 ?VTB(send_start, send_end, 1, 200)).
 
 
 post_pipeline() ->
@@ -450,10 +545,15 @@ normalize_range_test_() ->
 
 register_test() ->
     ?assertMatch(undefined, whereis(elli)),
-    {ok, Pid} = elli:start_link([
-                                 {name, {local, elli}},
-                                 {callback, elli_example_callback}
-                                ]),
+    Config = [
+              {name, {local, elli}},
+              {callback, elli_middleware},
+              {callback_args, [{mods, [
+                                       elli_example_callback,
+                                       elli_metrics_middleware
+                                      ]}]}
+             ],
+    {ok, Pid} = elli:start_link(Config),
     ?assertMatch(Pid, whereis(elli)),
     ok.
 

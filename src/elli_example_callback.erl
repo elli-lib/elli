@@ -69,6 +69,7 @@ handle(Req, _Args) -> handle(Req#req.method, elli_request:path(Req), Req).
       Req    :: elli:req().
 handle('GET', [<<"hello">>, <<"world">>], _Req) ->
     %% Reply with a normal response.
+    timer:sleep(1000),
     {ok, [], <<"Hello World!">>};
 
 handle('GET', [<<"hello">>], Req) ->
@@ -135,30 +136,15 @@ handle('GET', [<<"sendfile">>], _Req) ->
     %% Returning {file, "/path/to/file"} instead of the body results
     %% in Elli using sendfile.
     %% All required headers should be added by the handler.
-    F    = "../README.md",
-    Size = elli_util:file_size(F),
-    {ok, [{<<"Content-Length">>, Size}], {file, F}};
+    F    = "README.md",
+    {ok, [], {file, F}};
 
 handle('GET', [<<"sendfile">>, <<"range">>], Req) ->
     %% Read the Range header of the request and use the normalized
     %% range with sendfile, otherwise send the entire file when
     %% no range is present, or respond with a 416 if the range is invalid.
-    F     = "../README.md",
-    Size  = elli_util:file_size(F),
-    Range = elli_util:normalize_range(elli_request:get_range(Req), Size),
-    case Range of
-        {_Offset, Length} ->
-            {206, [{<<"Content-Length">>, Length},
-                   {<<"Content-Range">>, elli_util:encode_range(Range, Size)}],
-             {file, F, Range}};
-        undefined ->
-            {200, [{<<"Content-Length">>, Size}], {file, F}};
-        invalid_range ->
-            {416, [{<<"Content-Length">>, 0},
-                   {<<"Content-Range">>,
-                    elli_util:encode_range(invalid_range, Size)}],
-             []}
-    end;
+    F     = "README.md",
+    {ok, [], {file, F, elli_request:get_range(Req)}};
 
 handle('GET', [<<"compressed">>], _Req) ->
     %% Body with a byte size over 1024 are automatically gzipped by
@@ -247,10 +233,11 @@ chunk_loop(Ref, N) ->
 %% tree.
 %%
 %% `request_complete' fires *after* Elli has sent the response to the
-%% client. Timings contains timestamps of events like when the
-%% connection was accepted, when request parsing finished, when the
-%% user callback returns, etc. This allows you to collect performance
-%% statistics for monitoring your app.
+%% client. `Timings' contains timestamps (native units) of events like when the
+%% connection was accepted, when headers/body parsing finished, when the
+%% user callback returns, response sent, etc. `Sizes' contains response sizes
+%% like response headers size, response body or file size.
+%% This allows you to collect performance statistics for monitoring your app.
 %%
 %% `request_throw', `request_error' and `request_exit' events are sent if
 %% the user callback code throws an exception, has an error or
@@ -264,7 +251,8 @@ chunk_loop(Ref, N) ->
 %% `chunk_complete' fires when a chunked response is completely
 %% sent. It's identical to the `request_complete' event, except instead
 %% of the response body you get the atom `client' or `server'
-%% depending on who closed the connection.
+%% depending on who closed the connection. `Sizes' will have the key `chunks',
+%% which is the total size of all chunks plus encoding overhead.
 %%
 %% `request_closed' is sent if the client closes the connection when
 %% Elli is waiting for the next request on a keep alive connection.
@@ -303,7 +291,7 @@ chunk_loop(Ref, N) ->
 handle_event(elli_startup, [], _) -> ok;
 handle_event(request_complete, [_Request,
                                 _ResponseCode, _ResponseHeaders, _ResponseBody,
-                                _Timings], _) -> ok;
+                                {_Timings, _Sizes}], _) -> ok;
 handle_event(request_throw, [_Request, _Exception, _Stacktrace], _) -> ok;
 handle_event(request_error, [_Request, _Exception, _Stacktrace], _) -> ok;
 handle_event(request_exit, [_Request, _Exception, _Stacktrace], _) -> ok;
@@ -312,7 +300,7 @@ handle_event(invalid_return, [_Request, _ReturnValue], _) -> ok;
 
 handle_event(chunk_complete, [_Request,
                               _ResponseCode, _ResponseHeaders, _ClosingEnd,
-                              _Timings], _) -> ok;
+                              {_Timings, _Sizes}], _) -> ok;
 
 handle_event(request_closed, [], _) -> ok;
 
