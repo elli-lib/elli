@@ -553,11 +553,12 @@ connection_token(#req{version = {1, 1}, headers = Headers}) ->
     case proplists:get_value(<<"Connection">>, Headers) of
         <<"close">> -> <<"close">>;
         <<"Close">> -> <<"close">>;
-        _           -> <<"Keep-Alive">>
+        _           -> <<"keep-alive">>
     end;
 connection_token(#req{version = {1, 0}, headers = Headers}) ->
     case proplists:get_value(<<"Connection">>, Headers) of
-        <<"Keep-Alive">> -> <<"Keep-Alive">>;
+        <<"Keep-Alive">> -> <<"keep-alive">>;
+        <<"keep-alive">> -> <<"keep-alive">>;
         _                -> <<"close">>
     end;
 connection_token(#req{version = {0, 9}}) ->
@@ -568,11 +569,12 @@ close_or_keepalive(Req, UserHeaders) ->
     case proplists:get_value(<<"Connection">>, UserHeaders) of
         undefined ->
             case connection_token(Req) of
-                <<"Keep-Alive">> -> keep_alive;
+                <<"keep-alive">> -> keep_alive;
                 <<"close">>      -> close
             end;
         <<"close">>      -> close;
-        <<"Keep-Alive">> -> keep_alive
+      <<"Keep-Alive">> -> keep_alive;
+      <<"keep-alive">> -> keep_alive
     end.
 
 
