@@ -181,7 +181,7 @@ init([Opts]) ->
                          {reply, {ok, [ets:tid()]}, state()};
                  (get_open_reqs, {pid(), _Tag}, state()) ->
                          {reply, {ok, OpenReqs :: non_neg_integer()}, state()};
-                 (stop, {pid(), _tag}, state()) -> {stop, normal, ok, state()};
+                 (stop, {pid(), _Tag}, state()) -> {stop, normal, ok, state()};
                  ({set_callback, Mod, Args}, {pid(), _Tag}, state()) ->
                          {reply, ok, state()} when
       Mod  :: elli_handler:callback_mod(),
