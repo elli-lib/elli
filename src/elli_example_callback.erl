@@ -251,7 +251,7 @@ chunk_loop(Ref, N) ->
 %% `chunk_complete' fires when a chunked response is completely
 %% sent. It's identical to the `request_complete' event, except instead
 %% of the response body you get the atom `client' or `server'
-%% depending on who closed the connection. `Sizes' will have `chunks' key
+%% depending on who closed the connection. `Sizes' will have the key `chunks',
 %% which is the total size of all chunks plus encoding overhead.
 %%
 %% `request_closed' is sent if the client closes the connection when

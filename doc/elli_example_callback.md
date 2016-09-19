@@ -71,10 +71,11 @@ create ETS tables or start supervised processes in a supervisor
 tree.
 
 `request_complete` fires *after* Elli has sent the response to the
-client. Timings contains timestamps of events like when the
-connection was accepted, when request parsing finished, when the
-user callback returns, etc. This allows you to collect performance
-statistics for monitoring your app.
+client. `Timings` contains timestamps (native units) of events like when the
+connection was accepted, when headers/body parsing finished, when the
+user callback returns, response sent, etc. `Sizes` contains response sizes
+like response headers size, response body or file size.
+This allows you to collect performance statistics for monitoring your app.
 
 `request_throw`, `request_error` and `request_exit` events are sent if
 the user callback code throws an exception, has an error or
@@ -88,7 +89,8 @@ After triggering this event, a generated response is sent to the user.
 `chunk_complete` fires when a chunked response is completely
 sent. It's identical to the `request_complete` event, except instead
 of the response body you get the atom `client` or `server`
-depending on who closed the connection.
+depending on who closed the connection. `Sizes` will have the key `chunks`,
+which is the total size of all chunks plus encoding overhead.
 
 `request_closed` is sent if the client closes the connection when
 Elli is waiting for the next request on a keep alive connection.
