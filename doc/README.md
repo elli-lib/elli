@@ -64,16 +64,28 @@ nginx, stunnel or ELB if you're on AWS.
 
 ## Extensions
 
-* WebSockets: https://github.com/mmzeeman/elli_websocket 
-* Access log: https://github.com/wooga/elli_access_log 
-* Basic auth: https://github.com/martinrehfeld/elli_basicauth 
-* Static content: https://github.com/chrisavl/elli_fileserve 
-* "Date" header: https://github.com/knutin/elli_date 
-* Real-time statistics dashboard: https://github.com/knutin/elli_stats 
-* CloudFront signed URLs: https://github.com/elli-lib/elli_cloudfront 
-* Cookies: https://github.com/elli-lib/elli_cookie 
-* Prometheus: https://github.com/elli-lib/elli_prometheus 
-* X-Powered-By LFE: https://github.com/elli-lib/elli_xpblfe
+* [elli_access_log](https://github.com/elli-lib/elli_access_log):
+Access log 
+* [elli_basicauth](https://github.com/elli-lib/elli_basicauth):
+Basic auth 
+* [elli_chatterbox](https://github.com/elli-lib/elli_chatterbox):
+HTTP/2 support 
+* [elli_cloudfront](https://github.com/elli-lib/elli_cloudfront):
+CloudFront signed URLs 
+* [elli_cookie](https://github.com/elli-lib/elli_cookie):
+Cookies 
+* [elli_date](https://github.com/elli-lib/elli_date):
+"Date" header 
+* [elli_fileserve](https://github.com/elli-lib/elli_fileserve):
+Static content 
+* [elli_prometheus](https://github.com/elli-lib/elli_prometheus):
+Prometheus 
+* [elli_stats](https://github.com/elli-lib/elli_stats):
+Real-time statistics dashboard 
+* [elli_websockets](https://github.com/elli-lib/elli_websocket):
+WebSockets 
+* [elli_xpblfe](https://github.com/elli-lib/elli_xpblfe):
+X-Powered-By LFE
 
 ## About
 
