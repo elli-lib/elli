@@ -135,8 +135,13 @@ handle('GET', [<<"decoded-list">>], Req) ->
 handle('GET', [<<"sendfile">>], _Req) ->
     %% Returning {file, "/path/to/file"} instead of the body results
     %% in Elli using sendfile.
-    %% All required headers should be added by the handler.
     F    = "README.md",
+    {ok, [], {file, F}};
+
+handle('GET', [<<"send_no_file">>], _Req) ->
+    %% Returning {file, "/path/to/file"} instead of the body results
+    %% in Elli using sendfile.
+    F    = "README",
     {ok, [], {file, F}};
 
 handle('GET', [<<"sendfile">>, <<"range">>], Req) ->
