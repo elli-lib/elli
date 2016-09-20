@@ -11,7 +11,7 @@ webserver, `elli` might be for you. If you're building web services,
 not web sites, then `elli` might be for you.
 
 Elli is used in production at Wooga and Game Analytics. Elli requires
-R15 or newer.
+OTP 18.3 or newer.
 
 ## Features
 
