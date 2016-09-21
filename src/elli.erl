@@ -273,8 +273,8 @@ required_opt(Name, Opts) ->
 
 -spec valid_callback(Mod :: module()) -> Exported :: boolean().
 valid_callback(Mod) ->
-    erlang:function_exported(Mod, handle, 2) andalso
-        erlang:function_exported(Mod, handle_event, 3).
+    lists:member({handle, 2}, Mod:module_info(exports)) andalso
+        lists:member({handle_event, 3}, Mod:module_info(exports)).
 
 -spec dec_open_reqs(State0 :: state()) -> State1 :: state().
 dec_open_reqs(#state{open_reqs = OpenReqs} = State) ->
