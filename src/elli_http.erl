@@ -87,8 +87,8 @@ keepalive_loop(Socket, NumRequests, Buffer, Options, Callback) ->
       Callback  :: elli_handler:callback(),
       ConnToken :: {'keep_alive' | 'close', binary()}.
 handle_request(S, PrevB, Opts, {Mod, Args} = Callback) ->
-    {Method, RawPath, V, B0} = get_request(S, PrevB, Opts, Callback),
     t(request_start),
+    {Method, RawPath, V, B0} = get_request(S, PrevB, Opts, Callback),
     t(headers_start),
     {RequestHeaders, B1} = get_headers(S, V, B0, Opts, Callback),
     t(headers_end),
@@ -167,38 +167,46 @@ handle_response(Req, Buffer, {file, ResponseCode, UserHeaders,
 
     ResponseHeaders = [connection(Req, UserHeaders) | UserHeaders],
 
-    Size  = elli_util:file_size(Filename),
+    case elli_util:file_size(Filename) of
+        {error, FileError} ->
+            handle_event(Mod, file_error, [FileError], Args),
+            send_server_error(Req#req.socket),
+            elli_tcp:close(Req#req.socket),
+            exit(normal);
+        Size ->
+            t(send_start),
+            case elli_util:normalize_range(Range, Size) of
+                undefined ->
+                    send_file(Req, ResponseCode,
+                              [{<<"Content-Length">>, Size} |
+                               ResponseHeaders],
+                              Filename, {0, 0});
+                {Offset, Length} ->
+                    ERange = elli_util:encode_range({Offset, Length}, Size),
+                    send_file(Req, 206,
+                              lists:append(ResponseHeaders,
+                                           [{<<"Content-Length">>, Length},
+                                            {<<"Content-Range">>, ERange}]),
+                              Filename, {Offset, Length});
+                invalid_range ->
+                    ERange = elli_util:encode_range(invalid_range, Size),
+                    send_response(Req, 416,
+                                  lists:append(ResponseHeaders,
+                                               [{<<"Content-Length">>, 0},
+                                                {<<"Content-Range">>, ERange}]),
+                                  [])
+            end,
+            t(send_end),
 
-    t(send_start),
-    case elli_util:normalize_range(Range, Size) of
-        undefined ->
-            send_file(Req, ResponseCode, [{<<"Content-Length">>, Size} |
-                                          ResponseHeaders],
-                      Filename, {0, 0});
-        {Offset, Length} ->
-            ERange = elli_util:encode_range({Offset, Length}, Size),
-            send_file(Req, 206, lists:append(ResponseHeaders,
-                                             [{<<"Content-Length">>, Length},
-                                              {<<"Content-Range">>, ERange}]),
-                      Filename, {Offset, Length});
-        invalid_range ->
-            ERange = elli_util:encode_range(invalid_range, Size),
-            send_response(Req, 416,
-                          lists:append(ResponseHeaders,
-                                       [{<<"Content-Length">>, 0},
-                                        {<<"Content-Range">>, ERange}]),
-                          [])
-    end,
-    t(send_end),
+            t(request_end),
+            handle_event(Mod, request_complete,
+                         [Req, ResponseCode, ResponseHeaders, <<>>,
+                          {get_timings(),
+                           get_sizes()}],
+                         Args),
 
-    t(request_end),
-    handle_event(Mod, request_complete,
-                 [Req, ResponseCode, ResponseHeaders, <<>>, {get_timings(),
-                                                             get_sizes()}],
-                 Args),
-
-    {close_or_keepalive(Req, UserHeaders), Buffer}.
-
+            {close_or_keepalive(Req, UserHeaders), Buffer}
+    end.
 
 
 %% @doc Generate a HTTP response and send it to the client.
@@ -238,7 +246,11 @@ send_file(#req{callback={Mod, Args}} = Req, Code, Headers, Filename, Range) ->
 
     case file:open(Filename, [read, raw, binary]) of
         {ok,    Fd}        -> do_send_file(Fd, Range, Req, ResponseHeaders);
-        {error, FileError} -> handle_event(Mod, file_error, [FileError], Args)
+        {error, FileError} ->
+            handle_event(Mod, file_error, [FileError], Args),
+            send_server_error(Req#req.socket),
+            elli_tcp:close(Req#req.socket),
+            exit(normal)
     end,
     ok.
 
@@ -262,10 +274,16 @@ do_send_file(Fd, {Offset, Length}, #req{callback={Mod, Args}} = Req, Headers) ->
 %% client is sending. If this is not the case, {@link send_bad_request/1}
 %% might reset the client connection.
 send_bad_request(Socket) ->
-    Body = <<"Bad Request">>,
-    Response = [<<"HTTP/1.1 ">>, status(400), <<"\r\n">>,
+    send_rescue_response(Socket, 400, <<"Bad Request">>).
+
+send_server_error(Socket) ->
+    send_rescue_response(Socket, 500, <<"Server Error">>).
+
+send_rescue_response(Socket, Code, Body) ->
+    Response = [<<"HTTP/1.1 ">>, status(Code), <<"\r\n">>,
                 <<"Content-Length: ">>, integer_to_list(size(Body)), <<"\r\n">>,
-                <<"\r\n">>],
+                <<"\r\n">>,
+                Body],
     elli_tcp:send(Socket, Response).
 
 %% @doc Execute the user callback, translating failure into a proper response.

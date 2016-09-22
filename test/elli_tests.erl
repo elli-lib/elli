@@ -42,6 +42,7 @@ elli_test_() ->
         ?_test(user_content_length()),
         ?_test(chunked()),
         ?_test(sendfile()),
+        ?_test(send_no_file()),
         ?_test(sendfile_range()),
         ?_test(slow_client()),
         ?_test(post_pipeline()),
@@ -236,7 +237,7 @@ bad_request_line() ->
     Req = <<"FOO BAR /hello HTTP/1.1\r\n">>,
     gen_tcp:send(Socket, <<Req/binary, Req/binary>>),
     ?assertMatch({ok, <<"HTTP/1.1 400 Bad Request\r\n"
-                        "Content-Length: 11\r\n\r\n">>},
+                        "Content-Length: 11\r\n\r\nBad Request">>},
                  gen_tcp:recv(Socket, 0)).
 
 
@@ -312,6 +313,14 @@ sendfile() ->
     ?assertNotMatch(undefined, get_timing_value(send_start)),
     ?assertNotMatch(undefined, get_timing_value(send_end)),
     ?assertNotMatch(undefined, get_timing_value(request_end)).
+
+send_no_file() ->
+    {ok, Response} = httpc:request("http://localhost:3001/send_no_file"),
+
+    ?assertMatch(500, status(Response)),
+    ?assertEqual([{"content-length", "12"}],
+                 headers(Response)),
+    ?assertEqual("Server Error", body(Response)).
 
 sendfile_range() ->
     Url            = "http://localhost:3001/sendfile/range",
