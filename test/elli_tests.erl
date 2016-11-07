@@ -38,6 +38,7 @@ elli_test_() ->
         ?_test(decoded_get_args_list()),
         ?_test(post_args()),
         ?_test(shorthand()),
+        ?_test(found()),
         ?_test(too_many_headers()),
         ?_test(too_big_body()),
         ?_test(way_too_big_body()),
@@ -93,6 +94,43 @@ init_stats() ->
 
 clear_stats(_) ->
     ets:delete(elli_stat_table).
+
+
+accessors_test_() ->
+    RawPath = <<"/foo/bar">>,
+    Headers = [{<<"Content-Type">>, <<"application/x-www-form-urlencoded">>}],
+    Method = 'POST',
+    Body = <<"name=knut%3D">>,
+    Name = <<"knut=">>,
+    Req1 = #req{raw_path = RawPath,
+                headers = Headers,
+                method = Method,
+                body = Body},
+    Args = [{<<"name">>, Name}],
+    Req2 = #req{headers = Headers, args = Args, body = <<>>},
+
+    [
+     %% POST /foo/bar
+     ?_assertMatch(RawPath, elli_request:raw_path(Req1)),
+     ?_assertMatch(Headers, elli_request:headers(Req1)),
+     ?_assertMatch(Method, elli_request:method(Req1)),
+     ?_assertMatch(Body, elli_request:body(Req1)),
+     ?_assertMatch(Args, elli_request:post_args_decoded(Req1)),
+     ?_assertMatch(undefined, elli_request:post_arg(<<"foo">>, Req1)),
+     ?_assertMatch(undefined, elli_request:post_arg_decoded(<<"foo">>, Req1)),
+     ?_assertMatch(Name, elli_request:post_arg_decoded(<<"name">>, Req1)),
+     %% GET /foo/bar
+     ?_assertMatch(Headers, elli_request:headers(Req2)),
+
+     ?_assertMatch(Args, elli_request:get_args(Req2)),
+     ?_assertMatch(undefined, elli_request:get_arg_decoded(<<"foo">>, Req2)),
+     ?_assertMatch(Name, elli_request:get_arg_decoded(<<"name">>, Req2)),
+     ?_assertMatch([], elli_request:post_args(Req2)),
+
+     ?_assertMatch({error, not_supported}, elli_request:chunk_ref(#req{}))
+    ].
+
+
 %%% Integration tests
 %%%   Use inets httpc to actually call Elli over the network.
 
@@ -236,6 +274,15 @@ shorthand() ->
     ?assertMatch([{"connection", "Keep-Alive"},
                   {"content-length", "5"}], headers(Response)),
     ?assertMatch("hello", body(Response)).
+
+found() ->
+    {ok, Response} = httpc:request(get, {"http://localhost:3001/302", []},
+                                  [{autoredirect, false}], []),
+    ?assertMatch(302, status(Response)),
+    ?assertMatch([{"connection","Keep-Alive"},
+                  {"content-length","0"},
+                  {"location", "/hello/world"}], headers(Response)),
+    ?assertMatch("", body(Response)).
 
 too_many_headers() ->
     Headers = lists:duplicate(100, {"X-Foo", "Bar"}),
@@ -611,6 +658,10 @@ normalize_range_test_() ->
      ?_assertMatch(invalid_range, elli_util:normalize_range(Invalid5, Size)),
      ?_assertMatch(invalid_range, elli_util:normalize_range(Invalid6, Size))].
 
+
+encode_range_test() ->
+    Expected = [<<"bytes ">>,<<"*">>,<<"/">>,"42"],
+    ?assertMatch(Expected, elli_util:encode_range(invalid_range, 42)).
 
 register_test() ->
     ?assertMatch(undefined, whereis(elli)),
