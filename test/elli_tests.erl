@@ -38,6 +38,7 @@ elli_test_() ->
         ?_test(decoded_get_args_list()),
         ?_test(post_args()),
         ?_test(shorthand()),
+        ?_test(ip()),
         ?_test(found()),
         ?_test(too_many_headers()),
         ?_test(too_big_body()),
@@ -274,6 +275,11 @@ shorthand() ->
     ?assertMatch([{"connection", "Keep-Alive"},
                   {"content-length", "5"}], headers(Response)),
     ?assertMatch("hello", body(Response)).
+
+ip() ->
+    {ok, Response} = httpc:request("http://localhost:3001/ip"),
+    ?assertMatch(200, status(Response)),
+    ?assertMatch("127.0.0.1", body(Response)).
 
 found() ->
     {ok, Response} = httpc:request(get, {"http://localhost:3001/302", []},
