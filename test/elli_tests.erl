@@ -1,6 +1,7 @@
 -module(elli_tests).
 -include_lib("eunit/include/eunit.hrl").
 -include("elli.hrl").
+-include("elli_test.hrl").
 
 -define(I2B(I), list_to_binary(integer_to_list(I))).
 -define(I2L(I), integer_to_list(I)).
@@ -598,14 +599,3 @@ invalid_callback_test() ->
         E ->
             ?assertMatch(invalid_callback, E)
     end.
-
-
-%%% Helpers
-
-status({{_, Status, _}, _, _}) ->
-    Status.
-body({_, _, Body}) ->
-    Body.
-
-headers({_, Headers, _}) ->
-    lists:sort(Headers).
