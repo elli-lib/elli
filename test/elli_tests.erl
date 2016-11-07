@@ -27,6 +27,8 @@ elli_test_() ->
         ?_test(crash()),
         ?_test(invalid_return()),
         ?_test(no_compress()),
+        ?_test(gzip()),
+        ?_test(deflate()),
         ?_test(exception_flow()),
         ?_test(accept_content_type()),
         ?_test(user_connection()),
@@ -71,6 +73,7 @@ setup() ->
     Config = [
               {mods, [
                       {elli_metrics_middleware, []},
+                      {elli_middleware_compress, []},
                       {elli_example_callback, []}
                      ]}
              ],
@@ -146,14 +149,30 @@ invalid_return() ->
     ?assertMatch("Internal server error", body(Response)).
 
 no_compress() ->
-    {ok, Response} = httpc:request(get, {"http://localhost:3001/compressed",
-                                         [{"Accept-Encoding", "gzip"}]},
-                                   [], []),
+    {ok, Response} = httpc:request("http://localhost:3001/compressed"),
     ?assertMatch(200, status(Response)),
     ?assertMatch([{"connection", "Keep-Alive"},
                   {"content-length", "1032"}], headers(Response)),
     ?assertEqual(binary:copy(<<"Hello World!">>, 86),
                  list_to_binary(body(Response))).
+
+compress(Encoding, Length) ->
+    {ok, Response} = httpc:request(get, {"http://localhost:3001/compressed",
+                                         [{"Accept-Encoding", Encoding}]},
+                                   [], []),
+    ?assertMatch(200, status(Response)),
+    ?assertMatch([{"connection", "Keep-Alive"},
+                  {"content-encoding", Encoding},
+                  {"content-length", Length}], headers(Response)),
+    ?assertEqual(binary:copy(<<"Hello World!">>, 86),
+                 uncompress(Encoding, body(Response))).
+
+uncompress("gzip",    Data) -> zlib:gunzip(Data);
+uncompress("deflate", Data) -> zlib:uncompress(Data).
+
+gzip() -> compress("gzip", "41").
+
+deflate() -> compress("deflate", "29").
 
 exception_flow() ->
     {ok, Response} = httpc:request("http://localhost:3001/403"),
