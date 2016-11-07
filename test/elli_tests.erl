@@ -30,6 +30,7 @@ elli_test_() ->
         ?_test(gzip()),
         ?_test(deflate()),
         ?_test(exception_flow()),
+        ?_test(hello_iolist()),
         ?_test(accept_content_type()),
         ?_test(user_connection()),
         ?_test(get_args()),
@@ -43,6 +44,7 @@ elli_test_() ->
         ?_test(bad_request_line()),
         ?_test(content_length()),
         ?_test(user_content_length()),
+        ?_test(headers()),
         ?_test(chunked()),
         ?_test(sendfile()),
         ?_test(send_no_file()),
@@ -181,6 +183,11 @@ exception_flow() ->
                   {"content-length", "9"}], headers(Response)),
     ?assertMatch("Forbidden", body(Response)).
 
+hello_iolist() ->
+    Url = "http://localhost:3001/hello/iolist?name=knut",
+    {ok, Response} = httpc:request(Url),
+    ?assertMatch("Hello knut", body(Response)).
+
 accept_content_type() ->
     {ok, Json} = httpc:request(get, {"http://localhost:3001/type?name=knut",
                                      [{"Accept", "application/json"}]}, [], []),
@@ -282,6 +289,12 @@ user_content_length() ->
                         "foobar">>},
                  gen_tcp:recv(Client, 0)).
 
+headers() ->
+    {ok, Response} = httpc:request("http://localhost:3001/headers.html"),
+    Headers = headers(Response),
+
+    ?assert(proplists:is_defined("x-custom", Headers)),
+    ?assertMatch("foobar", proplists:get_value("x-custom", Headers)).
 
 chunked() ->
     Expected = "chunk10chunk9chunk8chunk7chunk6chunk5chunk4chunk3chunk2chunk1",
