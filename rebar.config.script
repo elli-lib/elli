@@ -7,6 +7,12 @@ case erl_internal:bif(is_map, 1) of
     Config1 = lists:keystore(project_plugins, 1, CONFIG,
                              {project_plugins, [Lint]}),
     Config2 = lists:keystore(provider_hooks, 1, Config1,
-                             {provider_hooks, [{pre, [{eunit, lint}]}]})
-
+                             {provider_hooks, [{pre, [{eunit, lint}]}]}),
+    case os:getenv("TRAVIS") of
+      "true" ->
+        JobId   = os:getenv("TRAVIS_JOB_ID"),
+        Config3 = lists:keystore(coveralls_service_job_id, 1, Config2,
+                                 {coveralls_service_job_id, JobId});
+      _ -> Config2
+    end
 end.
