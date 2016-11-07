@@ -1,11 +1,14 @@
 -module(elli_metrics_middleware).
--export([handle/2, handle_event/3]).
+-export([init/2, handle/2, handle_event/3]).
 -behaviour(elli_handler).
 
 
 %%
 %% ELLI
 %%
+
+init(_Req, _Args) ->
+    ignore.
 
 handle(_Req, _Args) ->
     ignore.
