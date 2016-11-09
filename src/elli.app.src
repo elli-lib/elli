@@ -24,7 +24,7 @@
                  ]},
   {env, []},
 
-  {maintainers,["Eric Bailey", "Knut Nesheim", "Tristan Sloughter"]},
-  {licenses,["MIT"]},
-  {links,[{"Github","https://github.com/elli-lib/elli"}]}
+  {maintainers, ["Eric Bailey", "Knut Nesheim", "Tristan Sloughter"]},
+  {licenses, ["MIT"]},
+  {links, [{"GitHub", "https://github.com/elli-lib/elli"}]}
  ]}.
