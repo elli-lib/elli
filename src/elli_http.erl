@@ -849,6 +849,6 @@ get_body_test() ->
     Buffer   = binary:copy(<<".">>, 42),
     Opts     = [],
     Callback = {no, op},
-    ?assertEqual({Buffer, <<>>},
+    ?assertMatch({Buffer, <<>>},
                  get_body(Socket, Headers, Buffer, Opts, Callback)).
 -endif.

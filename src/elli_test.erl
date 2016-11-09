@@ -12,7 +12,7 @@
 
 -export([call/5]).
 
--spec call(Method, Path, Headers, Body, Opts) -> elli:req() when
+-spec call(Method, Path, Headers, Body, Opts) -> elli_handler:result() when
       Method  :: elli:http_method(),
       Path    :: binary(),
       Headers :: elli:headers(),
@@ -30,13 +30,13 @@ call(Method, Path, Headers, Body, Opts) ->
 -include_lib("eunit/include/eunit.hrl").
 
 hello_world_test() ->
-    ?assertEqual({ok, [], <<"Hello World!">>},
+    ?assertMatch({ok, [], <<"Hello World!">>},
                  elli_test:call('GET', <<"/hello/world/">>, [], <<>>,
                                 ?EXAMPLE_CONF)),
-    ?assertEqual({ok, [], <<"Hello Test1">>},
+    ?assertMatch({ok, [], <<"Hello Test1">>},
                  elli_test:call('GET', <<"/hello/?name=Test1">>, [], <<>>,
                                 ?EXAMPLE_CONF)),
-    ?assertEqual({ok,
+    ?assertMatch({ok,
                   [{<<"Content-type">>,
                     <<"application/json; charset=ISO-8859-1">>}],
                   <<"{\"name\" : \"Test2\"}">>},
