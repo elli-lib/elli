@@ -254,6 +254,12 @@ send_file(#req{callback={Mod, Args}} = Req, Code, Headers, Filename, Range) ->
     end,
     ok.
 
+do_send_file(_Fd, _Range, #req{socket={ssl, _Socket}} = Req, _Headers) ->
+    #req{callback = {Mod, Args}} = Req,
+    handle_event(Mod, file_error, [ssl_sendfile_not_supported], Args),
+    send_server_error(Req#req.socket),
+    elli_tcp:close(Req#req.socket),
+    exit(normal);
 do_send_file(Fd, {Offset, Length}, #req{callback={Mod, Args}} = Req, Headers) ->
     try elli_tcp:send(Req#req.socket, Headers) of
         ok ->
