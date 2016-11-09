@@ -54,12 +54,16 @@ encode_range_bytes({Offset, Length}) ->
 encode_range_bytes(invalid_range) -> <<"*">>.
 
 
--spec file_size(Filename::file:name()) ->
-                       non_neg_integer() | {error, Reason}
-                           when Reason :: badarg | file:posix().
+-spec file_size(Filename) -> Size | {error, Reason} when
+      Filename :: file:name_all(),
+      Size     :: non_neg_integer(),
+      Reason   :: file:posix() | badarg | invalid_file.
 %% @doc: Get the size in bytes of the file.
 file_size(Filename) ->
     case file:read_file_info(Filename) of
-        {ok, #file_info{size = Size}} -> Size;
-        {error, Reason}               -> {error, Reason}
+        {ok, #file_info{type = regular, access = Perm, size = Size}}
+          when Perm =:= read orelse Perm =:= read_write ->
+            Size;
+        {error, Reason} -> {error, Reason};
+        _               -> {error, invalid_file}
     end.
