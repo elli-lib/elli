@@ -561,19 +561,19 @@ check_max_size(Socket, ContentLength, Buffer, Opts, {Mod, Args}) ->
 do_check_max_size(Socket, ContentLength, Buffer, MaxSize, {Mod, Args})
   when ContentLength > MaxSize ->
     handle_event(Mod, bad_request, [{body_size, ContentLength}], Args),
-    do_check_max_size_2x(Socket, ContentLength, Buffer, MaxSize),
+    do_check_max_size_x2(Socket, ContentLength, Buffer, MaxSize),
     elli_tcp:close(Socket),
     exit(normal);
 do_check_max_size(_, _, _, _, _) -> ok.
 
-do_check_max_size_2x(Socket, ContentLength, Buffer, MaxSize)
+do_check_max_size_x2(Socket, ContentLength, Buffer, MaxSize)
   when ContentLength < MaxSize * 2 ->
     OnSocket = ContentLength - size(Buffer),
     elli_tcp:recv(Socket, OnSocket, 60000),
     Response = [<<"HTTP/1.1 ">>, status(413), <<"\r\n">>,
                 <<"Content-Length: 0">>, <<"\r\n\r\n">>],
     elli_tcp:send(Socket, Response);
-do_check_max_size_2x(_, _, _, _) -> ok.
+do_check_max_size_x2(_, _, _, _) -> ok.
 
 -spec mk_req(Method, PathTuple, Headers, Body, V, Socket, Callback) -> Req when
       Method    :: elli:http_method(),
