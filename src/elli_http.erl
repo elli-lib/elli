@@ -280,10 +280,7 @@ send_server_error(Socket) ->
     send_rescue_response(Socket, 500, <<"Server Error">>).
 
 send_rescue_response(Socket, Code, Body) ->
-    Response = [<<"HTTP/1.1 ">>, status(Code), <<"\r\n">>,
-                <<"Content-Length: ">>, integer_to_list(size(Body)), <<"\r\n">>,
-                <<"\r\n">>,
-                Body],
+    Response = http_response(Code, Body),
     elli_tcp:send(Socket, Response).
 
 %% @doc Execute the user callback, translating failure into a proper response.
@@ -544,8 +541,7 @@ maybe_send_continue(Socket, Headers) ->
     % headers contains "Expect:100-continue"
     case proplists:get_value(<<"Expect">>, Headers, undefined) of
         <<"100-continue">> ->
-            Response = [<<"HTTP/1.1 ">>, status(100), <<"\r\n">>,
-                        <<"Content-Length: 0">>, <<"\r\n\r\n">>],
+            Response = http_response(100),
             elli_tcp:send(Socket, Response);
         _Other ->
             ok
@@ -570,8 +566,7 @@ do_check_max_size_x2(Socket, ContentLength, Buffer, MaxSize)
   when ContentLength < MaxSize * 2 ->
     OnSocket = ContentLength - size(Buffer),
     elli_tcp:recv(Socket, OnSocket, 60000),
-    Response = [<<"HTTP/1.1 ">>, status(413), <<"\r\n">>,
-                <<"Content-Length: 0">>, <<"\r\n\r\n">>],
+    Response = http_response(413),
     elli_tcp:send(Socket, Response);
 do_check_max_size_x2(_, _, _, _) -> ok.
 
@@ -603,9 +598,20 @@ mk_req(Method, RawPath, Headers, Body, V, Socket, {Mod, Args} = Callback) ->
 %% HEADERS
 %%
 
+http_response(Code) ->
+    http_response(Code, <<>>).
+
+http_response(Code, Body) ->
+    http_response(Code, [{<<"Content-Length">>, size(Body)}], Body).
+
+http_response(Code, Headers, <<>>) ->
+    [<<"HTTP/1.1 ">>, status(Code), <<"\r\n">>,
+     encode_headers(Headers), <<"\r\n">>];
+http_response(Code, Headers, Body) ->
+    [http_response(Code, Headers, <<>>), Body].
+
 assemble_response_headers(Code, Headers) ->
-    ResponseHeaders = [<<"HTTP/1.1 ">>, status(Code), <<"\r\n">>,
-                       encode_headers(Headers), <<"\r\n">>],
+    ResponseHeaders = http_response(Code, Headers, <<>>),
     s(resp_headers, iolist_size(ResponseHeaders)),
     ResponseHeaders.
 
