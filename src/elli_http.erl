@@ -70,7 +70,7 @@ keepalive_loop(Socket, Options, Callback) ->
 keepalive_loop(Socket, NumRequests, Buffer, Options, Callback) ->
     case ?MODULE:handle_request(Socket, Buffer, Options, Callback) of
         {keep_alive, NewBuffer} ->
-            ?MODULE:keepalive_loop(Socket, NumRequests,
+            ?MODULE:keepalive_loop(Socket, NumRequests + 1,
                                    NewBuffer, Options, Callback);
         {close, _} ->
             elli_tcp:close(Socket),
@@ -87,7 +87,6 @@ keepalive_loop(Socket, NumRequests, Buffer, Options, Callback) ->
       Callback  :: elli_handler:callback(),
       ConnToken :: {'keep_alive' | 'close', binary()}.
 handle_request(S, PrevB, Opts, {Mod, Args} = Callback) ->
-    t(request_start),
     {Method, RawPath, V, B0} = get_request(S, PrevB, Opts, Callback),
     t(headers_start),
     {RequestHeaders, B1} = get_headers(S, V, B0, Opts, Callback),
@@ -404,23 +403,17 @@ send_chunk(Socket, Data) ->
 %%
 
 %% @doc Retrieve the request line.
-get_request(Socket, Buffer, Options, {Mod, Args} = Callback) ->
+get_request(Socket, <<>>, Options, Callback) ->
+    NewBuffer = recv_request(Socket, <<>>, Options, Callback),
+    get_request(Socket, NewBuffer, Options, Callback);
+get_request(Socket, Buffer, Options, Callback) ->
+    t(request_start),
+    get_request_(Socket, Buffer, Options, Callback).
+
+get_request_(Socket, Buffer, Options, {Mod, Args} = Callback) ->
     case erlang:decode_packet(http_bin, Buffer, []) of
         {more, _} ->
-            case elli_tcp:recv(Socket, 0, request_timeout(Options)) of
-                {ok, Data} ->
-                    NewBuffer = <<Buffer/binary, Data/binary>>,
-                    get_request(Socket, NewBuffer, Options, Callback);
-                {error, timeout} ->
-                    handle_event(Mod, request_timeout, [], Args),
-                    elli_tcp:close(Socket),
-                    exit(normal);
-                {error, Closed} when Closed =:= closed orelse
-                                     Closed =:= enotconn ->
-                    handle_event(Mod, request_closed, [], Args),
-                    elli_tcp:close(Socket),
-                    exit(normal)
-            end;
+            recv_request(Socket, Buffer, Options, Callback);
         {ok, {http_request, Method, RawPath, Version}, Rest} ->
             {Method, RawPath, Version, Rest};
         {ok, {http_error, _}, _} ->
@@ -429,6 +422,21 @@ get_request(Socket, Buffer, Options, {Mod, Args} = Callback) ->
             elli_tcp:close(Socket),
             exit(normal);
         {ok, {http_response, _, _, _}, _} ->
+            elli_tcp:close(Socket),
+            exit(normal)
+    end.
+
+recv_request(Socket, Buffer, Options, {Mod, Args} = _Callback) ->
+    case elli_tcp:recv(Socket, 0, request_timeout(Options)) of
+        {ok, Data} ->
+            <<Buffer/binary, Data/binary>>;
+        {error, timeout} ->
+            handle_event(Mod, request_timeout, [], Args),
+            elli_tcp:close(Socket),
+            exit(normal);
+        {error, Closed} when Closed =:= closed orelse
+                             Closed =:= enotconn ->
+            handle_event(Mod, request_closed, [], Args),
             elli_tcp:close(Socket),
             exit(normal)
     end.
