@@ -7,8 +7,8 @@
 -define(I2L(I), integer_to_list(I)).
 -define(README, "README.md").
 -define(VTB(T1, T2, LB, UB),
-        time_diff_to_micro_seconds(T1, T2) > LB andalso
-        time_diff_to_micro_seconds(T1, T2) < UB).
+        time_diff_to_micro_seconds(T1, T2) >= LB andalso
+        time_diff_to_micro_seconds(T1, T2) =< UB).
 
 time_diff_to_micro_seconds(T1, T2) ->
     erlang:convert_time_unit(
@@ -23,6 +23,7 @@ elli_test_() ->
      [{foreach,
        fun init_stats/0, fun clear_stats/1,
        [?_test(hello_world()),
+        ?_test(keep_alive_timings()),
         ?_test(not_found()),
         ?_test(crash()),
         ?_test(invalid_return()),
@@ -72,6 +73,7 @@ setup() ->
     application:start(crypto),
     application:start(public_key),
     application:start(ssl),
+    hackney:start(),
     inets:start(),
 
     Config = [
@@ -141,6 +143,65 @@ hello_world() ->
     ?assertMatch([{"connection", "Keep-Alive"},
                   {"content-length", "12"}], headers(Response)),
     ?assertMatch("Hello World!", body(Response)),
+    %% sizes
+    ?assertMatch(63, get_size_value(resp_headers)),
+    ?assertMatch(12, get_size_value(resp_body)),
+    %% timings
+    ?assertNotMatch(undefined, get_timing_value(request_start)),
+    ?assertNotMatch(undefined, get_timing_value(headers_start)),
+    ?assertNotMatch(undefined, get_timing_value(headers_end)),
+    ?assertNotMatch(undefined, get_timing_value(body_start)),
+    ?assertNotMatch(undefined, get_timing_value(body_end)),
+    ?assertNotMatch(undefined, get_timing_value(user_start)),
+    ?assertNotMatch(undefined, get_timing_value(user_end)),
+    ?assertNotMatch(undefined, get_timing_value(send_start)),
+    ?assertNotMatch(undefined, get_timing_value(send_end)),
+    ?assertNotMatch(undefined, get_timing_value(request_end)),
+    %% check timings
+    ?assertMatch(true,
+                 ?VTB(request_start, request_end, 1000000, 1200000)),
+    ?assertMatch(true,
+                 ?VTB(headers_start, headers_end, 1, 100)),
+    ?assertMatch(true,
+                 ?VTB(body_start, body_end, 1, 100)),
+    ?assertMatch(true,
+                 ?VTB(user_start, user_end, 1000000, 1200000)),
+    ?assertMatch(true,
+                 ?VTB(send_start, send_end, 1, 200)).
+
+
+keep_alive_timings() ->
+
+    Transport = hackney_tcp,
+    Host = <<"localhost">>,
+    Port = 3001,
+    Options = [],
+    {ok, ConnRef} = hackney:connect(Transport, Host, Port, Options),
+
+    ReqBody = <<>>,
+    ReqHeaders = [],
+    ReqPath = <<"/hello/world">>,
+    ReqMethod = get,
+    Req = {ReqMethod, ReqPath, ReqHeaders, ReqBody},
+
+    {ok, Status, Headers, HCRef} = hackney:send_request(ConnRef, Req),
+    keep_alive_timings(Status, Headers, HCRef),
+
+    %% pause between keep-alive requests,
+    %% request_start is a timestamp of
+    %% the first bytes of the second request
+    timer:sleep(1000),
+
+    {ok, Status, Headers, HCRef} = hackney:send_request(ConnRef, Req),
+    keep_alive_timings(Status, Headers, HCRef),
+
+    hackney:close(ConnRef).
+
+keep_alive_timings(Status, Headers, HCRef) ->
+    ?assertMatch(200, Status),
+    ?assertMatch([{<<"Connection">>,<<"Keep-Alive">>},
+                  {<<"Content-Length">>,<<"12">>}], Headers),
+    ?assertMatch({ok, <<"Hello World!">>}, hackney:body(HCRef)),
     %% sizes
     ?assertMatch(63, get_size_value(resp_headers)),
     ?assertMatch(12, get_size_value(resp_body)),
