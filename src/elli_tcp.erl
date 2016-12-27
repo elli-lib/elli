@@ -73,8 +73,8 @@ setopts({ssl, Socket}, Opts) ->
 
 sendfile(Fd, {plain, Socket}, Offset, Length, Opts) ->
     file:sendfile(Fd, Socket, Offset, Length, Opts);
-sendfile(_Fd, {ssl, _}, _Offset, _Length, _Opts) ->
-    throw(ssl_sendfile_not_supported).
+sendfile(Fd, {ssl, Socket}, Offset, Length, Opts) ->
+    elli_sendfile:sendfile(ssl, Socket, Fd, Offset, Length, Opts).
 
 peername({plain, Socket}) ->
     inet:peername(Socket);
