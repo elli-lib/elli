@@ -26,5 +26,9 @@
 
   {maintainers, ["Eric Bailey", "Knut Nesheim", "Tristan Sloughter"]},
   {licenses, ["MIT"]},
-  {links, [{"GitHub", "https://github.com/elli-lib/elli"}]}
+  {links,
+   [
+    {"GitHub", "https://github.com/elli-lib/elli"},
+    {"Changelog", "https://github.com/elli-lib/elli/blob/develop/CHANGELOG.md"}
+   ]}
  ]}.
