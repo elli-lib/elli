@@ -159,6 +159,7 @@ about benchmarking HTTP servers.
 
 
 <table width="100%" border="0" summary="list of modules">
+<tr><td><a href="adder.md" class="module">adder</a></td></tr>
 <tr><td><a href="elli.md" class="module">elli</a></td></tr>
 <tr><td><a href="elli_example_callback.md" class="module">elli_example_callback</a></td></tr>
 <tr><td><a href="elli_example_callback_handover.md" class="module">elli_example_callback_handover</a></td></tr>
