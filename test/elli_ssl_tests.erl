@@ -6,7 +6,8 @@ elli_ssl_test_() ->
     {setup,
      fun setup/0, fun teardown/1,
      [
-      ?_test(hello_world())
+      ?_test(hello_world()),
+      ?_test(chunked())
      ]}.
 
 %%% Tests
@@ -14,6 +15,19 @@ elli_ssl_test_() ->
 hello_world() ->
     {ok, Response} = httpc:request("https://localhost:3443/hello/world"),
     ?assertMatch(200, status(Response)).
+
+chunked() ->
+    Expected = "chunk10chunk9chunk8chunk7chunk6chunk5chunk4chunk3chunk2chunk1",
+
+    {ok, Response} = httpc:request("https://localhost:3443/chunked"),
+
+    ?assertMatch(200, status(Response)),
+    ?assertEqual([{"connection", "Keep-Alive"},
+                  %% httpc adds a content-length, even though elli
+                  %% does not send any for chunked transfers
+                  {"content-length", integer_to_list(length(Expected))},
+                  {"content-type", "text/event-stream"}], headers(Response)),
+    ?assertMatch(Expected, body(Response)).
 
 %%% Internal helpers
 

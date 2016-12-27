@@ -1,13 +1,14 @@
 -module(elli_tests).
 -include_lib("eunit/include/eunit.hrl").
 -include("elli.hrl").
+-include("elli_test.hrl").
 
 -define(I2B(I), list_to_binary(integer_to_list(I))).
 -define(I2L(I), integer_to_list(I)).
 -define(README, "README.md").
 -define(VTB(T1, T2, LB, UB),
-        time_diff_to_micro_seconds(T1, T2) > LB andalso
-        time_diff_to_micro_seconds(T1, T2) < UB).
+        time_diff_to_micro_seconds(T1, T2) >= LB andalso
+        time_diff_to_micro_seconds(T1, T2) =< UB).
 
 time_diff_to_micro_seconds(T1, T2) ->
     erlang:convert_time_unit(
@@ -22,11 +23,15 @@ elli_test_() ->
      [{foreach,
        fun init_stats/0, fun clear_stats/1,
        [?_test(hello_world()),
+        ?_test(keep_alive_timings()),
         ?_test(not_found()),
         ?_test(crash()),
         ?_test(invalid_return()),
         ?_test(no_compress()),
+        ?_test(gzip()),
+        ?_test(deflate()),
         ?_test(exception_flow()),
+        ?_test(hello_iolist()),
         ?_test(accept_content_type()),
         ?_test(user_connection()),
         ?_test(get_args()),
@@ -34,12 +39,15 @@ elli_test_() ->
         ?_test(decoded_get_args_list()),
         ?_test(post_args()),
         ?_test(shorthand()),
+        ?_test(ip()),
+        ?_test(found()),
         ?_test(too_many_headers()),
         ?_test(too_big_body()),
         ?_test(way_too_big_body()),
         ?_test(bad_request_line()),
         ?_test(content_length()),
         ?_test(user_content_length()),
+        ?_test(headers()),
         ?_test(chunked()),
         ?_test(sendfile()),
         ?_test(send_no_file()),
@@ -65,11 +73,13 @@ setup() ->
     application:start(crypto),
     application:start(public_key),
     application:start(ssl),
+    hackney:start(),
     inets:start(),
 
     Config = [
               {mods, [
                       {elli_metrics_middleware, []},
+                      {elli_middleware_compress, []},
                       {elli_example_callback, []}
                      ]}
              ],
@@ -87,6 +97,43 @@ init_stats() ->
 
 clear_stats(_) ->
     ets:delete(elli_stat_table).
+
+
+accessors_test_() ->
+    RawPath = <<"/foo/bar">>,
+    Headers = [{<<"Content-Type">>, <<"application/x-www-form-urlencoded">>}],
+    Method = 'POST',
+    Body = <<"name=knut%3D">>,
+    Name = <<"knut=">>,
+    Req1 = #req{raw_path = RawPath,
+                headers = Headers,
+                method = Method,
+                body = Body},
+    Args = [{<<"name">>, Name}],
+    Req2 = #req{headers = Headers, args = Args, body = <<>>},
+
+    [
+     %% POST /foo/bar
+     ?_assertMatch(RawPath, elli_request:raw_path(Req1)),
+     ?_assertMatch(Headers, elli_request:headers(Req1)),
+     ?_assertMatch(Method, elli_request:method(Req1)),
+     ?_assertMatch(Body, elli_request:body(Req1)),
+     ?_assertMatch(Args, elli_request:post_args_decoded(Req1)),
+     ?_assertMatch(undefined, elli_request:post_arg(<<"foo">>, Req1)),
+     ?_assertMatch(undefined, elli_request:post_arg_decoded(<<"foo">>, Req1)),
+     ?_assertMatch(Name, elli_request:post_arg_decoded(<<"name">>, Req1)),
+     %% GET /foo/bar
+     ?_assertMatch(Headers, elli_request:headers(Req2)),
+
+     ?_assertMatch(Args, elli_request:get_args(Req2)),
+     ?_assertMatch(undefined, elli_request:get_arg_decoded(<<"foo">>, Req2)),
+     ?_assertMatch(Name, elli_request:get_arg_decoded(<<"name">>, Req2)),
+     ?_assertMatch([], elli_request:post_args(Req2)),
+
+     ?_assertMatch({error, not_supported}, elli_request:chunk_ref(#req{}))
+    ].
+
+
 %%% Integration tests
 %%%   Use inets httpc to actually call Elli over the network.
 
@@ -96,6 +143,65 @@ hello_world() ->
     ?assertMatch([{"connection", "Keep-Alive"},
                   {"content-length", "12"}], headers(Response)),
     ?assertMatch("Hello World!", body(Response)),
+    %% sizes
+    ?assertMatch(63, get_size_value(resp_headers)),
+    ?assertMatch(12, get_size_value(resp_body)),
+    %% timings
+    ?assertNotMatch(undefined, get_timing_value(request_start)),
+    ?assertNotMatch(undefined, get_timing_value(headers_start)),
+    ?assertNotMatch(undefined, get_timing_value(headers_end)),
+    ?assertNotMatch(undefined, get_timing_value(body_start)),
+    ?assertNotMatch(undefined, get_timing_value(body_end)),
+    ?assertNotMatch(undefined, get_timing_value(user_start)),
+    ?assertNotMatch(undefined, get_timing_value(user_end)),
+    ?assertNotMatch(undefined, get_timing_value(send_start)),
+    ?assertNotMatch(undefined, get_timing_value(send_end)),
+    ?assertNotMatch(undefined, get_timing_value(request_end)),
+    %% check timings
+    ?assertMatch(true,
+                 ?VTB(request_start, request_end, 1000000, 1200000)),
+    ?assertMatch(true,
+                 ?VTB(headers_start, headers_end, 1, 100)),
+    ?assertMatch(true,
+                 ?VTB(body_start, body_end, 1, 100)),
+    ?assertMatch(true,
+                 ?VTB(user_start, user_end, 1000000, 1200000)),
+    ?assertMatch(true,
+                 ?VTB(send_start, send_end, 1, 200)).
+
+
+keep_alive_timings() ->
+
+    Transport = hackney_tcp,
+    Host = <<"localhost">>,
+    Port = 3001,
+    Options = [],
+    {ok, ConnRef} = hackney:connect(Transport, Host, Port, Options),
+
+    ReqBody = <<>>,
+    ReqHeaders = [],
+    ReqPath = <<"/hello/world">>,
+    ReqMethod = get,
+    Req = {ReqMethod, ReqPath, ReqHeaders, ReqBody},
+
+    {ok, Status, Headers, HCRef} = hackney:send_request(ConnRef, Req),
+    keep_alive_timings(Status, Headers, HCRef),
+
+    %% pause between keep-alive requests,
+    %% request_start is a timestamp of
+    %% the first bytes of the second request
+    timer:sleep(1000),
+
+    {ok, Status, Headers, HCRef} = hackney:send_request(ConnRef, Req),
+    keep_alive_timings(Status, Headers, HCRef),
+
+    hackney:close(ConnRef).
+
+keep_alive_timings(Status, Headers, HCRef) ->
+    ?assertMatch(200, Status),
+    ?assertMatch([{<<"Connection">>,<<"Keep-Alive">>},
+                  {<<"Content-Length">>,<<"12">>}], Headers),
+    ?assertMatch({ok, <<"Hello World!">>}, hackney:body(HCRef)),
     %% sizes
     ?assertMatch(63, get_size_value(resp_headers)),
     ?assertMatch(12, get_size_value(resp_body)),
@@ -145,14 +251,30 @@ invalid_return() ->
     ?assertMatch("Internal server error", body(Response)).
 
 no_compress() ->
-    {ok, Response} = httpc:request(get, {"http://localhost:3001/compressed",
-                                         [{"Accept-Encoding", "gzip"}]},
-                                   [], []),
+    {ok, Response} = httpc:request("http://localhost:3001/compressed"),
     ?assertMatch(200, status(Response)),
     ?assertMatch([{"connection", "Keep-Alive"},
                   {"content-length", "1032"}], headers(Response)),
     ?assertEqual(binary:copy(<<"Hello World!">>, 86),
                  list_to_binary(body(Response))).
+
+compress(Encoding, Length) ->
+    {ok, Response} = httpc:request(get, {"http://localhost:3001/compressed",
+                                         [{"Accept-Encoding", Encoding}]},
+                                   [], []),
+    ?assertMatch(200, status(Response)),
+    ?assertMatch([{"connection", "Keep-Alive"},
+                  {"content-encoding", Encoding},
+                  {"content-length", Length}], headers(Response)),
+    ?assertEqual(binary:copy(<<"Hello World!">>, 86),
+                 uncompress(Encoding, body(Response))).
+
+uncompress("gzip",    Data) -> zlib:gunzip(Data);
+uncompress("deflate", Data) -> zlib:uncompress(Data).
+
+gzip() -> compress("gzip", "41").
+
+deflate() -> compress("deflate", "29").
 
 exception_flow() ->
     {ok, Response} = httpc:request("http://localhost:3001/403"),
@@ -160,6 +282,11 @@ exception_flow() ->
     ?assertMatch([{"connection", "Keep-Alive"},
                   {"content-length", "9"}], headers(Response)),
     ?assertMatch("Forbidden", body(Response)).
+
+hello_iolist() ->
+    Url = "http://localhost:3001/hello/iolist?name=knut",
+    {ok, Response} = httpc:request(Url),
+    ?assertMatch("Hello knut", body(Response)).
 
 accept_content_type() ->
     {ok, Json} = httpc:request(get, {"http://localhost:3001/type?name=knut",
@@ -209,6 +336,20 @@ shorthand() ->
     ?assertMatch([{"connection", "Keep-Alive"},
                   {"content-length", "5"}], headers(Response)),
     ?assertMatch("hello", body(Response)).
+
+ip() ->
+    {ok, Response} = httpc:request("http://localhost:3001/ip"),
+    ?assertMatch(200, status(Response)),
+    ?assertMatch("127.0.0.1", body(Response)).
+
+found() ->
+    {ok, Response} = httpc:request(get, {"http://localhost:3001/302", []},
+                                  [{autoredirect, false}], []),
+    ?assertMatch(302, status(Response)),
+    ?assertMatch([{"connection","Keep-Alive"},
+                  {"content-length","0"},
+                  {"location", "/hello/world"}], headers(Response)),
+    ?assertMatch("", body(Response)).
 
 too_many_headers() ->
     Headers = lists:duplicate(100, {"X-Foo", "Bar"}),
@@ -262,6 +403,12 @@ user_content_length() ->
                         "foobar">>},
                  gen_tcp:recv(Client, 0)).
 
+headers() ->
+    {ok, Response} = httpc:request("http://localhost:3001/headers.html"),
+    Headers = headers(Response),
+
+    ?assert(proplists:is_defined("x-custom", Headers)),
+    ?assertMatch("foobar", proplists:get_value("x-custom", Headers)).
 
 chunked() ->
     Expected = "chunk10chunk9chunk8chunk7chunk6chunk5chunk4chunk3chunk2chunk1",
@@ -579,6 +726,10 @@ normalize_range_test_() ->
      ?_assertMatch(invalid_range, elli_util:normalize_range(Invalid6, Size))].
 
 
+encode_range_test() ->
+    Expected = [<<"bytes ">>,<<"*">>,<<"/">>,"42"],
+    ?assertMatch(Expected, elli_util:encode_range(invalid_range, 42)).
+
 register_test() ->
     ?assertMatch(undefined, whereis(elli)),
     Config = [
@@ -598,14 +749,3 @@ invalid_callback_test() ->
         E ->
             ?assertMatch(invalid_callback, E)
     end.
-
-
-%%% Helpers
-
-status({{_, Status, _}, _, _}) ->
-    Status.
-body({_, _, Body}) ->
-    Body.
-
-headers({_, Headers, _}) ->
-    lists:sort(Headers).

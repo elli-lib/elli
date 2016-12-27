@@ -22,8 +22,14 @@
                | client_closed  | client_timeout
                | invalid_return.
 
--type result() :: {elli:response_code() | ok, elli:body()}
+-type result() :: {elli:response_code() | ok,
+                   elli:headers(),
+                   {file, file:name_all()}
+                   | {file, file:name_all(), elli_util:range()}}
                 | {elli:response_code() | ok, elli:headers(), elli:body()}
+                | {elli:response_code() | ok, elli:body()}
+                | {chunk, elli:headers()}
+                | {chunk, elli:headers(), elli:body()}
                 | ignore.
 
 -callback handle(Req :: elli:req(), callback_args()) -> result().

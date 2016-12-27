@@ -53,6 +53,6 @@ See [`elli_example_callback:handle_event/3`](elli_example_callback.md#handle_eve
 
 
 <pre><code>
-result() = {<a href="elli.md#type-response_code">elli:response_code()</a> | ok, <a href="elli.md#type-body">elli:body()</a>} | {<a href="elli.md#type-response_code">elli:response_code()</a> | ok, <a href="elli.md#type-headers">elli:headers()</a>, <a href="elli.md#type-body">elli:body()</a>} | ignore
+result() = {<a href="elli.md#type-response_code">elli:response_code()</a> | ok, <a href="elli.md#type-headers">elli:headers()</a>, {file, <a href="file.md#type-name_all">file:name_all()</a>} | {file, <a href="file.md#type-name_all">file:name_all()</a>, <a href="elli_util.md#type-range">elli_util:range()</a>}} | {<a href="elli.md#type-response_code">elli:response_code()</a> | ok, <a href="elli.md#type-headers">elli:headers()</a>, <a href="elli.md#type-body">elli:body()</a>} | {<a href="elli.md#type-response_code">elli:response_code()</a> | ok, <a href="elli.md#type-body">elli:body()</a>} | {chunk, <a href="elli.md#type-headers">elli:headers()</a>} | {chunk, <a href="elli.md#type-headers">elli:headers()</a>, <a href="elli.md#type-body">elli:body()</a>} | ignore
 </code></pre>
 

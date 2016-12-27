@@ -1,9 +1,10 @@
 # elli - Erlang web server for HTTP APIs
 
-[![Travis CI][travis badge]][travis builds]
 [![Hex.pm][hex badge]][hex package]
-[![Erlang][erlang badge]][erlang downloads]
 [![Documentation][doc badge]][docs]
+[![Erlang][erlang badge]][erlang downloads]
+[![Travis CI][travis badge]][travis builds]
+[![Coverage Status][coveralls badge]][coveralls link]
 [![MIT License][license badge]](LICENSE)
 
 [travis builds]: https://travis-ci.org/elli-lib/elli
@@ -15,6 +16,8 @@
 [erlang downloads]: http://www.erlang.org/downloads
 [doc badge]: https://img.shields.io/badge/docs-edown-green.svg
 [docs]: doc/README.md
+[coveralls badge]: https://coveralls.io/repos/github/elli-lib/elli/badge.svg?branch=develop
+[coveralls link]: https://coveralls.io/github/elli-lib/elli?branch=develop
 [license badge]: https://img.shields.io/badge/license-MIT-blue.svg
 
 Elli is a webserver you can run inside your Erlang application to

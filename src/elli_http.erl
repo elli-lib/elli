@@ -70,7 +70,7 @@ keepalive_loop(Socket, Options, Callback) ->
 keepalive_loop(Socket, NumRequests, Buffer, Options, Callback) ->
     case ?MODULE:handle_request(Socket, Buffer, Options, Callback) of
         {keep_alive, NewBuffer} ->
-            ?MODULE:keepalive_loop(Socket, NumRequests,
+            ?MODULE:keepalive_loop(Socket, NumRequests + 1,
                                    NewBuffer, Options, Callback);
         {close, _} ->
             elli_tcp:close(Socket),
@@ -87,7 +87,6 @@ keepalive_loop(Socket, NumRequests, Buffer, Options, Callback) ->
       Callback  :: elli_handler:callback(),
       ConnToken :: {'keep_alive' | 'close', binary()}.
 handle_request(S, PrevB, Opts, {Mod, Args} = Callback) ->
-    t(request_start),
     {Method, RawPath, V, B0} = get_request(S, PrevB, Opts, Callback),
     t(headers_start),
     {RequestHeaders, B1} = get_headers(S, V, B0, Opts, Callback),
@@ -280,10 +279,7 @@ send_server_error(Socket) ->
     send_rescue_response(Socket, 500, <<"Server Error">>).
 
 send_rescue_response(Socket, Code, Body) ->
-    Response = [<<"HTTP/1.1 ">>, status(Code), <<"\r\n">>,
-                <<"Content-Length: ">>, integer_to_list(size(Body)), <<"\r\n">>,
-                <<"\r\n">>,
-                Body],
+    Response = http_response(Code, Body),
     elli_tcp:send(Socket, Response).
 
 %% @doc Execute the user callback, translating failure into a proper response.
@@ -407,23 +403,17 @@ send_chunk(Socket, Data) ->
 %%
 
 %% @doc Retrieve the request line.
-get_request(Socket, Buffer, Options, {Mod, Args} = Callback) ->
+get_request(Socket, <<>>, Options, Callback) ->
+    NewBuffer = recv_request(Socket, <<>>, Options, Callback),
+    get_request(Socket, NewBuffer, Options, Callback);
+get_request(Socket, Buffer, Options, Callback) ->
+    t(request_start),
+    get_request_(Socket, Buffer, Options, Callback).
+
+get_request_(Socket, Buffer, Options, {Mod, Args} = Callback) ->
     case erlang:decode_packet(http_bin, Buffer, []) of
         {more, _} ->
-            case elli_tcp:recv(Socket, 0, request_timeout(Options)) of
-                {ok, Data} ->
-                    NewBuffer = <<Buffer/binary, Data/binary>>,
-                    get_request(Socket, NewBuffer, Options, Callback);
-                {error, timeout} ->
-                    handle_event(Mod, request_timeout, [], Args),
-                    elli_tcp:close(Socket),
-                    exit(normal);
-                {error, Closed} when Closed =:= closed orelse
-                                     Closed =:= enotconn ->
-                    handle_event(Mod, request_closed, [], Args),
-                    elli_tcp:close(Socket),
-                    exit(normal)
-            end;
+            recv_request(Socket, Buffer, Options, Callback);
         {ok, {http_request, Method, RawPath, Version}, Rest} ->
             {Method, RawPath, Version, Rest};
         {ok, {http_error, _}, _} ->
@@ -432,6 +422,21 @@ get_request(Socket, Buffer, Options, {Mod, Args} = Callback) ->
             elli_tcp:close(Socket),
             exit(normal);
         {ok, {http_response, _, _, _}, _} ->
+            elli_tcp:close(Socket),
+            exit(normal)
+    end.
+
+recv_request(Socket, Buffer, Options, {Mod, Args} = _Callback) ->
+    case elli_tcp:recv(Socket, 0, request_timeout(Options)) of
+        {ok, Data} ->
+            <<Buffer/binary, Data/binary>>;
+        {error, timeout} ->
+            handle_event(Mod, request_timeout, [], Args),
+            elli_tcp:close(Socket),
+            exit(normal);
+        {error, Closed} when Closed =:= closed orelse
+                             Closed =:= enotconn ->
+            handle_event(Mod, request_closed, [], Args),
             elli_tcp:close(Socket),
             exit(normal)
     end.
@@ -544,8 +549,7 @@ maybe_send_continue(Socket, Headers) ->
     % headers contains "Expect:100-continue"
     case proplists:get_value(<<"Expect">>, Headers, undefined) of
         <<"100-continue">> ->
-            Response = [<<"HTTP/1.1 ">>, status(100), <<"\r\n">>,
-                        <<"Content-Length: 0">>, <<"\r\n\r\n">>],
+            Response = http_response(100),
             elli_tcp:send(Socket, Response);
         _Other ->
             ok
@@ -561,19 +565,18 @@ check_max_size(Socket, ContentLength, Buffer, Opts, {Mod, Args}) ->
 do_check_max_size(Socket, ContentLength, Buffer, MaxSize, {Mod, Args})
   when ContentLength > MaxSize ->
     handle_event(Mod, bad_request, [{body_size, ContentLength}], Args),
-    do_check_max_size_2x(Socket, ContentLength, Buffer, MaxSize),
+    do_check_max_size_x2(Socket, ContentLength, Buffer, MaxSize),
     elli_tcp:close(Socket),
     exit(normal);
 do_check_max_size(_, _, _, _, _) -> ok.
 
-do_check_max_size_2x(Socket, ContentLength, Buffer, MaxSize)
+do_check_max_size_x2(Socket, ContentLength, Buffer, MaxSize)
   when ContentLength < MaxSize * 2 ->
     OnSocket = ContentLength - size(Buffer),
     elli_tcp:recv(Socket, OnSocket, 60000),
-    Response = [<<"HTTP/1.1 ">>, status(413), <<"\r\n">>,
-                <<"Content-Length: 0">>, <<"\r\n\r\n">>],
+    Response = http_response(413),
     elli_tcp:send(Socket, Response);
-do_check_max_size_2x(_, _, _, _) -> ok.
+do_check_max_size_x2(_, _, _, _) -> ok.
 
 -spec mk_req(Method, PathTuple, Headers, Body, V, Socket, Callback) -> Req when
       Method    :: elli:http_method(),
@@ -603,9 +606,20 @@ mk_req(Method, RawPath, Headers, Body, V, Socket, {Mod, Args} = Callback) ->
 %% HEADERS
 %%
 
+http_response(Code) ->
+    http_response(Code, <<>>).
+
+http_response(Code, Body) ->
+    http_response(Code, [{<<"Content-Length">>, size(Body)}], Body).
+
+http_response(Code, Headers, <<>>) ->
+    [<<"HTTP/1.1 ">>, status(Code), <<"\r\n">>,
+     encode_headers(Headers), <<"\r\n">>];
+http_response(Code, Headers, Body) ->
+    [http_response(Code, Headers, <<>>), Body].
+
 assemble_response_headers(Code, Headers) ->
-    ResponseHeaders = [<<"HTTP/1.1 ">>, status(Code), <<"\r\n">>,
-                       encode_headers(Headers), <<"\r\n">>],
+    ResponseHeaders = http_response(Code, Headers, <<>>),
     s(resp_headers, iolist_size(ResponseHeaders)),
     ResponseHeaders.
 
@@ -849,6 +863,6 @@ get_body_test() ->
     Buffer   = binary:copy(<<".">>, 42),
     Opts     = [],
     Callback = {no, op},
-    ?assertEqual({Buffer, <<>>},
+    ?assertMatch({Buffer, <<>>},
                  get_body(Socket, Headers, Buffer, Opts, Callback)).
 -endif.
