@@ -10,15 +10,14 @@
 
 %% @doc Send part of a file on a socket.
 %%
-%% A fallback for transports that don't have a native sendfile implementation.
-%% Note that the ordering of arguments is different from file:sendfile/5 and
-%% that this function accepts either a raw file or a file name.
+%% Basically, @see file:sendfile/5 but for ssl (i.e. not raw OS sockets).
+%% Originally from https://github.com/ninenines/ranch/pull/41/files
 %%
-%% @see file:sendfile/5
+%% @end
 -spec sendfile(file:fd(), socket(),
         non_neg_integer(), non_neg_integer(), sendfile_opts())
     -> {ok, non_neg_integer()} | {error, atom()}.
-sendfile(RawFile, Socket,Offset, Bytes, Opts) ->
+sendfile(RawFile, Socket, Offset, Bytes, Opts) ->
     ChunkSize = chunk_size(Opts),
     Initial2 = case file:position(RawFile, {cur, 0}) of
         {ok, Offset} ->
