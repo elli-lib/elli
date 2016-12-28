@@ -1,4 +1,5 @@
-%% Taken from https://github.com/ninenines/ranch/pull/41/files, with permission from fishcakez
+%% Taken from https://github.com/ninenines/ranch/pull/41/files,
+%% with permission from fishcakez
 
 -module(elli_sendfile).
 
