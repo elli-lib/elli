@@ -9,13 +9,14 @@
 
 Here's the features Elli <em>does</em> have:
 
- * Rack-style request-response. Your handler function gets a complete request
-   and returns a complete response. There's no messaging, no receiving data
-   directly from the socket, no writing responses directly to the socket. It's a
-   very simple and straightforward API. Have a look at {@link
-   elli_example_callback} for examples.
+ * [Rack][]-style request-response. Your handler function gets a
+   complete request and returns a complete response. There's no
+   messaging, no receiving data directly from the socket, no writing
+   responses directly to the socket. It's a very simple and
+   straightforward API. Have a look at {@link elli_example_callback}
+   for examples.
 
- * Middlewares allows you to add useful features like compression,
+ * Middlewares allow you to add useful features like compression,
    encoding, stats, but only have it used when needed. No features you
    don't use on the critical path.
 
@@ -94,13 +95,14 @@ visibility into strange client behaviour, really good instrumentation
 and good tests. We are willing to sacrifice almost everything, even
 basic features to achieve this.
 
-With this in mind we looked at the big names in the Erlang community:
-Yaws, Mochiweb, Misultin and Cowboy. We found Mochiweb to be the best
-match. However, we also wanted to see if we could take the
-architecture of Mochiweb and improve on it. `elli' takes the
-acceptor-turns-into-request-handler idea found in Mochiweb, the
-binaries-only idea from Cowboy and the request-response idea from
-WSGI/Rack (with chunked transfer being an exception).
+With this in mind we looked at the big names in the Erlang
+community: [Yaws][], [Mochiweb][], [Misultin][] and [Cowboy][]. We
+found [Mochiweb][] to be the best match. However, we also wanted to
+see if we could take the architecture of [Mochiweb][] and improve on
+it. `elli' takes the acceptor-turns-into-request-handler idea found
+in [Mochiweb][], the binaries-only idea from [Cowboy][] and the
+request-response idea from [WSGI][]/[Rack][] (with chunked transfer
+being an exception).
 
 On top of this we built a handler that allows us to write HTTP
 middleware modules to add practical features, like compression of
@@ -120,11 +122,11 @@ from the big names.
 
 ## Why another webserver? Isn't this just the NIH syndrome?
 
-Yaws, Mochiweb, Misultin and Cowboy are great projects, hardened over
-time and full of very useful features for web development. If you
-value developer productivity, Yaws is an excellent choice. If you want
-a fast and lightweight server, Mochiweb and Cowboy are excellent
-choices.
+[Yaws][], [Mochiweb][], [Misultin][], and [Cowboy][] are great
+projects, hardened over time and full of very useful features for web
+development. If you value developer productivity, [Yaws][] is an
+excellent choice. If you want a fast and lightweight
+server, [Mochiweb][] and [Cowboy][] are excellent choices.
 
 Having used and studied all of these projects, we believed that if we
 merged some of the existing ideas and added some ideas from other
@@ -154,3 +156,12 @@ harm than good when released. I encourage you to run your own
 benchmarks, on your own hardware. Mark Nottingham has some
 [very good pointers](http://www.mnot.net/blog/2011/05/18/http_benchmark_rules)
 about benchmarking HTTP servers.
+
+<!-- Named Links -->
+
+[Yaws]: https://github.com/klacke/yaws
+[Mochiweb]: https://github.com/mochi/mochiweb
+[Misultin]: https://github.com/ostinelli/misultin
+[Cowboy]: https://github.com/ninenines/cowboy
+[WSGI]: https://www.python.org/dev/peps/pep-3333/
+[Rack]: https://github.com/rack/rack
