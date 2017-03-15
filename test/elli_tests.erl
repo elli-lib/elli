@@ -641,6 +641,9 @@ body_qs_test() ->
 
 to_proplist_test() ->
     Req  = #req{method   = 'GET',
+                scheme   = <<"http">>,
+                host     = <<"localhost">>,
+                port     = 80,
                 path     = [<<"crash">>],
                 args     = [],
                 version  = {1, 1},
@@ -652,6 +655,9 @@ to_proplist_test() ->
                 callback = {mod, []}},
 
     Prop = [{method,   'GET'},
+            {scheme,   <<"http">>},
+            {host,     <<"localhost">>},
+            {port,     80},
             {path,     [<<"crash">>]},
             {args,     []},
             {raw_path, <<"/crash">>},

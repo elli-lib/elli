@@ -21,7 +21,12 @@
 call(Method, Path, Headers, Body, Opts) ->
     Callback     = proplists:get_value(callback, Opts),
     CallbackArgs = proplists:get_value(callback_args, Opts),
-    Req = elli_http:mk_req(Method, {abs_path, Path}, Headers,
+    %% TODO: Make sure these are acceptable defaults.
+    Scheme = <<"http">>,
+    Host = <<"localhost">>,
+    Port = 80,
+    Req = elli_http:mk_req(Method, Scheme, Host, Port, {abs_path, Path},
+                           Headers,
                            Body, {1, 1}, undefined, {Callback, CallbackArgs}),
     ok  = Callback:handle_event(elli_startup, [], CallbackArgs),
     Callback:handle(Req, CallbackArgs).

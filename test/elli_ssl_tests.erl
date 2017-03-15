@@ -12,10 +12,12 @@ elli_ssl_test_() ->
 
 %%% Tests
 
+%% FIXME
 hello_world() ->
     {ok, Response} = httpc:request("https://localhost:3443/hello/world"),
     ?assertMatch(200, status(Response)).
 
+%% FIXME
 chunked() ->
     Expected = "chunk10chunk9chunk8chunk7chunk6chunk5chunk4chunk3chunk2chunk1",
 

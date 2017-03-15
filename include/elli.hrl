@@ -1,4 +1,7 @@
 -record(req, {method   :: elli:http_method(),
+              scheme   :: binary(),
+              host     :: binary(),
+              port     :: 1..65535,
               path     :: [binary()],
               args     :: [{binary(), any()}],
               raw_path :: binary(),

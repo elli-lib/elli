@@ -13,7 +13,7 @@
 
 -export([send_response/4]).
 
--export([mk_req/7]). %% useful when testing.
+-export([mk_req/10]). %% useful when testing.
 
 %% Exported for looping with a fully-qualified module name
 -export([accept/4, handle_request/4, chunk_loop/1, split_args/1,
@@ -91,7 +91,14 @@ handle_request(S, PrevB, Opts, {Mod, Args} = Callback) ->
     t(headers_start),
     {RequestHeaders, B1} = get_headers(S, V, B0, Opts, Callback),
     t(headers_end),
-    Req = mk_req(Method, RawPath, RequestHeaders, <<>>, V, S, Callback),
+    %% TODO: pull out helper function
+    Scheme = case S of {plain, _} -> <<"http">>; {ssl, _} -> <<"ssl">> end,
+    %% TODO: get host from socket?
+    Host = <<"localhost">>,                     % FIXME
+    %% TODO: get port from socket?
+    Port = 80,                                  % FIXME
+    Req = mk_req(Method, Scheme, Host, Port,
+                 RawPath, RequestHeaders, <<>>, V, S, Callback),
 
     case init(Req) of
         {ok, standard} ->
@@ -578,8 +585,12 @@ do_check_max_size_x2(Socket, ContentLength, Buffer, MaxSize)
     elli_tcp:send(Socket, Response);
 do_check_max_size_x2(_, _, _, _) -> ok.
 
--spec mk_req(Method, PathTuple, Headers, Body, V, Socket, Callback) -> Req when
+-spec mk_req(Method, Scheme, Host, Port, PathTuple,
+             Headers, Body, V, Socket, Callback) -> Req when
       Method    :: elli:http_method(),
+      Scheme    :: binary(),
+      Host      :: binary(),
+      Port      :: 1..65535,
       PathTuple :: {PathType :: atom(), RawPath :: binary()},
       Headers   :: elli:headers(),
       Body      :: elli:body(),
@@ -587,16 +598,21 @@ do_check_max_size_x2(_, _, _, _) -> ok.
       Socket    :: elli_tcp:socket() | undefined,
       Callback  :: elli_handler:callback(),
       Req       :: elli:req().
-mk_req(Method, RawPath, Headers, Body, V, Socket, {Mod, Args} = Callback) ->
-    case parse_path(RawPath) of
+mk_req(Method, Scheme, Host, Port, PathTuple,
+       Headers, Body, V, Socket, {Mod, Args} = Callback) ->
+    case parse_path(PathTuple) of
         {ok, {Path, URL, URLArgs}} ->
+            Scheme = <<"http">>,
+            Host = <<"localhost">>,
+            Port = 80,
             #req{method   = Method, path     = URL,    args    = URLArgs,
+                 scheme   = Scheme, host     = Host,   port    = Port,
                  version  = V,      raw_path = Path,   headers = Headers,
                  body     = Body,   pid      = self(), socket  = Socket,
                  callback = Callback};
         {error, Reason} ->
             handle_event(Mod, request_parse_error,
-                         [{Reason, {Method, RawPath}}], Args),
+                         [{Reason, {Method, PathTuple}}], Args),
             send_bad_request(Socket),
             elli_tcp:close(Socket),
             exit(normal)
