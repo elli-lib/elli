@@ -7,7 +7,8 @@ elli_ssl_test_() ->
      fun setup/0, fun teardown/1,
      [
       ?_test(hello_world()),
-      ?_test(chunked())
+      ?_test(chunked()),
+      ?_test(sendfile())
      ]}.
 
 %%% Tests
@@ -28,6 +29,13 @@ chunked() ->
                   {"content-length", integer_to_list(length(Expected))},
                   {"content-type", "text/event-stream"}], headers(Response)),
     ?assertMatch(Expected, body(Response)).
+
+sendfile() ->
+    {ok, Response} = httpc:request("https://localhost:3443/sendfile"),
+
+    ?assertMatch(500, status(Response)),
+    ?assertEqual([{"content-length", "12"}], headers(Response)),
+    ?assertMatch("Server Error", body(Response)).
 
 %%% Internal helpers
 
