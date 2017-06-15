@@ -94,7 +94,7 @@ get_arg_decoded(Key, #req{args = Args}, Default) ->
     case proplists:get_value(Key, Args) of
         undefined    -> Default;
         EncodedValue ->
-            list_to_binary(http_uri:decode(binary_to_list(EncodedValue)))
+            uri_decode(EncodedValue)
     end.
 
 %% @doc Parse `application/x-www-form-urlencoded' body into a proplist.
@@ -124,7 +124,7 @@ post_arg_decoded(Key, #req{} = Req, Default) ->
     case proplists:get_value(Key, body_qs(Req)) of
         undefined    -> Default;
         EncodedValue ->
-            list_to_binary(http_uri:decode(binary_to_list(EncodedValue)))
+            uri_decode(EncodedValue)
     end.
 
 
@@ -138,7 +138,7 @@ get_args_decoded(#req{args = Args}) ->
     lists:map(fun ({K, true}) ->
                       {K, true};
                   ({K, V}) ->
-                      {K, list_to_binary(http_uri:decode(binary_to_list(V)))}
+                      {K, uri_decode(V)}
               end, Args).
 
 
@@ -149,7 +149,7 @@ post_args_decoded(#req{} = Req) ->
     lists:map(fun ({K, true}) ->
                       {K, true};
                   ({K, V}) ->
-                      {K, list_to_binary(http_uri:decode(binary_to_list(V)))}
+                      {K, uri_decode(V)}
               end, body_qs(Req)).
 
 %% @doc Calculate the query string associated with a given `Request'
@@ -263,3 +263,12 @@ is_ref_alive(Ref) ->
 
 is_request(#req{}) -> true;
 is_request(_)      -> false.
+
+
+-ifdef(binary_http_uri).
+uri_decode(EncodedValue) ->
+    http_uri:decode(EncodedValue).
+-else.
+uri_decode(EncodedValue) ->
+    list_to_binary(http_uri:decode(binary_to_list(EncodedValue))).
+-endif.
