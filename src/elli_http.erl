@@ -413,7 +413,8 @@ get_request(Socket, Buffer, Options, Callback) ->
 get_request_(Socket, Buffer, Options, {Mod, Args} = Callback) ->
     case erlang:decode_packet(http_bin, Buffer, []) of
         {more, _} ->
-            recv_request(Socket, Buffer, Options, Callback);
+            NewBuffer = recv_request(Socket, Buffer, Options, Callback),
+            get_request_(Socket, NewBuffer, Options, Callback);
         {ok, {http_request, Method, RawPath, Version}, Rest} ->
             {Method, RawPath, Version, Rest};
         {ok, {http_error, _}, _} ->
