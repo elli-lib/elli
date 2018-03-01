@@ -19,8 +19,7 @@
   {registered, []},
   {applications, [
                   kernel,
-                  stdlib,
-                  inets
+                  stdlib
                  ]},
   {env, []},
 

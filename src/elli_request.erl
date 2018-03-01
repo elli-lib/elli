@@ -266,9 +266,25 @@ is_request(_)      -> false.
 
 
 -ifdef(binary_http_uri).
-uri_decode(EncodedValue) ->
-    http_uri:decode(EncodedValue).
+uri_decode(<<$+, Rest/binary>>) ->
+    <<$ , (uri_decode(Rest))/binary>>;
+uri_decode(<<$%, Hex:2/bytes, Rest/binary>>) ->
+    <<(binary_to_integer(Hex, 16)), (uri_decode(Rest))/binary>>;
+uri_decode(<<C, Rest/binary>>) ->
+    <<C, (uri_decode(Rest))/binary>>;
+uri_decode(<<>>) ->
+    <<>>.
 -else.
-uri_decode(EncodedValue) ->
-    list_to_binary(http_uri:decode(binary_to_list(EncodedValue))).
+uri_decode(<<$+, Rest/binary>>) ->
+    <<$ , (uri_decode(Rest))/binary>>;
+uri_decode(<<$%, HexA, HexB, Rest/binary>>) ->
+    <<(hex_to_int(HexA)*16+hex_to_int(HexB)), (uri_decode(Rest))/binary>>;
+uri_decode(<<C, Rest/binary>>) ->
+    <<C, (uri_decode(Rest))/binary>>;
+uri_decode(<<>>) ->
+    <<>>.
+
+hex_to_int(X) when X >= $0, X =< $9 -> X-$0;
+hex_to_int(X) when X >= $a, X =< $f -> X-$a+10;
+hex_to_int(X) when X >= $A, X =< $F -> X-$A+10.
 -endif.
