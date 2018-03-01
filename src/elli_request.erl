@@ -94,7 +94,7 @@ get_arg_decoded(Key, #req{args = Args}, Default) ->
     case proplists:get_value(Key, Args) of
         undefined    -> Default;
         EncodedValue ->
-            list_to_binary(http_uri:decode(binary_to_list(EncodedValue)))
+            uri_decode(EncodedValue)
     end.
 
 %% @doc Parse `application/x-www-form-urlencoded' body into a proplist.
@@ -124,7 +124,7 @@ post_arg_decoded(Key, #req{} = Req, Default) ->
     case proplists:get_value(Key, body_qs(Req)) of
         undefined    -> Default;
         EncodedValue ->
-            list_to_binary(http_uri:decode(binary_to_list(EncodedValue)))
+            uri_decode(EncodedValue)
     end.
 
 
@@ -138,7 +138,7 @@ get_args_decoded(#req{args = Args}) ->
     lists:map(fun ({K, true}) ->
                       {K, true};
                   ({K, V}) ->
-                      {K, list_to_binary(http_uri:decode(binary_to_list(V)))}
+                      {K, uri_decode(V)}
               end, Args).
 
 
@@ -149,7 +149,7 @@ post_args_decoded(#req{} = Req) ->
     lists:map(fun ({K, true}) ->
                       {K, true};
                   ({K, V}) ->
-                      {K, list_to_binary(http_uri:decode(binary_to_list(V)))}
+                      {K, uri_decode(V)}
               end, body_qs(Req)).
 
 %% @doc Calculate the query string associated with a given `Request'
@@ -263,3 +263,28 @@ is_ref_alive(Ref) ->
 
 is_request(#req{}) -> true;
 is_request(_)      -> false.
+
+
+-ifdef(binary_http_uri).
+uri_decode(<<$+, Rest/binary>>) ->
+    <<$ , (uri_decode(Rest))/binary>>;
+uri_decode(<<$%, Hex:2/bytes, Rest/binary>>) ->
+    <<(binary_to_integer(Hex, 16)), (uri_decode(Rest))/binary>>;
+uri_decode(<<C, Rest/binary>>) ->
+    <<C, (uri_decode(Rest))/binary>>;
+uri_decode(<<>>) ->
+    <<>>.
+-else.
+uri_decode(<<$+, Rest/binary>>) ->
+    <<$ , (uri_decode(Rest))/binary>>;
+uri_decode(<<$%, HexA, HexB, Rest/binary>>) ->
+    <<(hex_to_int(HexA)*16+hex_to_int(HexB)), (uri_decode(Rest))/binary>>;
+uri_decode(<<C, Rest/binary>>) ->
+    <<C, (uri_decode(Rest))/binary>>;
+uri_decode(<<>>) ->
+    <<>>.
+
+hex_to_int(X) when X >= $0, X =< $9 -> X-$0;
+hex_to_int(X) when X >= $a, X =< $f -> X-$a+10;
+hex_to_int(X) when X >= $A, X =< $F -> X-$A+10.
+-endif.
