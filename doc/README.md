@@ -4,7 +4,7 @@
 
 Copyright (c) 2012-2016 Knut Nesheim, 2016 elli-lib team
 
-__Version:__ 2.0.1
+__Version:__ 2.0.2
 
 __Authors:__ Knut Nesheim, elli-lib team.
 
