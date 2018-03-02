@@ -73,7 +73,7 @@ setup() ->
     application:start(crypto),
     application:start(public_key),
     application:start(ssl),
-    {ok, _} = application:ensure_all_started,
+    {ok, _} = application:ensure_all_started(hackney),
     inets:start(),
 
     Config = [
