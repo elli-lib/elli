@@ -456,9 +456,9 @@ send_no_file() ->
     {ok, Response} = httpc:request("http://localhost:3001/send_no_file"),
 
     ?assertMatch(500, status(Response)),
-    ?assertEqual([{"content-length", "12"}],
+    ?assertMatch([{"content-length", "12"}],
                  headers(Response)),
-    ?assertEqual("Server Error", body(Response)).
+    ?assertMatch("Server Error", body(Response)).
 
 sendfile_range() ->
     Url            = "http://localhost:3001/sendfile/range",
@@ -577,7 +577,7 @@ sends_continue() ->
             "Expect: 100-continue\r\n\r\n">>,
 
     gen_tcp:send(Socket, Req),
-    ?assertEqual({ok, <<"HTTP/1.1 100 Continue\r\n"
+    ?assertMatch({ok, <<"HTTP/1.1 100 Continue\r\n"
                         "Content-Length: 0\r\n\r\n">>},
                  gen_tcp:recv(Socket, 0)),
     % Send Result of the body
