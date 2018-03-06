@@ -158,16 +158,11 @@ hello_world() ->
     ?assertNotMatch(undefined, get_timing_value(send_end)),
     ?assertNotMatch(undefined, get_timing_value(request_end)),
     %% check timings
-    ?assertMatch(true,
-                 ?VTB(request_start, request_end, 1000000, 1200000)),
-    ?assertMatch(true,
-                 ?VTB(headers_start, headers_end, 1, 100)),
-    ?assertMatch(true,
-                 ?VTB(body_start, body_end, 1, 100)),
-    ?assertMatch(true,
-                 ?VTB(user_start, user_end, 1000000, 1200000)),
-    ?assertMatch(true,
-                 ?VTB(send_start, send_end, 1, 200)).
+    ?assert(?VTB(request_start, request_end, 1000000, 1200000)),
+    ?assert(?VTB(headers_start, headers_end, 1, 100)),
+    ?assert(?VTB(body_start, body_end, 1, 100)),
+    ?assert(?VTB(user_start, user_end, 1000000, 1200000)),
+    ?assert(?VTB(send_start, send_end, 1, 200)).
 
 
 keep_alive_timings() ->
@@ -217,16 +212,11 @@ keep_alive_timings(Status, Headers, HCRef) ->
     ?assertNotMatch(undefined, get_timing_value(send_end)),
     ?assertNotMatch(undefined, get_timing_value(request_end)),
     %% check timings
-    ?assertMatch(true,
-                 ?VTB(request_start, request_end, 1000000, 1200000)),
-    ?assertMatch(true,
-                 ?VTB(headers_start, headers_end, 1, 100)),
-    ?assertMatch(true,
-                 ?VTB(body_start, body_end, 1, 100)),
-    ?assertMatch(true,
-                 ?VTB(user_start, user_end, 1000000, 1200000)),
-    ?assertMatch(true,
-                 ?VTB(send_start, send_end, 1, 200)).
+    ?assert(?VTB(request_start, request_end, 1000000, 1200000)),
+    ?assert(?VTB(headers_start, headers_end, 1, 100)),
+    ?assert(?VTB(body_start, body_end, 1, 100)),
+    ?assert(?VTB(user_start, user_end, 1000000, 1200000)),
+    ?assert(?VTB(send_start, send_end, 1, 200)).
 
 not_found() ->
     {ok, Response} = httpc:request("http://localhost:3001/foobarbaz"),
@@ -501,16 +491,11 @@ slow_client() ->
                         "Hello undefined">>},
                  gen_tcp:recv(Client, 0)),
     %% check timings
-    ?assertMatch(true,
-                 ?VTB(request_start, request_end, 30000, 70000)),
-    ?assertMatch(true,
-                 ?VTB(headers_start, headers_end, 30000, 70000)),
-    ?assertMatch(true,
-                 ?VTB(body_start, body_end, 1, 3000)),
-    ?assertMatch(true,
-                 ?VTB(user_start, user_end, 1, 100)),
-    ?assertMatch(true,
-                 ?VTB(send_start, send_end, 1, 200)).
+    ?assert(?VTB(request_start, request_end, 30000, 70000)),
+    ?assert(?VTB(headers_start, headers_end, 30000, 70000)),
+    ?assert(?VTB(body_start, body_end, 1, 3000)),
+    ?assert(?VTB(user_start, user_end, 1, 100)),
+    ?assert(?VTB(send_start, send_end, 1, 200)).
 
 
 post_pipeline() ->
