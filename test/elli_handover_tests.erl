@@ -17,7 +17,15 @@ setup() ->
     application:start(public_key),
     application:start(ssl),
     inets:start(),
-    {ok, P} = elli:start_link([{callback, elli_example_callback_handover},
+
+    Config = [
+              {mods, [
+                      {elli_example_callback_handover, []}
+                     ]}
+             ],
+
+    {ok, P} = elli:start_link([{callback, elli_middleware},
+                               {callback_args, Config},
                                {port, 3003}]),
     unlink(P),
     [P].

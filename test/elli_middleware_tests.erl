@@ -2,20 +2,20 @@
 -include_lib("eunit/include/eunit.hrl").
 -include("elli_test.hrl").
 
-
 elli_test_() ->
     {setup,
      fun setup/0, fun teardown/1,
      [
       ?_test(hello_world()),
       ?_test(short_circuit()),
-      ?_test(compress())
+      ?_test(compress()),
+      ?_test(no_callbacks())
      ]}.
+
 
 %%
 %% TESTS
 %%
-
 
 short_circuit() ->
     URL            = "http://localhost:3002/middleware/short-circuit",
@@ -60,6 +60,12 @@ compress() ->
     ?assertEqual(lists:flatten(lists:duplicate(86, "Hello World!")),
                  body(Response3)).
 
+no_callbacks() ->
+    {ok, Response1} = httpc:request("http://localhost:3004/whatever"),
+    ?assertMatch(404, status(Response1)),
+    ?assertMatch("Not Found", body(Response1)).
+
+
 %%
 %% HELPERS
 %%
@@ -81,11 +87,15 @@ setup() ->
                      ]}
              ],
 
-    {ok, P} = elli:start_link([{callback, elli_middleware},
-                               {callback_args, Config},
-                               {port, 3002}]),
-    unlink(P),
-    [P].
+    {ok, P1} = elli:start_link([{callback, elli_middleware},
+                                {callback_args, Config},
+                                {port, 3002}]),
+    unlink(P1),
+    {ok, P2} = elli:start_link([{callback, elli_middleware},
+                                {callback_args, [{mods, []}]},
+                                {port, 3004}]),
+    unlink(P2),
+    [P1, P2].
 
 teardown(Pids) ->
     [elli:stop(P) || P <- Pids].
