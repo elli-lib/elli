@@ -19,13 +19,14 @@
 -export([accept/4, handle_request/4, chunk_loop/1, split_args/1,
          parse_path/1, keepalive_loop/3, keepalive_loop/5]).
 
--export_type([version/0]).
+-export_type([version/0, connection_token_label/0, connection_token/0]).
 
 %% @type version(). HTTP version as a tuple, i.e. `{0, 9} | {1, 0} | {1, 1}'.
 -type version() :: {0, 9} | {1, 0} | {1, 1}.
 
-%% TODO: use this
-%% -type connection_token() :: keep_alive | close.
+-type connection_token_label() :: keep_alive | close.
+
+-type connection_token() :: {connection_token_label(), binary()}.
 
 -spec start_link(Server, ListenSocket, Options, Callback) -> pid() when
       Server       :: pid(),
@@ -85,7 +86,7 @@ keepalive_loop(Socket, NumRequests, Buffer, Options, Callback) ->
       PrevBin   :: binary(),
       Options   :: proplists:proplist(),
       Callback  :: elli_handler:callback(),
-      ConnToken :: {'keep_alive' | 'close', binary()}.
+      ConnToken :: connection_token().
 handle_request(S, PrevB, Opts, {Mod, Args} = Callback) ->
     {Method, RawPath, V, B0} = get_request(S, PrevB, Opts, Callback),
     t(headers_start),
@@ -98,7 +99,7 @@ handle_request(S, PrevB, Opts, {Mod, Args} = Callback) ->
             t(body_start),
             {RequestBody, B2} = get_body(S, RequestHeaders, B1, Opts, Callback),
             t(body_end),
-            Req1 = Req#req{body = RequestBody},
+            Req1 = elli_request:set_body(Req, RequestBody),
 
             t(user_start),
             Response = execute_callback(Req1),
@@ -106,7 +107,7 @@ handle_request(S, PrevB, Opts, {Mod, Args} = Callback) ->
 
             handle_response(Req1, B2, Response);
         {ok, handover} ->
-            Req1 = Req#req{body = B1},
+            Req1 = elli_request:set_body(Req, B1),
 
             t(user_start),
             Response = Mod:handle(Req1, Args),
@@ -120,7 +121,7 @@ handle_request(S, PrevB, Opts, {Mod, Args} = Callback) ->
     end.
 
 handle_response(Req, Buffer, {response, Code, UserHeaders, Body}) ->
-    #req{callback = {Mod, Args}} = Req,
+    {Mod, Args} = elli_request:callback(Req),
 
     Headers = [connection(Req, UserHeaders),
                content_length(UserHeaders, Body)
@@ -137,7 +138,7 @@ handle_response(Req, Buffer, {response, Code, UserHeaders, Body}) ->
 
 
 handle_response(Req, _Buffer, {chunk, UserHeaders, Initial}) ->
-    #req{callback = {Mod, Args}} = Req,
+    {Mod, Args} = elli_request:callback(Req),
 
     ResponseHeaders = [{<<"Transfer-Encoding">>, <<"chunked">>},
                        connection(Req, UserHeaders)
@@ -145,8 +146,8 @@ handle_response(Req, _Buffer, {chunk, UserHeaders, Initial}) ->
     send_response(Req, 200, ResponseHeaders, <<"">>),
 
     t(send_start),
-    Initial =:= <<"">> orelse send_chunk(Req#req.socket, Initial),
-    ClosingEnd = case start_chunk_loop(Req#req.socket) of
+    Initial =:= <<"">> orelse send_chunk(elli_request:socket(Req), Initial),
+    ClosingEnd = case start_chunk_loop(elli_request:socket(Req)) of
                      {error, client_closed} -> client;
                      ok                     -> server
                  end,
@@ -162,15 +163,15 @@ handle_response(Req, _Buffer, {chunk, UserHeaders, Initial}) ->
 
 handle_response(Req, Buffer, {file, ResponseCode, UserHeaders,
                               Filename, Range}) ->
-    #req{callback = {Mod, Args}} = Req,
+    {Mod, Args} = elli_request:callback(Req),
 
     ResponseHeaders = [connection(Req, UserHeaders) | UserHeaders],
 
     case elli_util:file_size(Filename) of
         {error, FileError} ->
             handle_event(Mod, file_error, [FileError], Args),
-            send_server_error(Req#req.socket),
-            elli_tcp:close(Req#req.socket),
+            send_server_error(elli_request:socket(Req)),
+            elli_tcp:close(elli_request:socket(Req)),
             exit(normal);
         Size ->
             t(send_start),
@@ -212,7 +213,7 @@ handle_response(Req, Buffer, {file, ResponseCode, UserHeaders,
 send_response(Req, Code, Headers, UserBody) ->
     ResponseHeaders = assemble_response_headers(Code, Headers),
 
-    Body     = case {Req#req.method, Code} of
+    Body     = case {elli_request:method(Req), Code} of
                    {'HEAD', _} -> <<>>;
                    {_, 304}    -> <<>>;
                    {_, 204}    -> <<>>;
@@ -223,10 +224,10 @@ send_response(Req, Code, Headers, UserBody) ->
     Response = [ResponseHeaders,
                 Body],
 
-    case elli_tcp:send(Req#req.socket, Response) of
+    case elli_tcp:send(elli_request:socket(Req), Response) of
         ok -> ok;
         {error, Closed} when Closed =:= closed orelse Closed =:= enotconn ->
-            #req{callback = {Mod, Args}} = Req,
+            {Mod, Args} = elli_request:callback(Req),
             handle_event(Mod, client_closed, [before_response], Args),
             ok
     end.
@@ -240,23 +241,25 @@ send_response(Req, Code, Headers, UserBody) ->
       Headers  :: elli:headers(),
       Filename :: file:filename(),
       Range    :: elli_util:range().
-send_file(#req{callback={Mod, Args}} = Req, Code, Headers, Filename, Range) ->
+send_file(Req, Code, Headers, Filename, Range) ->
+    {Mod, Args} = elli_request:callback(Req),
     ResponseHeaders = assemble_response_headers(Code, Headers),
 
     case file:open(Filename, [read, raw, binary]) of
         {ok,    Fd}        -> do_send_file(Fd, Range, Req, ResponseHeaders);
         {error, FileError} ->
             handle_event(Mod, file_error, [FileError], Args),
-            send_server_error(Req#req.socket),
-            elli_tcp:close(Req#req.socket),
+            send_server_error(elli_request:socket(Req)),
+            elli_tcp:close(elli_request:socket(Req)),
             exit(normal)
     end,
     ok.
 
-do_send_file(Fd, {Offset, Length}, #req{callback={Mod, Args}} = Req, Headers) ->
-    try elli_tcp:send(Req#req.socket, Headers) of
+do_send_file(Fd, {Offset, Length}, Req, Headers) ->
+    {Mod, Args} = elli_request:callback(Req),
+    try elli_tcp:send(elli_request:socket(Req), Headers) of
         ok ->
-            case elli_tcp:sendfile(Fd, Req#req.socket, Offset, Length, []) of
+            case elli_tcp:sendfile(Fd, elli_request:socket(Req), Offset, Length, []) of
                 {ok, BytesSent} -> s(file, BytesSent), ok;
                 {error, Closed} when Closed =:= closed orelse
                                      Closed =:= enotconn ->
@@ -283,7 +286,8 @@ send_rescue_response(Socket, Code, Body) ->
     elli_tcp:send(Socket, Response).
 
 %% @doc Execute the user callback, translating failure into a proper response.
-execute_callback(#req{callback = {Mod, Args}} = Req) ->
+execute_callback(Req) ->
+    {Mod, Args} = elli_request:callback(Req),
     try Mod:handle(Req, Args) of
         %% {ok,...{file,...}}
         {ok, Headers, {file, Filename}} ->
@@ -579,6 +583,7 @@ do_check_max_size_x2(Socket, ContentLength, Buffer, MaxSize)
     elli_tcp:send(Socket, Response);
 do_check_max_size_x2(_, _, _, _) -> ok.
 
+
 -spec mk_req(Method, PathTuple, Headers, Body, V, Socket, Callback) -> Req when
       Method    :: elli:http_method(),
       PathTuple :: {PathType :: atom(), RawPath :: binary()},
@@ -603,6 +608,7 @@ mk_req(Method, PathTuple, Headers, Body, V, Socket, {Mod, Args} = Callback) ->
             elli_tcp:close(Socket),
             exit(normal)
     end.
+
 
 mk_req(Method, Scheme, Host, Port, PathTuple, Headers, Body, V, Socket, Callback) ->
     Req = mk_req(Method, PathTuple, Headers, Body, V, Socket, Callback),
@@ -643,21 +649,26 @@ encode_value(V) when is_binary(V)  -> V;
 encode_value(V) when is_list(V)    -> list_to_binary(V).
 
 
-connection_token(#req{version = {1, 1}, headers = Headers}) ->
+connection_token(Req) ->
+    do_connection_token(elli_request:version(Req), elli_request:headers(Req)).
+
+
+do_connection_token({1, 1}, Headers) ->
     case proplists:get_value(<<"Connection">>, Headers) of
         <<"close">> -> <<"close">>;
         <<"Close">> -> <<"close">>;
         _           -> <<"Keep-Alive">>
     end;
-connection_token(#req{version = {1, 0}, headers = Headers}) ->
+do_connection_token({1, 0}, Headers) ->
     case proplists:get_value(<<"Connection">>, Headers) of
         <<"Keep-Alive">> -> <<"Keep-Alive">>;
         _                -> <<"close">>
     end;
-connection_token(#req{version = {0, 9}}) ->
+do_connection_token({0, 9}, _Headers) ->
     <<"close">>.
 
 
+-spec close_or_keepalive(elli:req(), elli:headers()) -> connection_token_label().
 close_or_keepalive(Req, UserHeaders) ->
     case proplists:get_value(<<"Connection">>, UserHeaders) of
         undefined ->
@@ -719,7 +730,8 @@ split_args(Qs) ->
 %% CALLBACK HELPERS
 %%
 
-init(#req{callback = {Mod, Args}} = Req) ->
+init(Req) ->
+    {Mod, Args} = elli_request:callback(Req),
     ?IF(erlang:function_exported(Mod, init, 2),
         case Mod:init(Req, Args) of
             ignore          -> {ok, standard};
