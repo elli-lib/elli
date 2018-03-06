@@ -31,6 +31,10 @@
         , get_range/1
         , to_proplist/1
         , is_request/1
+        , set_body/2
+        , callback/1
+        , socket/1
+        , version/1
         ]).
 
 -export_type([http_range/0]).
@@ -41,22 +45,72 @@
 
 
 %%
-%% Helpers for working with a #req{}
+%% Helpers for working with requests.
 %%
 
+-spec body(elli:req())     -> elli:body().
+-spec callback(elli:req()) -> elli_handler:callback().
+-spec get_args(elli:req()) -> proplists:proplist().
+-spec headers(elli:req())  -> elli:headers().
+-spec method(elli:req())   -> elli:http_method().
+-spec path(elli:req())     -> [binary()].
+-spec pid(elli:req())      -> pid().
+-spec raw_path(elli:req()) -> binary().
+-spec socket(elli:req())   -> undefined | elli_tcp:socket().
+-spec version(elli:req())  -> elli_http:version().
 
-%% @doc Return `path' split into binary parts.
-path(#req{path = Path})          -> Path.
-%% @doc Return the `raw_path', i.e. not split or parsed for query params.
-raw_path(#req{raw_path = Path})  -> Path.
-%% @doc Return the `headers'.
-headers(#req{headers = Headers}) -> Headers.
-%% @doc Return the `method'.
-method(#req{method = Method})    -> Method.
+-spec is_request(elli:req()) -> boolean().
+
+-spec set_body(elli:req(), elli:body()) -> elli:req().
+
+-spec to_proplist(elli:req()) -> proplists:proplist().
+
+-ifdef(elli_ctx).
+
+%% TODO: elli_ctx helpers
+
+-else.
+
 %% @doc Return the `body'.
-body(#req{body = Body})          -> Body.
+body(#req{body = Body})             -> Body.
+%% @doc Return the `callback'.
+callback(#req{callback = Callback}) -> Callback.
+%% @doc Return a proplist of keys and values of the original query string.
+%% Both keys and values in the returned proplists will be binaries or the atom
+%% `true' in case no value was supplied for the query value.
+get_args(#req{args = Args})         -> Args.
+%% @doc Return the `headers'.
+headers(#req{headers = Headers})    -> Headers.
+%% @doc Return the `method'.
+method(#req{method = Method})       -> Method.
+%% @doc Return `path' split into binary parts.
+path(#req{path = Path})             -> Path.
+%% @doc Return the `pid'.
+pid(#req{pid = Pid})                -> Pid.
+%% @doc Return the `raw_path', i.e. not split or parsed for query params.
+raw_path(#req{raw_path = Path})     -> Path.
+%% @doc Return the `socket'.
+socket(#req{socket = Socket})       -> Socket.
+%% @doc Return the `version'.
+version(#req{version = Version})    -> Version.
 
-peer(#req{socket = Socket} = Req) ->
+%% @doc Set the `body' of `Req' to `Body'.
+set_body(Req, Body)                 -> Req#req{body = Body}.
+
+%% @doc Return `true' iff the argument is a `#req{}'.
+is_request(#req{}) -> true;
+is_request(_)      -> false.
+
+%% @doc Serialize the `Req'uest record to a proplist.
+%% Useful for logging.
+to_proplist(#req{} = Req) ->
+    lists:zip(record_info(fields, req), tl(tuple_to_list(Req))).
+
+-endif.
+
+
+peer(Req) ->
+    Socket = socket(Req),
     case get_header(<<"X-Forwarded-For">>, Req, undefined) of
         undefined ->
             case elli_tcp:peername(Socket) of
@@ -71,81 +125,86 @@ peer(#req{socket = Socket} = Req) ->
 
 
 %% @equiv proplists:get_value(Key, Headers)
-get_header(Key, #req{headers = Headers}) ->
-    proplists:get_value(Key, Headers).
+get_header(Key, Req) ->
+    proplists:get_value(Key, headers(Req)).
+
 
 %% @equiv proplists:get_value(Key, Headers, Default)
-get_header(Key, #req{headers = Headers}, Default) ->
-    proplists:get_value(Key, Headers, Default).
+get_header(Key, Req, Default) ->
+    proplists:get_value(Key, headers(Req), Default).
+
 
 %% @equiv get_arg(Key, Req, undefined)
-get_arg(Key, #req{} = Req) ->
+get_arg(Key, Req) ->
     get_arg(Key, Req, undefined).
 
+
 %% @equiv proplists:get_value(Key, Args, Default)
-get_arg(Key, #req{args = Args}, Default) ->
-    proplists:get_value(Key, Args, Default).
+get_arg(Key, Req, Default) ->
+    proplists:get_value(Key, get_args(Req), Default).
+
 
 %% @equiv get_arg_decoded(Key, Req, undefined)
-get_arg_decoded(Key, #req{} = Req) ->
+get_arg_decoded(Key, Req) ->
     get_arg_decoded(Key, Req, undefined).
 
-get_arg_decoded(Key, #req{args = Args}, Default) ->
-    case proplists:get_value(Key, Args) of
+
+get_arg_decoded(Key, Req, Default) ->
+    case proplists:get_value(Key, get_args(Req)) of
         undefined    -> Default;
-        EncodedValue ->
-            uri_decode(EncodedValue)
+        EncodedValue -> uri_decode(EncodedValue)
     end.
+
 
 %% @doc Parse `application/x-www-form-urlencoded' body into a proplist.
-body_qs(#req{body = <<>>}) -> [];
-body_qs(#req{body = Body} = Req) ->
-    case get_header(<<"Content-Type">>, Req) of
-        <<"application/x-www-form-urlencoded">> ->
-            elli_http:split_args(Body);
-        <<"application/x-www-form-urlencoded;", _/binary>> -> % ; charset=...
-            elli_http:split_args(Body);
-        _ ->
-            erlang:error(badarg)
+body_qs(Req) ->
+    case body(Req) of
+        <<>> -> [];
+        Body ->
+            case get_header(<<"Content-Type">>, Req) of
+                <<"application/x-www-form-urlencoded">> ->
+                    elli_http:split_args(Body);
+                <<"application/x-www-form-urlencoded;", _/binary>> -> % ; charset=...
+                    elli_http:split_args(Body);
+                _ ->
+                    erlang:error(badarg)
+            end
     end.
+
 
 %% @equiv post_arg(Key, Req, undefined)
-post_arg(Key, #req{} = Req) ->
+post_arg(Key, Req) ->
     post_arg(Key, Req, undefined).
 
-post_arg(Key, #req{} = Req, Default) ->
+
+post_arg(Key, Req, Default) ->
     proplists:get_value(Key, body_qs(Req), Default).
 
+
 %% @equiv post_arg_decoded(Key, Req, undefined)
-post_arg_decoded(Key, #req{} = Req) ->
+post_arg_decoded(Key, Req) ->
     post_arg_decoded(Key, Req, undefined).
 
-post_arg_decoded(Key, #req{} = Req, Default) ->
+
+post_arg_decoded(Key, Req, Default) ->
     case proplists:get_value(Key, body_qs(Req)) of
         undefined    -> Default;
-        EncodedValue ->
-            uri_decode(EncodedValue)
+        EncodedValue -> uri_decode(EncodedValue)
     end.
 
 
-%% @doc Return a proplist of keys and values of the original query string.
-%% Both keys and values in the returned proplists will be binaries or the atom
-%% `true' in case no value was supplied for the query value.
--spec get_args(elli:req())  -> QueryArgs :: proplists:proplist().
-get_args(#req{args = Args}) -> Args.
-
-get_args_decoded(#req{args = Args}) ->
+get_args_decoded(Req) ->
     lists:map(fun ({K, true}) ->
                       {K, true};
                   ({K, V}) ->
                       {K, uri_decode(V)}
-              end, Args).
+              end, get_args(Req)).
 
 
-post_args(#req{} = Req) ->
+post_args(Req) ->
     body_qs(Req).
 
-post_args_decoded(#req{} = Req) ->
+post_args_decoded(Req) ->
     lists:map(fun ({K, true}) ->
                       {K, true};
                   ({K, V}) ->
@@ -155,8 +214,8 @@ post_args_decoded(#req{} = Req) ->
 %% @doc Calculate the query string associated with a given `Request'
 %% as a binary.
 -spec query_str(elli:req()) -> QueryStr :: binary().
-query_str(#req{raw_path = Path}) ->
-    case binary:split(Path, [<<"?">>]) of
+query_str(Req) ->
+    case binary:split(raw_path(Req), [<<"?">>]) of
         [_, Qs] -> Qs;
         [_]     -> <<>>
     end.
@@ -166,8 +225,8 @@ query_str(#req{raw_path = Path}) ->
 %% The result is either a `byte_range_set()' or the atom `parse_error'.
 %% Use {@link elli_util:normalize_range/2} to get a validated, normalized range.
 -spec get_range(elli:req()) -> [http_range()] | parse_error.
-get_range(#req{headers = Headers})  ->
-    case proplists:get_value(<<"Range">>, Headers) of
+get_range(Req)  ->
+    case proplists:get_value(<<"Range">>, headers(Req)) of
         <<"bytes=", RangeSetBin/binary>> ->
             parse_range_set(RangeSetBin);
         _ -> []
@@ -212,19 +271,14 @@ parse_range(<<ByteRange/binary>>) ->
 remove_whitespace(Bin) ->
     binary:replace(Bin, <<" ">>, <<>>, [global]).
 
-%% @doc Serialize the `Req'uest record to a proplist.
-%% Useful for logging.
-to_proplist(#req{} = Req) ->
-    lists:zip(record_info(fields, req), tl(tuple_to_list(Req))).
-
-
 
 %% @doc Return a reference that can be used to send chunks to the client.
 %% If the protocol does not support it, return `{error, not_supported}'.
-chunk_ref(#req{version = {1, 1}} = Req) ->
-    Req#req.pid;
-chunk_ref(#req{}) ->
-    {error, not_supported}.
+chunk_ref(Req) ->
+    case version(Req) of
+        {1, 1} -> pid(Req);
+        _      -> {error, not_supported}
+    end.
 
 
 %% @doc Explicitly close the chunked connection.
@@ -260,9 +314,6 @@ is_ref_alive(Ref) ->
     ?IF(node(Ref) =:= node(),
         is_process_alive(Ref),
         rpc:call(node(Ref), erlang, is_process_alive, [Ref])).
-
-is_request(#req{}) -> true;
-is_request(_)      -> false.
 
 
 -ifdef(binary_http_uri).

@@ -26,8 +26,16 @@
 
 -export_type([req/0, http_method/0, body/0, headers/0, response_code/0]).
 
+-ifdef(elli_ctx).
+
+%% TODO: req/0 type for elli_ctx
+
+-else.
+
 %% @type req(). A record representing an HTTP request.
 -type req() :: #req{}.
+
+-endif.
 
 %% @type http_method(). An uppercase atom representing a known HTTP verb or a
 %% binary for other verbs.
