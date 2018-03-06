@@ -2,12 +2,15 @@
 -include_lib("eunit/include/eunit.hrl").
 -include("elli_test.hrl").
 
+-define(README, "README.md").
+
 elli_ssl_test_() ->
     {setup,
      fun setup/0, fun teardown/1,
      [
       ?_test(hello_world()),
-      ?_test(chunked())
+      ?_test(chunked()),
+      ?_test(sendfile())
      ]}.
 
 %%% Tests
@@ -28,6 +31,15 @@ chunked() ->
                   {"content-length", integer_to_list(length(Expected))},
                   {"content-type", "text/event-stream"}], headers(Response)),
     ?assertMatch(Expected, body(Response)).
+
+sendfile() ->
+    {ok, Response} = httpc:request("https://localhost:3443/sendfile"),
+    {ok, Expected} = file:read_file(?README),
+    ?assertMatch(200, status(Response)),
+    ?assertEqual([{"connection", "Keep-Alive"},
+                  {"content-length", integer_to_list(size(Expected))}],
+                 headers(Response)),
+    ?assertEqual(binary_to_list(Expected), body(Response)).
 
 %%% Internal helpers
 
