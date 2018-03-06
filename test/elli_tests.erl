@@ -51,6 +51,7 @@ elli_test_() ->
         ?_test(chunked()),
         ?_test(sendfile()),
         ?_test(send_no_file()),
+        ?_test(sendfile_error()),
         ?_test(sendfile_range()),
         ?_test(slow_client()),
         ?_test(post_pipeline()),
@@ -454,6 +455,14 @@ sendfile() ->
 
 send_no_file() ->
     {ok, Response} = httpc:request("http://localhost:3001/send_no_file"),
+
+    ?assertMatch(500, status(Response)),
+    ?assertMatch([{"content-length", "12"}],
+                 headers(Response)),
+    ?assertMatch("Server Error", body(Response)).
+
+sendfile_error() ->
+    {ok, Response} = httpc:request("http://localhost:3001/sendfile/error"),
 
     ?assertMatch(500, status(Response)),
     ?assertMatch([{"content-length", "12"}],
