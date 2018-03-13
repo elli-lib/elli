@@ -144,6 +144,10 @@ handle('GET', [<<"send_no_file">>], _Req) ->
     F    = "README",
     {ok, [], {file, F}};
 
+handle('GET', [<<"sendfile">>, <<"error">>], _Req) ->
+    F    = "test",
+    {ok, [], {file, F}};
+
 handle('GET', [<<"sendfile">>, <<"range">>], Req) ->
     %% Read the Range header of the request and use the normalized
     %% range with sendfile, otherwise send the entire file when

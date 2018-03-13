@@ -51,6 +51,7 @@ elli_test_() ->
         ?_test(chunked()),
         ?_test(sendfile()),
         ?_test(send_no_file()),
+        ?_test(sendfile_error()),
         ?_test(sendfile_range()),
         ?_test(slow_client()),
         ?_test(post_pipeline()),
@@ -158,16 +159,11 @@ hello_world() ->
     ?assertNotMatch(undefined, get_timing_value(send_end)),
     ?assertNotMatch(undefined, get_timing_value(request_end)),
     %% check timings
-    ?assertMatch(true,
-                 ?VTB(request_start, request_end, 1000000, 1200000)),
-    ?assertMatch(true,
-                 ?VTB(headers_start, headers_end, 1, 100)),
-    ?assertMatch(true,
-                 ?VTB(body_start, body_end, 1, 100)),
-    ?assertMatch(true,
-                 ?VTB(user_start, user_end, 1000000, 1200000)),
-    ?assertMatch(true,
-                 ?VTB(send_start, send_end, 1, 200)).
+    ?assert(?VTB(request_start, request_end, 1000000, 1200000)),
+    ?assert(?VTB(headers_start, headers_end, 1, 100)),
+    ?assert(?VTB(body_start, body_end, 1, 100)),
+    ?assert(?VTB(user_start, user_end, 1000000, 1200000)),
+    ?assert(?VTB(send_start, send_end, 1, 200)).
 
 
 keep_alive_timings() ->
@@ -217,16 +213,11 @@ keep_alive_timings(Status, Headers, HCRef) ->
     ?assertNotMatch(undefined, get_timing_value(send_end)),
     ?assertNotMatch(undefined, get_timing_value(request_end)),
     %% check timings
-    ?assertMatch(true,
-                 ?VTB(request_start, request_end, 1000000, 1200000)),
-    ?assertMatch(true,
-                 ?VTB(headers_start, headers_end, 1, 100)),
-    ?assertMatch(true,
-                 ?VTB(body_start, body_end, 1, 100)),
-    ?assertMatch(true,
-                 ?VTB(user_start, user_end, 1000000, 1200000)),
-    ?assertMatch(true,
-                 ?VTB(send_start, send_end, 1, 200)).
+    ?assert(?VTB(request_start, request_end, 1000000, 1200000)),
+    ?assert(?VTB(headers_start, headers_end, 1, 100)),
+    ?assert(?VTB(body_start, body_end, 1, 100)),
+    ?assert(?VTB(user_start, user_end, 1000000, 1200000)),
+    ?assert(?VTB(send_start, send_end, 1, 200)).
 
 not_found() ->
     {ok, Response} = httpc:request("http://localhost:3001/foobarbaz"),
@@ -466,9 +457,17 @@ send_no_file() ->
     {ok, Response} = httpc:request("http://localhost:3001/send_no_file"),
 
     ?assertMatch(500, status(Response)),
-    ?assertEqual([{"content-length", "12"}],
+    ?assertMatch([{"content-length", "12"}],
                  headers(Response)),
-    ?assertEqual("Server Error", body(Response)).
+    ?assertMatch("Server Error", body(Response)).
+
+sendfile_error() ->
+    {ok, Response} = httpc:request("http://localhost:3001/sendfile/error"),
+
+    ?assertMatch(500, status(Response)),
+    ?assertMatch([{"content-length", "12"}],
+                 headers(Response)),
+    ?assertMatch("Server Error", body(Response)).
 
 sendfile_range() ->
     Url            = "http://localhost:3001/sendfile/range",
@@ -501,16 +500,11 @@ slow_client() ->
                         "Hello undefined">>},
                  gen_tcp:recv(Client, 0)),
     %% check timings
-    ?assertMatch(true,
-                 ?VTB(request_start, request_end, 30000, 70000)),
-    ?assertMatch(true,
-                 ?VTB(headers_start, headers_end, 30000, 70000)),
-    ?assertMatch(true,
-                 ?VTB(body_start, body_end, 1, 3000)),
-    ?assertMatch(true,
-                 ?VTB(user_start, user_end, 1, 100)),
-    ?assertMatch(true,
-                 ?VTB(send_start, send_end, 1, 200)).
+    ?assert(?VTB(request_start, request_end, 30000, 70000)),
+    ?assert(?VTB(headers_start, headers_end, 30000, 70000)),
+    ?assert(?VTB(body_start, body_end, 1, 3000)),
+    ?assert(?VTB(user_start, user_end, 1, 100)),
+    ?assert(?VTB(send_start, send_end, 1, 200)).
 
 
 post_pipeline() ->
@@ -592,7 +586,7 @@ sends_continue() ->
             "Expect: 100-continue\r\n\r\n">>,
 
     gen_tcp:send(Socket, Req),
-    ?assertEqual({ok, <<"HTTP/1.1 100 Continue\r\n"
+    ?assertMatch({ok, <<"HTTP/1.1 100 Continue\r\n"
                         "Content-Length: 0\r\n\r\n">>},
                  gen_tcp:recv(Socket, 0)),
     % Send Result of the body

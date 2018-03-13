@@ -1,5 +1,7 @@
 -module(elli_handler).
 
+-optional_callbacks([init/2, preprocess/2, postprocess/3]).
+
 -export_type([callback/0, callback_mod/0, callback_args/0, event/0, result/0]).
 
 %% @type callback(). A tuple of a {@type callback_mod()} and {@type
@@ -38,3 +40,18 @@
       Event  :: event(),
       Args   :: callback_args(),
       Config :: [tuple()].
+
+-callback init(Req, Args) -> {ok, standard | handover} when
+      Req  :: elli:req(),
+      Args :: callback_args().
+
+-callback preprocess(Req1, Args) -> Req2 when
+      Req1 :: elli:req(),
+      Args :: callback_args(),
+      Req2 :: elli:req().
+
+-callback postprocess(Req, Res1, Args) -> Res2 when
+      Req  :: elli:req(),
+      Res1 :: result(),
+      Args :: callback_args(),
+      Res2 :: result().
