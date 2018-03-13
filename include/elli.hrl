@@ -1,7 +1,7 @@
 -record(req, {method   :: elli:http_method(),
               scheme   :: undefined | binary(),
               host     :: undefined | binary(),
-              port     :: undefined | non_neg_integer(),
+              port     :: undefined | 1..65535,
               path     :: [binary()],
               args     :: [{binary(), any()}],
               raw_path :: binary(),
