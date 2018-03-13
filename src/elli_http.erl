@@ -13,7 +13,7 @@
 
 -export([send_response/4]).
 
--export([mk_req/7]). %% useful when testing.
+-export([mk_req/7, mk_req/10]). %% useful when testing.
 
 %% Exported for looping with a fully-qualified module name
 -export([accept/4, handle_request/4, chunk_loop/1, split_args/1,
@@ -588,20 +588,32 @@ do_check_max_size_x2(_, _, _, _) -> ok.
       Socket    :: elli_tcp:socket() | undefined,
       Callback  :: elli_handler:callback(),
       Req       :: elli:req().
-mk_req(Method, RawPath, Headers, Body, V, Socket, {Mod, Args} = Callback) ->
-    case parse_path(RawPath) of
-        {ok, {Path, URL, URLArgs}} ->
-            #req{method   = Method, path     = URL,    args    = URLArgs,
+mk_req(Method, PathTuple, Headers, Body, V, Socket, {Mod, Args} = Callback) ->
+    case parse_path(PathTuple) of
+        {ok, {SchemeHostPort, {Path, URL, URLArgs}}} ->
+            {Scheme, Host, Port} = case SchemeHostPort of
+                undefined ->
+                    list_to_tuple(lists:duplicate(3, undefined));
+                {_Scheme, _Host, _Port} ->
+                    SchemeHostPort
+            end,
+            #req{method   = Method, scheme   = Scheme, host    = Host,
+                 port     = Port,   path     = URL,    args    = URLArgs,
                  version  = V,      raw_path = Path,   headers = Headers,
                  body     = Body,   pid      = self(), socket  = Socket,
                  callback = Callback};
         {error, Reason} ->
             handle_event(Mod, request_parse_error,
-                         [{Reason, {Method, RawPath}}], Args),
+                         [{Reason, {Method, PathTuple}}], Args),
             send_bad_request(Socket),
             elli_tcp:close(Socket),
             exit(normal)
     end.
+
+mk_req(Method, Scheme, Host, Port, PathTuple, Headers, Body, V, Socket, Callback) ->
+    Req = mk_req(Method, PathTuple, Headers, Body, V, Socket, Callback),
+    Req#req{scheme = Scheme, host = Host, port = Port}.
+
 
 %%
 %% HEADERS
@@ -683,11 +695,11 @@ content_length(Headers, Body)->
 
 parse_path({abs_path, FullPath}) ->
     case binary:split(FullPath, [<<"?">>]) of
-        [URL]       -> {ok, {FullPath, split_path(URL), []}};
-        [URL, Args] -> {ok, {FullPath, split_path(URL), split_args(Args)}}
+        [URL]       -> {ok, {undefined, {FullPath, split_path(URL), []}}};
+        [URL, Args] -> {ok, {undefined, {FullPath, split_path(URL), split_args(Args)}}}
     end;
-parse_path({absoluteURI, _Scheme, _Host, _Port, Path}) ->
-    parse_path({abs_path, Path});
+parse_path({absoluteURI, Scheme, Host, Port, Path}) ->
+    {{Scheme, Host, Port}, parse_path({abs_path, Path})};
 parse_path(_) ->
     {error, unsupported_uri}.
 
