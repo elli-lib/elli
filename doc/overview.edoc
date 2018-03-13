@@ -1,6 +1,6 @@
 @author Knut Nesheim
 @author elli-lib team
-@copyright 2012-2016 Knut Nesheim, 2016 elli-lib team
+@copyright 2012-2016 Knut Nesheim, 2016-2018 elli-lib team
 @version 2.0.2
 @title elli
 @doc Erlang web server for HTTP APIs
