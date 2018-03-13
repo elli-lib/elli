@@ -5,7 +5,6 @@
 
 -export([sendfile/5]).
 
--type socket() :: any().
 -type sendfile_opts() :: [{chunk_size, non_neg_integer()}].
 
 %% @doc Send part of a file on a socket.
@@ -14,7 +13,7 @@
 %% Originally from https://github.com/ninenines/ranch/pull/41/files
 %%
 %% @end
--spec sendfile(file:fd(), socket(),
+-spec sendfile(file:fd(), elli_tcp:socket(),
         non_neg_integer(), non_neg_integer(), sendfile_opts())
     -> {ok, non_neg_integer()} | {error, atom()}.
 sendfile(RawFile, Socket, Offset, Bytes, Opts) ->
@@ -46,7 +45,7 @@ chunk_size(Opts) ->
             16#1FFF
     end.
 
--spec sendfile_loop(socket(), file:fd(), non_neg_integer(),
+-spec sendfile_loop(elli_tcp:socket(), file:fd(), non_neg_integer(),
         non_neg_integer(), pos_integer())
     -> {ok, non_neg_integer()} | {error, term()}.
 sendfile_loop(_Socket, _RawFile, Sent, Sent, _ChunkSize)

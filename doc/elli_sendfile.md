@@ -19,16 +19,6 @@
 sendfile_opts() = [{chunk_size, non_neg_integer()}]
 </code></pre>
 
-
-
-
-### <a name="type-socket">socket()</a> ###
-
-
-<pre><code>
-socket() = any()
-</code></pre>
-
 <a name="index"></a>
 
 ## Function Index ##
@@ -46,7 +36,7 @@ socket() = any()
 ### sendfile/5 ###
 
 <pre><code>
-sendfile(RawFile::<a href="file.md#type-fd">file:fd()</a>, Socket::<a href="#type-socket">socket()</a>, Offset::non_neg_integer(), Bytes::non_neg_integer(), Opts::<a href="#type-sendfile_opts">sendfile_opts()</a>) -&gt; {ok, non_neg_integer()} | {error, atom()}
+sendfile(RawFile::<a href="file.md#type-fd">file:fd()</a>, Socket::<a href="elli_tcp.md#type-socket">elli_tcp:socket()</a>, Offset::non_neg_integer(), Bytes::non_neg_integer(), Opts::<a href="#type-sendfile_opts">sendfile_opts()</a>) -&gt; {ok, non_neg_integer()} | {error, atom()}
 </code></pre>
 <br />
 
