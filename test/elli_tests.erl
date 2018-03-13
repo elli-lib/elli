@@ -631,6 +631,9 @@ to_proplist_test() ->
                 callback = {mod, []}},
 
     Prop = [{method,   'GET'},
+            {scheme,   undefined},
+            {host,     undefined},
+            {port,     undefined},
             {path,     [<<"crash">>]},
             {args,     []},
             {raw_path, <<"/crash">>},
