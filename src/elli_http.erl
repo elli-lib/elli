@@ -498,7 +498,7 @@ get_headers(Socket, Buffer, Headers, Count, Opts, {Mod, Args} = Callback) ->
 %% buffered too much and get parts of the next pipelined request. In
 %% that case, push it back in the buffer and handle the first request.
 -spec get_body(Socket, Headers, Buffer, Opts, Callback) -> FullBody when
-      Socket   :: elli_tcp:socket(),
+      Socket   :: undefined | elli_tcp:socket(),
       Headers  :: elli:headers(),
       Buffer   :: binary(),
       Opts     :: proplists:proplist(),
@@ -859,11 +859,11 @@ status(B) when is_binary(B) -> B.
 -include_lib("eunit/include/eunit.hrl").
 
 get_body_test() ->
-    Socket   = socket,
+    Socket   = undefined,
     Headers  = [{<<"Content-Length">>, <<" 42 ">>}],
     Buffer   = binary:copy(<<".">>, 42),
     Opts     = [],
-    Callback = {no, op},
+    Callback = {no_mod, []},
     ?assertMatch({Buffer, <<>>},
                  get_body(Socket, Headers, Buffer, Opts, Callback)).
 -endif.

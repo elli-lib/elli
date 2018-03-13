@@ -2,9 +2,9 @@
 
 # elli #
 
-Copyright (c) 2012-2016 Knut Nesheim, 2016 elli-lib team
+Copyright (c) 2012-2016 Knut Nesheim, 2016-2018 elli-lib team
 
-__Version:__ 2.0.2
+__Version:__ 2.1.2
 
 __Authors:__ Knut Nesheim, elli-lib team.
 
@@ -177,6 +177,7 @@ about benchmarking HTTP servers.
 <tr><td><a href="elli_middleware.md" class="module">elli_middleware</a></td></tr>
 <tr><td><a href="elli_middleware_compress.md" class="module">elli_middleware_compress</a></td></tr>
 <tr><td><a href="elli_request.md" class="module">elli_request</a></td></tr>
+<tr><td><a href="elli_sendfile.md" class="module">elli_sendfile</a></td></tr>
 <tr><td><a href="elli_tcp.md" class="module">elli_tcp</a></td></tr>
 <tr><td><a href="elli_test.md" class="module">elli_test</a></td></tr>
 <tr><td><a href="elli_util.md" class="module">elli_util</a></td></tr></table>
