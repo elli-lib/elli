@@ -27,8 +27,8 @@
       Req    :: elli:req(),
       _Args  :: elli_handler:callback_args(),
       Result :: elli_handler:result().
-handle(Req, _Args) -> handle(Req#req.method, elli_request:path(Req), Req).
-
+handle(Req, _Args) ->
+    handle(elli_request:method(Req), elli_request:path(Req), Req).
 
 
 %% @doc Route `Method' and `Path' to the appropriate clause.

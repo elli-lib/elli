@@ -98,6 +98,13 @@ clear_stats(_) ->
     ets:delete(elli_stat_table).
 
 
+-ifdef(elli_ctx).
+
+accessors_test_() ->
+    throw(nyi).
+
+-else.
+
 accessors_test_() ->
     RawPath = <<"/foo/bar">>,
     Headers = [{<<"Content-Type">>, <<"application/x-www-form-urlencoded">>}],
@@ -131,6 +138,8 @@ accessors_test_() ->
 
      ?_assertMatch({error, not_supported}, elli_request:chunk_ref(#req{}))
     ].
+
+-endif.
 
 
 %%% Integration tests
@@ -609,6 +618,13 @@ send(Socket, B, ChunkSize) ->
 
 %%% Unit tests
 
+-ifdef(elli_ctx).
+
+body_qs_test() ->
+    throw(nyi).
+
+-else.
+
 body_qs_test() ->
     Expected = [{<<"foo">>, <<"bar">>},
                 {<<"baz">>, <<"bang">>},
@@ -617,6 +633,16 @@ body_qs_test() ->
     Headers  = [{<<"Content-Type">>, <<"application/x-www-form-urlencoded">>}],
     ?assertMatch(Expected, elli_request:body_qs(#req{body = Body,
                                                      headers = Headers})).
+
+-endif.
+
+
+-ifdef(elli_ctx).
+
+to_proplist_test() ->
+    throw(nyi).
+
+-else.
 
 to_proplist_test() ->
     Req  = #req{method   = 'GET',
@@ -642,9 +668,21 @@ to_proplist_test() ->
             {callback, {mod, []}}],
     ?assertEqual(Prop, elli_request:to_proplist(Req)).
 
+-endif.
+
+
+-ifdef(elli_ctx).
+
+is_request_test() ->
+    throw(nyi).
+
+-else.
+
 is_request_test() ->
     ?assert(elli_request:is_request(#req{})),
     ?assertNot(elli_request:is_request({req, foobar})).
+
+-endif.
 
 
 query_str_test_() ->
@@ -659,6 +697,13 @@ query_str_test_() ->
     ].
 
 
+-ifdef(elli_ctx).
+
+get_range_test_() ->
+    throw(nyi).
+
+-else.
+
 get_range_test_() ->
     Req       = #req{headers = [{<<"Range">>,
                                  <<"bytes=0-99 ,500-999 , -800">>}]},
@@ -672,6 +717,9 @@ get_range_test_() ->
      ?_assertMatch([{offset, 200}], elli_request:get_range(OffsetReq)),
      ?_assertMatch([],              elli_request:get_range(UndefReq)),
      ?_assertMatch(parse_error,     elli_request:get_range(BadReq))].
+
+-endif.
+
 
 normalize_range_test_() ->
     Size     = 1000,
