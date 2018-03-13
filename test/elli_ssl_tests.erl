@@ -27,32 +27,31 @@ get_timing_value(Key) ->
 %%% Tests
 
 hello_world() ->
-    {ok, Response} = httpc:request("https://localhost:3443/hello/world"),
-    ?assertMatch(200, status(Response)).
+    Response = hackney:request(get, "https://localhost:3443/hello/world",
+                               [], <<>>, [insecure]),
+    ?assertMatch(200, status(Response)),
+    ?assertMatch({ok, 200, _, _}, Response).
 
 chunked() ->
-    Expected = "chunk10chunk9chunk8chunk7chunk6chunk5chunk4chunk3chunk2chunk1",
+    Expected = <<"chunk10chunk9chunk8chunk7chunk6chunk5chunk4chunk3chunk2chunk1">>,
 
-    {ok, Response} = httpc:request("https://localhost:3443/chunked"),
+    Response = hackney:get("https://localhost:3443/chunked"),
 
     ?assertMatch(200, status(Response)),
-    ?assertEqual([{"connection", "Keep-Alive"},
-                  %% httpc adds a content-length, even though elli
-                  %% does not send any for chunked transfers
-                  {"content-length", integer_to_list(length(Expected))},
-                  {"content-type", "text/event-stream"}], headers(Response)),
+    ?assertEqual([{<<"Connection">>, <<"Keep-Alive">>},
+                  {<<"Content-Type">>, <<"text/event-stream">>},
+                  {<<"Transfer-Encoding">>,<<"chunked">>}], headers(Response)),
     ?assertMatch(Expected, body(Response)).
 
 sendfile() ->
-    {ok, 200, Headers, ClientRef} = hackney:get("https://localhost:3443/sendfile"),
-    {ok, Body} = hackney:body(ClientRef),
+    Response       = hackney:get("https://localhost:3443/sendfile"),
     F              = ?README,
     {ok, Expected} = file:read_file(F),
 
-    ?assertEqual([{<<"Content-Length">>, integer_to_binary(size(Expected))},
-                  {<<"Connection">>, <<"Keep-Alive">>}],
-                 Headers),
-    ?assertEqual(Expected, Body),
+    ?assertEqual([{<<"Connection">>, <<"Keep-Alive">>},
+                  {<<"Content-Length">>, ?I2B(size(Expected))}],
+                 headers(Response)),
+    ?assertEqual(Expected, body(Response)),
     %% sizes
     ?assertEqual(size(Expected), get_size_value(file)),
     ?assertMatch(65, get_size_value(resp_headers)),
@@ -76,7 +75,6 @@ setup() ->
     application:start(public_key),
     application:start(ssl),
     {ok, _} = application:ensure_all_started(hackney),
-    inets:start(),
 
     EbinDir  = filename:dirname(code:which(?MODULE)),
     CertDir  = filename:join([EbinDir, "..", "test"]),
@@ -96,14 +94,13 @@ setup() ->
                                 ssl,
                                 {keyfile, KeyFile},
                                 {certfile, CertFile},
-                                {callback,  elli_middleware},
+                                {callback, elli_middleware},
                                 {callback_args, Config}
                                ]),
     unlink(P),
     [P].
 
 teardown(Pids) ->
-    inets:stop(),
     application:stop(ssl),
     application:stop(public_key),
     application:stop(crypto),

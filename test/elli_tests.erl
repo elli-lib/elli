@@ -3,7 +3,6 @@
 -include("elli.hrl").
 -include("elli_test.hrl").
 
--define(I2B(I), list_to_binary(integer_to_list(I))).
 -define(I2L(I), integer_to_list(I)).
 -define(README, "README.md").
 -define(VTB(T1, T2, LB, UB),
@@ -75,7 +74,6 @@ setup() ->
     application:start(public_key),
     application:start(ssl),
     {ok, _} = application:ensure_all_started(hackney),
-    inets:start(),
 
     Config = [
               {mods, [
@@ -136,14 +134,14 @@ accessors_test_() ->
 
 
 %%% Integration tests
-%%%   Use inets httpc to actually call Elli over the network.
+%%%   Use hackney to actually call Elli over the network.
 
 hello_world() ->
-    {ok, Response} = httpc:request("http://localhost:3001/hello/world"),
+    Response = hackney:get("http://localhost:3001/hello/world"),
     ?assertMatch(200, status(Response)),
-    ?assertMatch([{"connection", "Keep-Alive"},
-                  {"content-length", "12"}], headers(Response)),
-    ?assertMatch("Hello World!", body(Response)),
+    ?assertMatch([{<<"Connection">>, <<"Keep-Alive">>},
+                  {<<"Content-Length">>, <<"12">>}], headers(Response)),
+    ?assertMatch(<<"Hello World!">>, body(Response)),
     %% sizes
     ?assertMatch(63, get_size_value(resp_headers)),
     ?assertMatch(12, get_size_value(resp_body)),
@@ -220,147 +218,139 @@ keep_alive_timings(Status, Headers, HCRef) ->
     ?assert(?VTB(send_start, send_end, 1, 200)).
 
 not_found() ->
-    {ok, Response} = httpc:request("http://localhost:3001/foobarbaz"),
+    Response = hackney:get("http://localhost:3001/foobarbaz"),
     ?assertMatch(404, status(Response)),
-    ?assertMatch([{"connection", "Keep-Alive"},
-                  {"content-length", "9"}], headers(Response)),
-    ?assertMatch("Not Found", body(Response)).
+    ?assertMatch([{<<"Connection">>, <<"Keep-Alive">>},
+                  {<<"Content-Length">>, <<"9">>}], headers(Response)),
+    ?assertMatch(<<"Not Found">>, body(Response)).
 
 crash() ->
-    {ok, Response} = httpc:request("http://localhost:3001/crash"),
+    Response = hackney:get("http://localhost:3001/crash"),
     ?assertMatch(500, status(Response)),
-    ?assertMatch([{"connection", "Keep-Alive"},
-                  {"content-length", "21"}], headers(Response)),
-    ?assertMatch("Internal server error", body(Response)).
+    ?assertMatch([{<<"Connection">>, <<"Keep-Alive">>},
+                  {<<"Content-Length">>, <<"21">>}], headers(Response)),
+    ?assertMatch(<<"Internal server error">>, body(Response)).
 
 invalid_return() ->
     %% Elli should return 500 for handlers returning bogus responses.
-    {ok, Response} = httpc:request("http://localhost:3001/invalid_return"),
+    Response = hackney:get("http://localhost:3001/invalid_return"),
     ?assertMatch(500, status(Response)),
-    ?assertMatch([{"connection", "Keep-Alive"},
-                  {"content-length", "21"}], headers(Response)),
-    ?assertMatch("Internal server error", body(Response)).
+    ?assertMatch([{<<"Connection">>, <<"Keep-Alive">>},
+                  {<<"Content-Length">>, <<"21">>}], headers(Response)),
+    ?assertMatch(<<"Internal server error">>, body(Response)).
 
 no_compress() ->
-    {ok, Response} = httpc:request("http://localhost:3001/compressed"),
+    Response = hackney:get("http://localhost:3001/compressed"),
     ?assertMatch(200, status(Response)),
-    ?assertMatch([{"connection", "Keep-Alive"},
-                  {"content-length", "1032"}], headers(Response)),
+    ?assertMatch([{<<"Connection">>, <<"Keep-Alive">>},
+                  {<<"Content-Length">>, <<"1032">>}], headers(Response)),
     ?assertEqual(binary:copy(<<"Hello World!">>, 86),
-                 list_to_binary(body(Response))).
+                 body(Response)).
 
 compress(Encoding, Length) ->
-    {ok, Response} = httpc:request(get, {"http://localhost:3001/compressed",
-                                         [{"Accept-Encoding", Encoding}]},
-                                   [], []),
+    Response = hackney:get("http://localhost:3001/compressed",
+                           [{<<"Accept-Encoding">>, Encoding}]),
     ?assertMatch(200, status(Response)),
-    ?assertMatch([{"connection", "Keep-Alive"},
-                  {"content-encoding", Encoding},
-                  {"content-length", Length}], headers(Response)),
+    ?assertMatch([{<<"Connection">>, <<"Keep-Alive">>},
+                  {<<"Content-Encoding">>, Encoding},
+                  {<<"Content-Length">>, Length}], headers(Response)),
     ?assertEqual(binary:copy(<<"Hello World!">>, 86),
                  uncompress(Encoding, body(Response))).
 
-uncompress("gzip",    Data) -> zlib:gunzip(Data);
-uncompress("deflate", Data) -> zlib:uncompress(Data).
+uncompress(<<"gzip">>,    Data) -> zlib:gunzip(Data);
+uncompress(<<"deflate">>, Data) -> zlib:uncompress(Data).
 
-gzip() -> compress("gzip", "41").
+gzip() -> compress(<<"gzip">>, <<"41">>).
 
-deflate() -> compress("deflate", "29").
+deflate() -> compress(<<"deflate">>, <<"29">>).
 
 exception_flow() ->
-    {ok, Response} = httpc:request("http://localhost:3001/403"),
+    Response = hackney:get("http://localhost:3001/403"),
     ?assertMatch(403, status(Response)),
-    ?assertMatch([{"connection", "Keep-Alive"},
-                  {"content-length", "9"}], headers(Response)),
-    ?assertMatch("Forbidden", body(Response)).
+    ?assertMatch([{<<"Connection">>, <<"Keep-Alive">>},
+                  {<<"Content-Length">>, <<"9">>}], headers(Response)),
+    ?assertMatch(<<"Forbidden">>, body(Response)).
 
 hello_iolist() ->
-    Url = "http://localhost:3001/hello/iolist?name=knut",
-    {ok, Response} = httpc:request(Url),
-    ?assertMatch("Hello knut", body(Response)).
+    Url      = "http://localhost:3001/hello/iolist?name=knut",
+    Response = hackney:get(Url),
+    ?assertMatch(<<"Hello knut">>, body(Response)).
 
 accept_content_type() ->
-    {ok, Json} = httpc:request(get, {"http://localhost:3001/type?name=knut",
-                                     [{"Accept", "application/json"}]}, [], []),
-    ?assertMatch(<<"{\"name\" : \"knut\"}">>, list_to_binary(body(Json))),
-    {ok, Text} = httpc:request(get, {"http://localhost:3001/type?name=knut",
-                                     [{"Accept", "text/plain"}]}, [], []),
-    ?assertMatch("name: knut", body(Text)).
+    Json = hackney:get("http://localhost:3001/type?name=knut",
+                       [{"Accept", "application/json"}]),
+    ?assertMatch(<<"{\"name\" : \"knut\"}">>, body(Json)),
+    Text = hackney:get("http://localhost:3001/type?name=knut",
+                       [{"Accept", "text/plain"}]),
+    ?assertMatch(<<"name: knut">>, body(Text)).
 
 user_connection() ->
-    Url            = "http://localhost:3001/user/defined/behaviour",
-    {ok, Response} = httpc:request(Url),
+    Url      = "http://localhost:3001/user/defined/behaviour",
+    Response = hackney:get(Url),
     ?assertMatch(304, status(Response)),
-    ?assertMatch([{"connection", "close"},
-                  {"content-length", "123"}], headers(Response)),
-    ?assertMatch([], body(Response)).
+    ?assertMatch([{<<"Connection">>, <<"close">>},
+                  {<<"Content-Length">>, <<"123">>}], headers(Response)),
+    ?assertMatch(<<>>, body(Response)).
 
 
 get_args() ->
-    {ok, Response} = httpc:request("http://localhost:3001/hello?name=knut"),
-    ?assertMatch("Hello knut", body(Response)).
+    Response = hackney:get("http://localhost:3001/hello?name=knut"),
+    ?assertMatch(<<"Hello knut">>, body(Response)).
 
 decoded_get_args() ->
-    Url            = "http://localhost:3001/decoded-hello?name=knut%3D",
-    {ok, Response} = httpc:request(Url),
-    ?assertMatch("Hello knut=", body(Response)).
+    Url      = "http://localhost:3001/decoded-hello?name=knut%3D",
+    Response = hackney:get(Url),
+    ?assertMatch(<<"Hello knut=">>, body(Response)).
 
 decoded_get_args_list() ->
-    Url            = "http://localhost:3001/decoded-list?name=knut%3D&foo",
-    {ok, Response} = httpc:request(Url),
-    ?assertMatch("Hello knut=", body(Response)).
+    Url      = "http://localhost:3001/decoded-list?name=knut%3D&foo",
+    Response = hackney:get(Url),
+    ?assertMatch(<<"Hello knut=">>, body(Response)).
 
 post_args() ->
-    Body           = <<"name=foo&city=New%20York">>,
-    ContentType    = "application/x-www-form-urlencoded",
+    Body        = <<"name=foo&city=New%20York">>,
+    ContentType = <<"application/x-www-form-urlencoded">>,
 
-    {ok, Response} = httpc:request(
-                       post,
-                       {"http://localhost:3001/hello", [], ContentType, Body},
-                       [], []),
+    Response    = hackney:post("http://localhost:3001/hello",
+                               [{<<"Content-Type">>, ContentType}],
+                               Body),
     ?assertMatch(200, status(Response)),
-    ?assertMatch("Hello foo of New York", body(Response)).
+    ?assertMatch(<<"Hello foo of New York">>, body(Response)).
 
 shorthand() ->
-    {ok, Response} = httpc:request("http://localhost:3001/shorthand"),
+    Response = hackney:get("http://localhost:3001/shorthand"),
     ?assertMatch(200, status(Response)),
-    ?assertMatch([{"connection", "Keep-Alive"},
-                  {"content-length", "5"}], headers(Response)),
-    ?assertMatch("hello", body(Response)).
+    ?assertMatch([{<<"Connection">>, <<"Keep-Alive">>},
+                  {<<"Content-Length">>, <<"5">>}], headers(Response)),
+    ?assertMatch(<<"hello">>, body(Response)).
 
 ip() ->
-    {ok, Response} = httpc:request("http://localhost:3001/ip"),
+    Response = hackney:get("http://localhost:3001/ip"),
     ?assertMatch(200, status(Response)),
-    ?assertMatch("127.0.0.1", body(Response)).
+    ?assertMatch(<<"127.0.0.1">>, body(Response)).
 
 found() ->
-    {ok, Response} = httpc:request(get, {"http://localhost:3001/302", []},
-                                  [{autoredirect, false}], []),
+    Response = hackney:get("http://localhost:3001/302"),
     ?assertMatch(302, status(Response)),
-    ?assertMatch([{"connection","Keep-Alive"},
-                  {"content-length","0"},
-                  {"location", "/hello/world"}], headers(Response)),
-    ?assertMatch("", body(Response)).
+    ?assertMatch([{<<"Connection">>, <<"Keep-Alive">>},
+                  {<<"Content-Length">>, <<"0">>},
+                  {<<"Location">>, <<"/hello/world">>}], headers(Response)),
+    ?assertMatch(<<>>, body(Response)).
 
 too_many_headers() ->
-    Headers = lists:duplicate(100, {"X-Foo", "Bar"}),
-    {ok, Response} = httpc:request(get, {"http://localhost:3001/foo", Headers},
-                                   [], []),
+    Headers = lists:duplicate(100, {<<"X-Foo">>, <<"Bar">>}),
+    Response = hackney:get("http://localhost:3001/foo", Headers),
     ?assertMatch(400, status(Response)).
 
 too_big_body() ->
     Body = binary:copy(<<"x">>, (1024 * 1000) + 1),
-    {ok, Response} = httpc:request(post,
-                                   {"http://localhost:3001/foo", [], [], Body},
-                                   [], []),
+    Response = hackney:post("http://localhost:3001/foo", [], Body),
     ?assertMatch(413, status(Response)).
 
 way_too_big_body() ->
     Body = binary:copy(<<"x">>, (1024 * 2000) + 1),
-    ?assertMatch({error, socket_closed_remotely},
-                 httpc:request(post,
-                               {"http://localhost:3001/foo", [], [], Body},
-                               [], [])).
+    ?assertMatch({error, closed},
+                 hackney:post("http://localhost:3001/foo", [], Body)).
 
 
 bad_request_line() ->
@@ -375,13 +365,13 @@ bad_request_line() ->
 
 
 content_length() ->
-    {ok, Response} = httpc:request("http://localhost:3001/304"),
+    Response = hackney:get("http://localhost:3001/304"),
 
     ?assertMatch(304, status(Response)),
-    ?assertMatch([{"connection", "Keep-Alive"},
-                  {"content-length", "7"},
-                  {"etag", "foobar"}], headers(Response)),
-    ?assertMatch([], body(Response)).
+    ?assertMatch([{<<"Connection">>, <<"Keep-Alive">>},
+                  {<<"Content-Length">>, <<"7">>},
+                  {<<"Etag">>, <<"foobar">>}], headers(Response)),
+    ?assertMatch(<<>>, body(Response)).
 
 user_content_length() ->
     Headers = <<"Foo: bar\n\n">>,
@@ -395,23 +385,21 @@ user_content_length() ->
                  gen_tcp:recv(Client, 0)).
 
 headers() ->
-    {ok, Response} = httpc:request("http://localhost:3001/headers.html"),
+    Response = hackney:get("http://localhost:3001/headers.html"),
     Headers = headers(Response),
 
-    ?assert(proplists:is_defined("x-custom", Headers)),
-    ?assertMatch("foobar", proplists:get_value("x-custom", Headers)).
+    ?assert(proplists:is_defined(<<"X-Custom">>, Headers)),
+    ?assertMatch(<<"foobar">>, proplists:get_value(<<"X-Custom">>, Headers)).
 
 chunked() ->
-    Expected = "chunk10chunk9chunk8chunk7chunk6chunk5chunk4chunk3chunk2chunk1",
+    Expected = <<"chunk10chunk9chunk8chunk7chunk6chunk5chunk4chunk3chunk2chunk1">>,
 
-    {ok, Response} = httpc:request("http://localhost:3001/chunked"),
+    Response = hackney:get("http://localhost:3001/chunked"),
 
     ?assertMatch(200, status(Response)),
-    ?assertEqual([{"connection", "Keep-Alive"},
-                  %% httpc adds a content-length, even though elli
-                  %% does not send any for chunked transfers
-                  {"content-length", integer_to_list(length(Expected))},
-                  {"content-type", "text/event-stream"}], headers(Response)),
+    ?assertEqual([{<<"Connection">>, <<"Keep-Alive">>},
+                  {<<"Content-Type">>, <<"text/event-stream">>},
+                  {<<"Transfer-Encoding">>, <<"chunked">>}], headers(Response)),
     ?assertMatch(Expected, body(Response)),
     %% sizes
     ?assertMatch(104, get_size_value(resp_headers)),
@@ -429,15 +417,15 @@ chunked() ->
     ?assertNotMatch(undefined, get_timing_value(request_end)).
 
 sendfile() ->
-    {ok, Response} = httpc:request("http://localhost:3001/sendfile"),
+    Response = hackney:get("http://localhost:3001/sendfile"),
     F              = ?README,
     {ok, Expected} = file:read_file(F),
 
     ?assertMatch(200, status(Response)),
-    ?assertEqual([{"connection", "Keep-Alive"},
-                  {"content-length", integer_to_list(size(Expected))}],
+    ?assertEqual([{<<"Connection">>, <<"Keep-Alive">>},
+                  {<<"Content-Length">>, ?I2B(size(Expected))}],
                  headers(Response)),
-    ?assertEqual(binary_to_list(Expected), body(Response)),
+    ?assertEqual(Expected, body(Response)),
     %% sizes
     ?assertEqual(size(Expected), get_size_value(file)),
     ?assertMatch(65, get_size_value(resp_headers)),
@@ -454,36 +442,36 @@ sendfile() ->
     ?assertNotMatch(undefined, get_timing_value(request_end)).
 
 send_no_file() ->
-    {ok, Response} = httpc:request("http://localhost:3001/send_no_file"),
+    Response = hackney:get("http://localhost:3001/send_no_file"),
 
     ?assertMatch(500, status(Response)),
-    ?assertMatch([{"content-length", "12"}],
+    ?assertMatch([{<<"Content-Length">>, <<"12">>}],
                  headers(Response)),
-    ?assertMatch("Server Error", body(Response)).
+    ?assertMatch(<<"Server Error">>, body(Response)).
 
 sendfile_error() ->
-    {ok, Response} = httpc:request("http://localhost:3001/sendfile/error"),
+    Response = hackney:get("http://localhost:3001/sendfile/error"),
 
     ?assertMatch(500, status(Response)),
-    ?assertMatch([{"content-length", "12"}],
+    ?assertMatch([{<<"Content-Length">>, <<"12">>}],
                  headers(Response)),
-    ?assertMatch("Server Error", body(Response)).
+    ?assertMatch(<<"Server Error">>, body(Response)).
 
 sendfile_range() ->
     Url            = "http://localhost:3001/sendfile/range",
     Headers        = [{"Range", "bytes=300-699"}],
-    {ok, Response} = httpc:request(get, {Url, Headers}, [], []),
+    Response       = hackney:get(Url, Headers),
     F              = ?README,
     {ok, Fd}       = file:open(F, [read, raw, binary]),
     {ok, Expected} = file:pread(Fd, 300, 400),
     file:close(Fd),
     Size = elli_util:file_size(F),
     ?assertMatch(206, status(Response)),
-    ?assertEqual([{"connection", "Keep-Alive"},
-                  {"content-length", "400"},
-                  {"content-range", "bytes 300-699/" ++ ?I2L(Size)}],
+    ?assertEqual([{<<"Connection">>, <<"Keep-Alive">>},
+                  {<<"Content-Length">>, <<"400">>},
+                  {<<"Content-Range">>, iolist_to_binary(["bytes 300-699/", ?I2L(Size)])}],
                  headers(Response)),
-    ?assertEqual(binary_to_list(Expected), body(Response)).
+    ?assertEqual(Expected, body(Response)).
 
 slow_client() ->
     Body    = <<"name=foobarbaz">>,
@@ -557,21 +545,18 @@ get_pipeline() ->
                  Res).
 
 head() ->
-    {ok, Response} = httpc:request(head, {"http://localhost:3001/head", []},
-                                   [], []),
+    Response = hackney:head("http://localhost:3001/head"),
     ?assertMatch(200, status(Response)),
-    ?assertMatch([{"connection", "Keep-Alive"},
-                  {"content-length", "20"}], headers(Response)),
-    ?assertMatch([], body(Response)).
-
+    ?assertMatch([{<<"Connection">>, <<"Keep-Alive">>},
+                  {<<"Content-Length">>, <<"20">>}], headers(Response)).
 
 no_body() ->
-    {ok, Response} = httpc:request("http://localhost:3001/304"),
+    Response = hackney:get("http://localhost:3001/304"),
     ?assertMatch(304, status(Response)),
-    ?assertMatch([{"connection", "Keep-Alive"},
-                  {"content-length", "7"},
-                  {"etag", "foobar"}], headers(Response)),
-    ?assertMatch([], body(Response)).
+    ?assertMatch([{<<"Connection">>, <<"Keep-Alive">>},
+                  {<<"Content-Length">>, <<"7">>},
+                  {<<"Etag">>, <<"foobar">>}], headers(Response)),
+    ?assertMatch(<<>>, body(Response)).
 
 sends_continue() ->
     {ok, Socket} = gen_tcp:connect("127.0.0.1", 3001, [{active, false}, binary]),
