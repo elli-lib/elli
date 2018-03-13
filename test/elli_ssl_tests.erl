@@ -44,15 +44,15 @@ chunked() ->
     ?assertMatch(Expected, body(Response)).
 
 sendfile() ->
-    {ok, Response} = httpc:request("https://localhost:3443/sendfile"),
+    {ok, 200, Headers, ClientRef} = hackney:get("https://localhost:3443/sendfile"),
+    {ok, Body} = hackney:body(ClientRef),
     F              = ?README,
     {ok, Expected} = file:read_file(F),
 
-    ?assertMatch(200, status(Response)),
-    ?assertEqual([{"connection", "Keep-Alive"},
-                  {"content-length", integer_to_list(size(Expected))}],
-                 headers(Response)),
-    ?assertEqual(binary_to_list(Expected), body(Response)),
+    ?assertEqual([{<<"Content-Length">>, integer_to_binary(size(Expected))},
+                  {<<"Connection">>, <<"Keep-Alive">>}],
+                 Headers),
+    ?assertEqual(Expected, Body),
     %% sizes
     ?assertEqual(size(Expected), get_size_value(file)),
     ?assertMatch(65, get_size_value(resp_headers)),
@@ -75,6 +75,7 @@ setup() ->
     application:start(crypto),
     application:start(public_key),
     application:start(ssl),
+    {ok, _} = application:ensure_all_started(hackney),
     inets:start(),
 
     EbinDir  = filename:dirname(code:which(?MODULE)),
