@@ -588,10 +588,11 @@ do_check_max_size_x2(_, _, _, _) -> ok.
       Socket    :: elli_tcp:socket() | undefined,
       Callback  :: elli_handler:callback(),
       Req       :: elli:req().
-mk_req(Method, RawPath, Headers, Body, V, Socket, {Mod, Args} = Callback) ->
+mk_req(Method, {_PathType, Scheme, Host, Port, _Path} = RawPath, Headers, Body, V, Socket, {Mod, Args} = Callback) ->
     case parse_path(RawPath) of
         {ok, {Path, URL, URLArgs}} ->
             #req{method   = Method, path     = URL,    args    = URLArgs,
+                 scheme   = Scheme, port     = Port,   host    = Host,
                  version  = V,      raw_path = Path,   headers = Headers,
                  body     = Body,   pid      = self(), socket  = Socket,
                  callback = Callback};
