@@ -24,8 +24,8 @@ http_range() = {First::non_neg_integer(), Last::non_neg_integer()} | {offset, Of
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#async_send_chunk-2">async_send_chunk/2</a></td><td>Send a chunk asynchronously.</td></tr><tr><td valign="top"><a href="#body-1">body/1</a></td><td>Return the <code>body</code>.</td></tr><tr><td valign="top"><a href="#body_qs-1">body_qs/1</a></td><td>Parse <code>application/x-www-form-urlencoded</code> body into a proplist.</td></tr><tr><td valign="top"><a href="#chunk_ref-1">chunk_ref/1</a></td><td>Return a reference that can be used to send chunks to the client.</td></tr><tr><td valign="top"><a href="#close_chunk-1">close_chunk/1</a></td><td>Explicitly close the chunked connection.</td></tr><tr><td valign="top"><a href="#get_arg-2">get_arg/2</a></td><td>Equivalent to <a href="#get_arg-3"><tt>get_arg(Key, Req, undefined)</tt></a>.</td></tr><tr><td valign="top"><a href="#get_arg-3">get_arg/3</a></td><td>Equivalent to <a href="proplists.md#get_value-3"><tt>proplists:get_value(Key, Args, Default)</tt></a>.</td></tr><tr><td valign="top"><a href="#get_arg_decoded-2">get_arg_decoded/2</a></td><td>Equivalent to <a href="#get_arg_decoded-3"><tt>get_arg_decoded(Key, Req, undefined)</tt></a>.</td></tr><tr><td valign="top"><a href="#get_arg_decoded-3">get_arg_decoded/3</a></td><td></td></tr><tr><td valign="top"><a href="#get_args-1">get_args/1</a></td><td>Return a proplist of keys and values of the original query string.</td></tr><tr><td valign="top"><a href="#get_args_decoded-1">get_args_decoded/1</a></td><td></td></tr><tr><td valign="top"><a href="#get_header-2">get_header/2</a></td><td>Equivalent to <a href="proplists.md#get_value-2"><tt>proplists:get_value(Key, Headers)</tt></a>.</td></tr><tr><td valign="top"><a href="#get_header-3">get_header/3</a></td><td>Equivalent to <a href="proplists.md#get_value-3"><tt>proplists:get_value(Key, Headers, Default)</tt></a>.</td></tr><tr><td valign="top"><a href="#get_range-1">get_range/1</a></td><td>Parse the <code>Range</code> header from the request.</td></tr><tr><td valign="top"><a href="#headers-1">headers/1</a></td><td>Return the <code>headers</code>.</td></tr><tr><td valign="top"><a href="#is_request-1">is_request/1</a></td><td></td></tr><tr><td valign="top"><a href="#method-1">method/1</a></td><td>Return the <code>method</code>.</td></tr><tr><td valign="top"><a href="#path-1">path/1</a></td><td>Return <code>path</code> split into binary parts.</td></tr><tr><td valign="top"><a href="#peer-1">peer/1</a></td><td></td></tr><tr><td valign="top"><a href="#post_arg-2">post_arg/2</a></td><td>Equivalent to <a href="#post_arg-3"><tt>post_arg(Key, Req, undefined)</tt></a>.</td></tr><tr><td valign="top"><a href="#post_arg-3">post_arg/3</a></td><td></td></tr><tr><td valign="top"><a href="#post_arg_decoded-2">post_arg_decoded/2</a></td><td>Equivalent to <a href="#post_arg_decoded-3"><tt>post_arg_decoded(Key, Req, undefined)</tt></a>.</td></tr><tr><td valign="top"><a href="#post_arg_decoded-3">post_arg_decoded/3</a></td><td></td></tr><tr><td valign="top"><a href="#post_args-1">post_args/1</a></td><td></td></tr><tr><td valign="top"><a href="#post_args_decoded-1">post_args_decoded/1</a></td><td></td></tr><tr><td valign="top"><a href="#query_str-1">query_str/1</a></td><td>Calculate the query string associated with a given <code>Request</code>
-as a binary.</td></tr><tr><td valign="top"><a href="#raw_path-1">raw_path/1</a></td><td>Return the <code>raw_path</code>, i.e.</td></tr><tr><td valign="top"><a href="#send_chunk-2">send_chunk/2</a></td><td>Send a chunk synchronously.</td></tr><tr><td valign="top"><a href="#to_proplist-1">to_proplist/1</a></td><td>Serialize the <code>Req</code>uest record to a proplist.</td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#async_send_chunk-2">async_send_chunk/2</a></td><td>Send a chunk asynchronously.</td></tr><tr><td valign="top"><a href="#body-1">body/1</a></td><td>Return the <code>body</code>.</td></tr><tr><td valign="top"><a href="#body_qs-1">body_qs/1</a></td><td>Parse <code>application/x-www-form-urlencoded</code> body into a proplist.</td></tr><tr><td valign="top"><a href="#chunk_ref-1">chunk_ref/1</a></td><td>Return a reference that can be used to send chunks to the client.</td></tr><tr><td valign="top"><a href="#close_chunk-1">close_chunk/1</a></td><td>Explicitly close the chunked connection.</td></tr><tr><td valign="top"><a href="#get_arg-2">get_arg/2</a></td><td>Equivalent to <a href="#get_arg-3"><tt>get_arg(Key, Req, undefined)</tt></a>.</td></tr><tr><td valign="top"><a href="#get_arg-3">get_arg/3</a></td><td>Equivalent to <a href="proplists.md#get_value-3"><tt>proplists:get_value(Key, Args, Default)</tt></a>.</td></tr><tr><td valign="top"><a href="#get_arg_decoded-2">get_arg_decoded/2</a></td><td>Equivalent to <a href="#get_arg_decoded-3"><tt>get_arg_decoded(Key, Req, undefined)</tt></a>.</td></tr><tr><td valign="top"><a href="#get_arg_decoded-3">get_arg_decoded/3</a></td><td></td></tr><tr><td valign="top"><a href="#get_args-1">get_args/1</a></td><td>Return a proplist of keys and values of the original query string.</td></tr><tr><td valign="top"><a href="#get_args_decoded-1">get_args_decoded/1</a></td><td></td></tr><tr><td valign="top"><a href="#get_header-2">get_header/2</a></td><td>Equivalent to <a href="proplists.md#get_value-2"><tt>proplists:get_value(Key, Headers)</tt></a>.</td></tr><tr><td valign="top"><a href="#get_header-3">get_header/3</a></td><td>Equivalent to <a href="proplists.md#get_value-3"><tt>proplists:get_value(Key, Headers, Default)</tt></a>.</td></tr><tr><td valign="top"><a href="#get_range-1">get_range/1</a></td><td>Parse the <code>Range</code> header from the request.</td></tr><tr><td valign="top"><a href="#headers-1">headers/1</a></td><td>Return the <code>headers</code>.</td></tr><tr><td valign="top"><a href="#host-1">host/1</a></td><td>Return the <code>host</code>.</td></tr><tr><td valign="top"><a href="#is_request-1">is_request/1</a></td><td></td></tr><tr><td valign="top"><a href="#method-1">method/1</a></td><td>Return the <code>method</code>.</td></tr><tr><td valign="top"><a href="#path-1">path/1</a></td><td>Return <code>path</code> split into binary parts.</td></tr><tr><td valign="top"><a href="#peer-1">peer/1</a></td><td></td></tr><tr><td valign="top"><a href="#port-1">port/1</a></td><td>Return the <code>port</code>.</td></tr><tr><td valign="top"><a href="#post_arg-2">post_arg/2</a></td><td>Equivalent to <a href="#post_arg-3"><tt>post_arg(Key, Req, undefined)</tt></a>.</td></tr><tr><td valign="top"><a href="#post_arg-3">post_arg/3</a></td><td></td></tr><tr><td valign="top"><a href="#post_arg_decoded-2">post_arg_decoded/2</a></td><td>Equivalent to <a href="#post_arg_decoded-3"><tt>post_arg_decoded(Key, Req, undefined)</tt></a>.</td></tr><tr><td valign="top"><a href="#post_arg_decoded-3">post_arg_decoded/3</a></td><td></td></tr><tr><td valign="top"><a href="#post_args-1">post_args/1</a></td><td></td></tr><tr><td valign="top"><a href="#post_args_decoded-1">post_args_decoded/1</a></td><td></td></tr><tr><td valign="top"><a href="#query_str-1">query_str/1</a></td><td>Calculate the query string associated with a given <code>Request</code>
+as a binary.</td></tr><tr><td valign="top"><a href="#raw_path-1">raw_path/1</a></td><td>Return the <code>raw_path</code>, i.e.</td></tr><tr><td valign="top"><a href="#scheme-1">scheme/1</a></td><td>Return the <code>scheme</code>.</td></tr><tr><td valign="top"><a href="#send_chunk-2">send_chunk/2</a></td><td>Send a chunk synchronously.</td></tr><tr><td valign="top"><a href="#to_proplist-1">to_proplist/1</a></td><td>Serialize the <code>Req</code>uest record to a proplist.</td></tr></table>
 
 
 <a name="functions"></a>
@@ -162,6 +162,14 @@ Use [`elli_util:normalize_range/2`](elli_util.md#normalize_range-2) to get a val
 
 Return the `headers`.
 
+<a name="host-1"></a>
+
+### host/1 ###
+
+`host(Req) -> any()`
+
+Return the `host`.
+
 <a name="is_request-1"></a>
 
 ### is_request/1 ###
@@ -189,6 +197,14 @@ Return `path` split into binary parts.
 ### peer/1 ###
 
 `peer(Req) -> any()`
+
+<a name="port-1"></a>
+
+### port/1 ###
+
+`port(Req) -> any()`
+
+Return the `port`.
 
 <a name="post_arg-2"></a>
 
@@ -249,6 +265,14 @@ as a binary.
 `raw_path(Req) -> any()`
 
 Return the `raw_path`, i.e. not split or parsed for query params.
+
+<a name="scheme-1"></a>
+
+### scheme/1 ###
+
+`scheme(Req) -> any()`
+
+Return the `scheme`.
 
 <a name="send_chunk-2"></a>
 
