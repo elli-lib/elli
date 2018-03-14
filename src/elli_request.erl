@@ -28,6 +28,9 @@
         , peer/1
         , method/1
         , body/1
+        , scheme/1
+        , host/1
+        , port/1
         , get_range/1
         , to_proplist/1
         , is_request/1
@@ -55,6 +58,12 @@ headers(#req{headers = Headers}) -> Headers.
 method(#req{method = Method})    -> Method.
 %% @doc Return the `body'.
 body(#req{body = Body})          -> Body.
+%% @doc Return the `scheme'.
+scheme(#req{scheme = Scheme})    -> Scheme.
+%% @doc Return the `host'.
+host(#req{host = Host})          -> Host.
+%% @doc Return the `port'.
+port(#req{port = Port})          -> Port.
 
 peer(#req{socket = Socket} = Req) ->
     case get_header(<<"X-Forwarded-For">>, Req, undefined) of
