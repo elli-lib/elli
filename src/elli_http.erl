@@ -590,13 +590,7 @@ do_check_max_size_x2(_, _, _, _) -> ok.
       Req       :: elli:req().
 mk_req(Method, PathTuple, Headers, Body, V, Socket, {Mod, Args} = Callback) ->
     case parse_path(PathTuple) of
-        {ok, {SchemeHostPort, {Path, URL, URLArgs}}} ->
-            {Scheme, Host, Port} = case SchemeHostPort of
-                undefined ->
-                    list_to_tuple(lists:duplicate(3, undefined));
-                {_Scheme, _Host, _Port} ->
-                    SchemeHostPort
-            end,
+        {ok, {Scheme, Host, Port}, {Path, URL, URLArgs}} ->
             #req{method   = Method, scheme   = Scheme, host    = Host,
                  port     = Port,   path     = URL,    args    = URLArgs,
                  version  = V,      raw_path = Path,   headers = Headers,
@@ -694,12 +688,13 @@ content_length(Headers, Body)->
 %%
 
 parse_path({abs_path, FullPath}) ->
-    case binary:split(FullPath, [<<"?">>]) of
-        [URL]       -> {ok, {undefined, {FullPath, split_path(URL), []}}};
-        [URL, Args] -> {ok, {undefined, {FullPath, split_path(URL), split_args(Args)}}}
-    end;
+    Parsed = case binary:split(FullPath, [<<"?">>]) of
+                 [URL]       -> {FullPath, split_path(URL), []};
+                 [URL, Args] -> {FullPath, split_path(URL), split_args(Args)}
+             end,
+    {ok, {undefined, undefined, undefined}, Parsed};
 parse_path({absoluteURI, Scheme, Host, Port, Path}) ->
-    {{Scheme, Host, Port}, parse_path({abs_path, Path})};
+    setelement(2, parse_path({abs_path, Path}), {Scheme, Host, Port});
 parse_path(_) ->
     {error, unsupported_uri}.
 
