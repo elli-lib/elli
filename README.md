@@ -42,7 +42,7 @@ Add `elli` to your application by adding it as a dependency to your
 ```erlang
 {deps, [
   %% ...
-  {elli, "2.1.2"}
+  {elli, "3.0.0"}
 ]}.
 ```
 
