@@ -9,7 +9,7 @@
 
 [travis builds]: https://travis-ci.org/elli-lib/elli
 [travis badge]: https://travis-ci.org/elli-lib/elli.svg
-[hex badge]: https://img.shields.io/hexpm/v/elli.svg?maxAge=2592000
+[hex badge]: https://img.shields.io/hexpm/v/elli.svg
 [hex package]: https://hex.pm/packages/elli
 [latest release]: https://github.com/elli-lib/elli/releases/latest
 [erlang badge]: https://img.shields.io/badge/erlang-%E2%89%A518.0-red.svg
@@ -42,7 +42,7 @@ Add `elli` to your application by adding it as a dependency to your
 ```erlang
 {deps, [
   %% ...
-  {elli, "2.1.2"}
+  {elli, "3.0.0"}
 ]}.
 ```
 

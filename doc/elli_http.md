@@ -33,7 +33,7 @@ HTTP version as a tuple, i.e. `{0, 9} | {1, 0} | {1, 1}`.
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#accept-4">accept/4</a></td><td>Accept on the socket until a client connects.</td></tr><tr><td valign="top"><a href="#chunk_loop-1">chunk_loop/1</a></td><td></td></tr><tr><td valign="top"><a href="#handle_request-4">handle_request/4</a></td><td>Handle a HTTP request that will possibly come on the socket.</td></tr><tr><td valign="top"><a href="#keepalive_loop-3">keepalive_loop/3</a></td><td>Handle multiple requests on the same connection, i.e.</td></tr><tr><td valign="top"><a href="#keepalive_loop-5">keepalive_loop/5</a></td><td></td></tr><tr><td valign="top"><a href="#mk_req-7">mk_req/7</a></td><td></td></tr><tr><td valign="top"><a href="#parse_path-1">parse_path/1</a></td><td></td></tr><tr><td valign="top"><a href="#send_response-4">send_response/4</a></td><td>Generate a HTTP response and send it to the client.</td></tr><tr><td valign="top"><a href="#split_args-1">split_args/1</a></td><td>Split the URL arguments into a proplist.</td></tr><tr><td valign="top"><a href="#start_link-4">start_link/4</a></td><td></td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#accept-4">accept/4</a></td><td>Accept on the socket until a client connects.</td></tr><tr><td valign="top"><a href="#chunk_loop-1">chunk_loop/1</a></td><td></td></tr><tr><td valign="top"><a href="#handle_request-4">handle_request/4</a></td><td>Handle a HTTP request that will possibly come on the socket.</td></tr><tr><td valign="top"><a href="#keepalive_loop-3">keepalive_loop/3</a></td><td>Handle multiple requests on the same connection, i.e.</td></tr><tr><td valign="top"><a href="#keepalive_loop-5">keepalive_loop/5</a></td><td></td></tr><tr><td valign="top"><a href="#mk_req-10">mk_req/10</a></td><td></td></tr><tr><td valign="top"><a href="#mk_req-7">mk_req/7</a></td><td></td></tr><tr><td valign="top"><a href="#parse_path-1">parse_path/1</a></td><td></td></tr><tr><td valign="top"><a href="#send_response-4">send_response/4</a></td><td>Generate a HTTP response and send it to the client.</td></tr><tr><td valign="top"><a href="#split_args-1">split_args/1</a></td><td>Split the URL arguments into a proplist.</td></tr><tr><td valign="top"><a href="#start_link-4">start_link/4</a></td><td></td></tr></table>
 
 
 <a name="functions"></a>
@@ -88,6 +88,12 @@ Handle multiple requests on the same connection, i.e. `"keep alive"`.
 ### keepalive_loop/5 ###
 
 `keepalive_loop(Socket, NumRequests, Buffer, Options, Callback) -> any()`
+
+<a name="mk_req-10"></a>
+
+### mk_req/10 ###
+
+`mk_req(Method, Scheme, Host, Port, PathTuple, Headers, Body, V, Socket, Callback) -> any()`
 
 <a name="mk_req-7"></a>
 
