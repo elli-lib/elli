@@ -1,4 +1,18 @@
 # CHANGELOG
+
+## v3.0.0
+
+ * `scheme`, `host`, and `port` added to the `#req{}` record. Corresponding
+   helper functions added to the `elli_request` module.
+
+## v2.0.1
+
+TODO
+
+## v2.0.0
+
+TODO
+
 ## v1.0.5
 
  * Optimization of SSL accept by Tristan Sloughter
