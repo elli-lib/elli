@@ -145,6 +145,8 @@ hello_world() ->
     %% sizes
     ?assertMatch(63, get_size_value(resp_headers)),
     ?assertMatch(12, get_size_value(resp_body)),
+    ?assertMatch(undefined, get_size_value(req_body)),
+
     %% timings
     ?assertNotMatch(undefined, get_timing_value(request_start)),
     ?assertNotMatch(undefined, get_timing_value(headers_start)),
@@ -517,6 +519,8 @@ post_pipeline() ->
 
     {ok, Res} = gen_tcp:recv(Socket, size(ExpectedResponse) * 2),
 
+    Size = size(Body),
+    ?assertMatch(Size, get_size_value(req_body)),
     ?assertEqual(binary:copy(ExpectedResponse, 2),
                  Res).
 
