@@ -21,6 +21,26 @@ closed either by the client timing out or explicitly by the user.
 
 
 
+### <a name="type-connection_token">connection_token()</a> ###
+
+
+<pre><code>
+connection_token() = {<a href="#type-connection_token_label">connection_token_label()</a>, binary()}
+</code></pre>
+
+
+
+
+### <a name="type-connection_token_label">connection_token_label()</a> ###
+
+
+<pre><code>
+connection_token_label() = keep_alive | close
+</code></pre>
+
+
+
+
 ### <a name="type-version">version()</a> ###
 
 
@@ -69,7 +89,7 @@ timeout, loop to allow code upgrades of this module.
 handle_request(Socket, PrevBin, Options, Callback) -&gt; ConnToken
 </code></pre>
 
-<ul class="definitions"><li><code>Socket = <a href="elli_tcp.md#type-socket">elli_tcp:socket()</a></code></li><li><code>PrevBin = binary()</code></li><li><code>Options = <a href="proplists.md#type-proplist">proplists:proplist()</a></code></li><li><code>Callback = <a href="elli_handler.md#type-callback">elli_handler:callback()</a></code></li><li><code>ConnToken = {keep_alive | close, binary()}</code></li></ul>
+<ul class="definitions"><li><code>Socket = <a href="elli_tcp.md#type-socket">elli_tcp:socket()</a></code></li><li><code>PrevBin = binary()</code></li><li><code>Options = <a href="proplists.md#type-proplist">proplists:proplist()</a></code></li><li><code>Callback = <a href="elli_handler.md#type-callback">elli_handler:callback()</a></code></li><li><code>ConnToken = <a href="#type-connection_token">connection_token()</a></code></li></ul>
 
 Handle a HTTP request that will possibly come on the socket.
 Returns the appropriate connection token and any buffer containing (parts of)

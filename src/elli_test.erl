@@ -8,7 +8,7 @@
 
 -module(elli_test).
 
--include("elli.hrl").
+-include("elli_conf.hrl").
 
 -export([call/5]).
 

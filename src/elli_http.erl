@@ -4,7 +4,6 @@
 %% connects. It then handles requests on that connection until it's
 %% closed either by the client timing out or explicitly by the user.
 -module(elli_http).
--include("elli.hrl").
 -include("elli_util.hrl").
 
 
@@ -596,11 +595,11 @@ do_check_max_size_x2(_, _, _, _) -> ok.
 mk_req(Method, PathTuple, Headers, Body, V, Socket, {Mod, Args} = Callback) ->
     case parse_path(PathTuple) of
         {ok, {Scheme, Host, Port}, {Path, URL, URLArgs}} ->
-            #req{method   = Method, scheme   = Scheme, host    = Host,
-                 port     = Port,   path     = URL,    args    = URLArgs,
-                 version  = V,      raw_path = Path,   headers = Headers,
-                 body     = Body,   pid      = self(), socket  = Socket,
-                 callback = Callback};
+            #{method   => Method, scheme   => Scheme, host    => Host,
+              port     => Port,   path     => URL,    args    => URLArgs,
+              version  => V,      raw_path => Path,   headers => Headers,
+              body     => Body,   pid      => self(), socket  => Socket,
+              callback => Callback};
         {error, Reason} ->
             handle_event(Mod, request_parse_error,
                          [{Reason, {Method, PathTuple}}], Args),
@@ -612,7 +611,7 @@ mk_req(Method, PathTuple, Headers, Body, V, Socket, {Mod, Args} = Callback) ->
 
 mk_req(Method, Scheme, Host, Port, PathTuple, Headers, Body, V, Socket, Callback) ->
     Req = mk_req(Method, PathTuple, Headers, Body, V, Socket, Callback),
-    Req#req{scheme = Scheme, host = Host, port = Port}.
+    Req#{scheme := Scheme, host := Host, port := Port}.
 
 
 %%

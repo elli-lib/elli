@@ -10,7 +10,6 @@
 -export([handle/2, handle_event/3]).
 -export([chunk_loop/1]).
 
--include("elli.hrl").
 -include("elli_util.hrl").
 -behaviour(elli_handler).
 

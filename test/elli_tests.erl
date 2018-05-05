@@ -1,6 +1,5 @@
 -module(elli_tests).
 -include_lib("eunit/include/eunit.hrl").
--include("elli.hrl").
 -include("elli_test.hrl").
 
 -define(I2L(I), integer_to_list(I)).
@@ -104,12 +103,12 @@ accessors_test_() ->
     Method = 'POST',
     Body = <<"name=knut%3D">>,
     Name = <<"knut=">>,
-    Req1 = #req{raw_path = RawPath,
-                headers = Headers,
-                method = Method,
-                body = Body},
+    Req1 = #{raw_path => RawPath,
+             headers  => Headers,
+             method   => Method,
+             body     => Body},
     Args = [{<<"name">>, Name}],
-    Req2 = #req{headers = Headers, args = Args, body = <<>>},
+    Req2 = #{headers => Headers, args => Args, body => <<>>},
 
     [
      %% POST /foo/bar
@@ -129,7 +128,7 @@ accessors_test_() ->
      ?_assertMatch(Name, elli_request:get_arg_decoded(<<"name">>, Req2)),
      ?_assertMatch([], elli_request:post_args(Req2)),
 
-     ?_assertMatch({error, not_supported}, elli_request:chunk_ref(#req{}))
+     ?_assertMatch({error, not_supported}, elli_request:chunk_ref(#{}))
     ].
 
 
@@ -615,20 +614,20 @@ body_qs_test() ->
                 {<<"found">>, true}],
     Body     = <<"foo=bar&baz=bang&found">>,
     Headers  = [{<<"Content-Type">>, <<"application/x-www-form-urlencoded">>}],
-    ?assertMatch(Expected, elli_request:body_qs(#req{body = Body,
-                                                     headers = Headers})).
+    ?assertMatch(Expected, elli_request:body_qs(#{body    => Body,
+                                                  headers => Headers})).
 
 to_proplist_test() ->
-    Req  = #req{method   = 'GET',
-                path     = [<<"crash">>],
-                args     = [],
-                version  = {1, 1},
-                raw_path = <<"/crash">>,
-                headers  = [{<<"Host">>, <<"localhost:3001">>}],
-                body     = <<>>,
-                pid      = self(),
-                socket   = socket,
-                callback = {mod, []}},
+    Req  = #{method   => 'GET',
+             path     => [<<"crash">>],
+             args     => [],
+             version  => {1, 1},
+             raw_path => <<"/crash">>,
+             headers  => [{<<"Host">>, <<"localhost:3001">>}],
+             body     => <<>>,
+             pid      => self(),
+             socket   => socket,
+             callback => {mod, []}},
 
     Prop = [{method,   'GET'},
             {scheme,   undefined},
@@ -643,15 +642,12 @@ to_proplist_test() ->
             {pid,      self()},
             {socket,   socket},
             {callback, {mod, []}}],
-    ?assertEqual(Prop, elli_request:to_proplist(Req)).
-
-is_request_test() ->
-    ?assert(elli_request:is_request(#req{})),
-    ?assertNot(elli_request:is_request({req, foobar})).
+    ?assertEqual(lists:keysort(1, Prop),
+                 lists:keysort(1, elli_request:to_proplist(Req))).
 
 
 query_str_test_() ->
-    MakeReq = fun(Path) -> #req{raw_path = Path} end,
+    MakeReq = fun(Path) -> #{raw_path => Path} end,
     [
      %% For empty query strings, expect `query_str` to return an empty binary.
      ?_assertMatch(<<>>, elli_request:query_str(MakeReq(<<"/foo">>))),
@@ -663,11 +659,11 @@ query_str_test_() ->
 
 
 get_range_test_() ->
-    Req       = #req{headers = [{<<"Range">>,
-                                 <<"bytes=0-99 ,500-999 , -800">>}]},
-    OffsetReq = #req{headers = [{<<"Range">>, <<"bytes=200-">>}]},
-    UndefReq  = #req{headers = []},
-    BadReq    = #req{headers = [{<<"Range">>, <<"bytes=--99,hallo-world">>}]},
+    Req       = #{headers => [{<<"Range">>,
+                               <<"bytes=0-99 ,500-999 , -800">>}]},
+    OffsetReq = #{headers => [{<<"Range">>, <<"bytes=200-">>}]},
+    UndefReq  = #{headers => []},
+    BadReq    = #{headers => [{<<"Range">>, <<"bytes=--99,hallo-world">>}]},
 
     ByteRangeSet = [{bytes, 0, 99}, {bytes, 500, 999}, {suffix, 800}],
 

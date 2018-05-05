@@ -1,5 +1,4 @@
 -module(elli_request).
--include("elli.hrl").
 -include("elli_util.hrl").
 
 -export([send_chunk/2
@@ -33,7 +32,6 @@
         , port/1
         , get_range/1
         , to_proplist/1
-        , is_request/1
         , set_body/2
         , callback/1
         , socket/1
@@ -52,43 +50,43 @@
 %%
 
 %% @doc Return `path' split into binary parts.
--spec path(elli:req())  -> [binary()].
-path(#req{path = Path}) -> Path.
+-spec path(elli:req()) -> [binary()].
+path(#{path := Path})  -> Path.
 
 
 %% @doc Return the `raw_path', i.e. not split or parsed for query params.
--spec raw_path(elli:req())       -> binary().
-raw_path(#req{raw_path = Path})  -> Path.
+-spec raw_path(elli:req())    -> binary().
+raw_path(#{raw_path := Path}) -> Path.
 
 
 %% @doc Return the `headers'.
--spec headers(elli:req())        -> elli:headers().
-headers(#req{headers = Headers}) -> Headers.
+-spec headers(elli:req())      -> elli:headers().
+headers(#{headers := Headers}) -> Headers.
 
 
 %% @doc Return the `method'.
--spec method(elli:req())      -> elli:http_method().
-method(#req{method = Method}) -> Method.
+-spec method(elli:req())    -> elli:http_method().
+method(#{method := Method}) -> Method.
 
 
 %% @doc Return the `body'.
--spec body(elli:req())  -> elli:body().
-body(#req{body = Body}) -> Body.
+-spec body(elli:req()) -> elli:body().
+body(#{body := Body})  -> Body.
 
 
 %% @doc Return the `scheme'.
--spec scheme(elli:req())      -> undefined | binary().
-scheme(#req{scheme = Scheme}) -> Scheme.
+-spec scheme(elli:req())    -> undefined | binary().
+scheme(#{scheme := Scheme}) -> Scheme.
 
 
 %% @doc Return the `host'.
--spec host(elli:req())  -> undefined | binary().
-host(#req{host = Host}) -> Host.
+-spec host(elli:req()) -> undefined | binary().
+host(#{host := Host})  -> Host.
 
 
 %% @doc Return the `port'.
--spec port(elli:req())  -> undefined | 1..65535.
-port(#req{port = Port}) -> Port.
+-spec port(elli:req()) -> undefined | 1..65535.
+port(#{port := Port})  -> Port.
 
 
 -spec peer(elli:req()) -> undefined | binary().
@@ -107,29 +105,29 @@ peer(Req) ->
 
 
 %% @doc Return the `callback'.
--spec callback(elli:req()) -> elli_handler:callback().
-callback(#req{callback = Callback}) -> Callback.
+-spec callback(elli:req())        -> elli_handler:callback().
+callback(#{callback := Callback}) -> Callback.
 
 
 %% @doc Return the `pid'.
 -spec pid(elli:req()) -> pid().
-pid(#req{pid = Pid})  -> Pid.
+pid(#{pid := Pid})    -> Pid.
 
 
 %% @doc Return the `socket'.
--spec socket(elli:req())      -> undefined | elli_tcp:socket().
-socket(#req{socket = Socket}) -> Socket.
+-spec socket(elli:req())    -> undefined | elli_tcp:socket().
+socket(#{socket := Socket}) -> Socket.
 
 
 %% @doc Return the `version'.
--spec version(elli:req())        -> elli_http:version().
-version(#req{version = Version}) -> Version.
+-spec version(elli:req())      -> elli_http:version().
+version(Req) -> maps:get(version, Req, undefined).
 
 
 %% @doc Set the `body' of `Req' to `Body'.
 -spec set_body(elli:req(), elli:body()) -> elli:req().
 set_body(Req, Body) ->
-    Req#req{body = Body}.
+    Req#{body => Body}.
 
 
 %% @equiv proplists:get_value(Key, Headers)
@@ -206,7 +204,7 @@ post_arg_decoded(Key, Req, Default) ->
 %% Both keys and values in the returned proplists will be binaries or the atom
 %% `true' in case no value was supplied for the query value.
 -spec get_args(elli:req())  -> QueryArgs :: proplists:proplist().
-get_args(#req{args = Args}) -> Args.
+get_args(#{args := Args}) -> Args.
 
 
 get_args_decoded(Req) ->
@@ -292,8 +290,15 @@ remove_whitespace(Bin) ->
 %% @doc Serialize the `Req'uest record to a proplist.
 %% Useful for logging.
 -spec to_proplist(elli:req()) -> proplists:proplist().
-to_proplist(#req{} = Req) ->
-    lists:zip(record_info(fields, req), tl(tuple_to_list(Req))).
+to_proplist(#{} = Req) ->
+    Defaults = #{scheme => undefined,
+                 host   => undefined,
+                 port   => undefined,
+                 path   => [],
+                 args   => [],
+                 socket => undefined
+                },
+    maps:to_list(maps:merge(Defaults, Req)).
 
 
 %% @doc Return a reference that can be used to send chunks to the client.
@@ -340,12 +345,6 @@ is_ref_alive(Ref) ->
     ?IF(node(Ref) =:= node(),
         is_process_alive(Ref),
         rpc:call(node(Ref), erlang, is_process_alive, [Ref])).
-
-
-%% @doc Return `true' iff the argument is a `#req{}'.
--spec is_request(elli:req()) -> boolean().
-is_request(#req{}) -> true;
-is_request(_)      -> false.
 
 
 -ifdef(binary_http_uri).

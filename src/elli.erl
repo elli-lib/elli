@@ -7,7 +7,7 @@
 %%
 -module(elli).
 -behaviour(gen_server).
--include("elli.hrl").
+-include("elli_conf.hrl").
 -include("elli_util.hrl").
 
 %% API
@@ -27,7 +27,20 @@
 -export_type([req/0, http_method/0, body/0, headers/0, response_code/0]).
 
 %% @type req(). A record representing an HTTP request.
--type req() :: #req{}.
+-type req() :: #{method   => elli:http_method(),
+                 scheme   => undefined | binary(),
+                 host     => undefined | binary(),
+                 port     => undefined | 1..65535,
+                 path     => [binary()],
+                 args     => [{binary(), any()}],
+                 raw_path => binary(),
+                 version  => elli_http:version(),
+                 headers  => elli:headers(),
+                 body     => elli:body(),
+                 pid      => pid(),
+                 socket   => undefined | elli_tcp:socket(),
+                 callback => elli_handler:callback()
+                }.
 
 %% @type http_method(). An uppercase atom representing a known HTTP verb or a
 %% binary for other verbs.
