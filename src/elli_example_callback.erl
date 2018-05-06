@@ -226,7 +226,7 @@ chunk_loop(Ref, N) ->
 
     case elli_request:send_chunk(Ref, [<<"chunk">>, ?I2L(N)]) of
         ok              -> ok;
-        {error, Reason} -> ?ERROR("error in sending chunk: ~p~n", [Reason])
+        {error, Reason} -> ?LOG_ERROR("error in sending chunk: ~p~n", [Reason])
     end,
 
     chunk_loop(Ref, N-1).
