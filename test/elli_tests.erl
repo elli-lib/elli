@@ -8,6 +8,13 @@
 -define(VTB(T1, T2, LB, UB),
         time_diff_to_micro_seconds(T1, T2) >= LB andalso
         time_diff_to_micro_seconds(T1, T2) =< UB).
+-ifdef('21.0').
+-include_lib("kernel/include/logger.hrl").
+-else.
+-define(LOG_ERROR(Str), error_logger:error_msg(Str)).
+-define(LOG_ERROR(Format,Data), error_logger:error_msg(Format, Data)).
+-define(LOG_INFO(Format,Data), error_logger:info_msg(Format, Data)).
+-endif.
 
 time_diff_to_micro_seconds(T1, T2) ->
     erlang:convert_time_unit(
@@ -541,8 +548,8 @@ get_pipeline() ->
         true ->
             ok;
         false ->
-            error_logger:info_msg("Expected: ~p~nResult: ~p~n",
-                                  [binary:copy(ExpectedResponse, 2), Res])
+            ?LOG_INFO("Expected: ~p~nResult: ~p~n",
+                      [binary:copy(ExpectedResponse, 2), Res])
     end,
 
     ?assertEqual(binary:copy(ExpectedResponse, 2),
@@ -606,7 +613,7 @@ send(Socket, B, ChunkSize) ->
                        <<P:ChunkSize/binary, R/binary>> -> {P, R};
                        P -> {P, <<>>}
                    end,
-    %%error_logger:info_msg("~p~n", [Part]),
+    %%?LOG_INFO("~p~n", [Part]),
     gen_tcp:send(Socket, Part),
     timer:sleep(1),
     send(Socket, Rest, ChunkSize).

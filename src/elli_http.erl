@@ -311,19 +311,19 @@ execute_callback(#req{callback = {Mod, Args}} = Req) ->
     catch
         throw:{ResponseCode, Headers, Body} when is_integer(ResponseCode) ->
             {response, ResponseCode, Headers, Body};
-        throw:Exc ->
+        ?WITH_STACKTRACE(throw, Exc, Stacktrace)
             handle_event(Mod, request_throw,
-                         [Req, Exc, erlang:get_stacktrace()],
+                         [Req, Exc, Stacktrace],
                          Args),
             {response, 500, [], <<"Internal server error">>};
-        error:Error ->
+        ?WITH_STACKTRACE(error, Error, Stacktrace)
             handle_event(Mod, request_error,
-                         [Req, Error, erlang:get_stacktrace()],
+                         [Req, Error, Stacktrace],
                          Args),
             {response, 500, [], <<"Internal server error">>};
-        exit:Exit ->
+        ?WITH_STACKTRACE(exit, Exit, Stacktrace)
             handle_event(Mod, request_exit,
-                         [Req, Exit, erlang:get_stacktrace()],
+                         [Req, Exit, Stacktrace],
                          Args),
             {response, 500, [], <<"Internal server error">>}
     end.
@@ -735,9 +735,9 @@ handle_event(Mod, Name, EventArgs, ElliArgs) ->
     try
         Mod:handle_event(Name, EventArgs, ElliArgs)
     catch
-        EvClass:EvError ->
-            ?ERROR("~p:handle_event/3 crashed ~p:~p~n~p",
-                   [Mod, EvClass, EvError, erlang:get_stacktrace()])
+        ?WITH_STACKTRACE(EvClass, EvError, Stacktrace)
+            ?LOG_ERROR("~p:handle_event/3 crashed ~p:~p~n~p",
+                       [Mod, EvClass, EvError, Stacktrace])
     end.
 
 %%
