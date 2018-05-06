@@ -516,15 +516,19 @@ get_body(Socket, Headers, Buffer, Opts, Callback) ->
 
             ok = check_max_size(Socket, ContentLength, Buffer, Opts, Callback),
 
-            case ContentLength - byte_size(Buffer) of
-                0 ->
-                    {Buffer, <<>>};
-                N when N > 0 ->
-                    do_get_body(Socket, Buffer, Opts, N, Callback);
-                _ ->
-                    <<Body:ContentLength/binary, Rest/binary>> = Buffer,
-                    {Body, Rest}
-            end
+            Result = case ContentLength - byte_size(Buffer) of
+                         0 ->
+                             {Buffer, <<>>};
+                         N when N > 0 ->
+                             do_get_body(Socket, Buffer, Opts, N, Callback);
+                         _ ->
+                             <<Body:ContentLength/binary, R/binary>> = Buffer,
+                             {Body, R}
+                     end,
+            %% set the size here so if do_get_body exits it won't have
+            %% req_body in sizes
+            s(req_body, ContentLength),
+            Result
     end.
 
 do_get_body(Socket, Buffer, Opts, N, {Mod, Args}) ->
