@@ -218,14 +218,14 @@ handle_cast(_Msg, State) ->
       Result :: {stop, emfile, State0}
               | {noreply, State1 :: state()}.
 handle_info({'EXIT', _Pid, {error, emfile}}, State) ->
-    ?ERROR("No more file descriptors, shutting down~n"),
+    ?LOG_ERROR("No more file descriptors, shutting down~n"),
     {stop, emfile, State};
 
 handle_info({'EXIT', Pid, normal}, State) ->
     {noreply, remove_acceptor(State, Pid)};
 
 handle_info({'EXIT', Pid, Reason}, State) ->
-    ?ERROR("Elli request (pid ~p) unexpectedly crashed:~n~p~n", [Pid, Reason]),
+    ?LOG_ERROR("Elli request (pid ~p) unexpectedly crashed:~n~p~n", [Pid, Reason]),
     {noreply, remove_acceptor(State, Pid)}.
 
 
