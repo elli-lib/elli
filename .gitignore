@@ -1,3 +1,5 @@
+doc/*.html
+!doc/tpl.html
 _build
 deps/**
 ebin/**
