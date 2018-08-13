@@ -48,8 +48,12 @@ elli_test_() ->
         ?_test(ip()),
         ?_test(found()),
         ?_test(too_many_headers()),
+        ?_test(too_big_headers()),
+        ?_test(way_too_big_headers()),
         ?_test(too_big_body()),
         ?_test(way_too_big_body()),
+        ?_test(too_big_request_line()),
+        ?_test(way_too_big_request_line()),
         ?_test(bad_request_line()),
         ?_test(content_length()),
         ?_test(user_content_length()),
@@ -351,6 +355,18 @@ too_many_headers() ->
     Response = hackney:get("http://localhost:3001/foo", Headers),
     ?assertMatch(400, status(Response)).
 
+too_big_headers() ->
+    CookieHeader = {"Cookie", binary:copy(<<"a">>, 1024 * 1001)},
+    Headers = [CookieHeader],
+    Response = hackney:get("http://localhost:3001/foo", Headers),
+    ?assertMatch(413, status(Response)).
+
+way_too_big_headers() ->
+    CookieHeader = {"Cookie", binary:copy(<<"a">>, 1024 * 2200)},
+    Headers = [CookieHeader],
+    ?assertMatch({error, closed},
+                 hackney:get("http://localhost:3001/foo", Headers)).
+
 too_big_body() ->
     Body = binary:copy(<<"x">>, (1024 * 1000) + 1),
     Response = hackney:post("http://localhost:3001/foo", [], Body),
@@ -361,6 +377,23 @@ way_too_big_body() ->
     ?assertMatch({error, closed},
                  hackney:post("http://localhost:3001/foo", [], Body)).
 
+too_big_request_line() ->
+    Path = binary:copy(<<"a">>, 1024 * 1001),
+    {ok, Socket} = gen_tcp:connect("127.0.0.1", 3001,
+                                   [{active, false}, binary]),
+    Req = <<"GET /", Path/binary, " HTTP/1.1\r\n">>,
+    gen_tcp:send(Socket, Req),
+    ?assertMatch({ok, <<"HTTP/1.1 414 Request-URI Too Long\r\n"
+                        "Content-Length: 0\r\n\r\n">>},
+                 gen_tcp:recv(Socket, 0)).
+
+way_too_big_request_line() ->
+    Path = binary:copy(<<"a">>, 1024 * 2200),
+    {ok, Socket} = gen_tcp:connect("127.0.0.1", 3001,
+                                   [{active, false}, binary]),
+    Req = <<"GET /", Path/binary, " HTTP/1.1\r\n">>,
+    gen_tcp:send(Socket, Req),
+    ?assertMatch({error, closed}, gen_tcp:recv(Socket, 0)).
 
 bad_request_line() ->
     {ok, Socket} = gen_tcp:connect("127.0.0.1", 3001,
