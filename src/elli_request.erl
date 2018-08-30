@@ -34,6 +34,7 @@
         , get_range/1
         , to_proplist/1
         , is_request/1
+        , uri_decode/1
         ]).
 
 -export_type([http_range/0]).
@@ -273,27 +274,24 @@ is_ref_alive(Ref) ->
 is_request(#req{}) -> true;
 is_request(_)      -> false.
 
+uri_decode(Bin) ->
+    case binary:match(Bin, [<<"+">>, <<"%">>]) of
+        nomatch -> Bin;
+        {Pos, _} ->
+            <<Prefix:Pos/binary, Rest/binary>> = Bin,
+            uri_decode(Rest, Prefix)
+    end.
 
--ifdef(binary_http_uri).
-uri_decode(<<$+, Rest/binary>>) ->
-    <<$ , (uri_decode(Rest))/binary>>;
-uri_decode(<<$%, Hex:2/bytes, Rest/binary>>) ->
-    <<(binary_to_integer(Hex, 16)), (uri_decode(Rest))/binary>>;
-uri_decode(<<C, Rest/binary>>) ->
-    <<C, (uri_decode(Rest))/binary>>;
-uri_decode(<<>>) ->
-    <<>>.
--else.
-uri_decode(<<$+, Rest/binary>>) ->
-    <<$ , (uri_decode(Rest))/binary>>;
-uri_decode(<<$%, HexA, HexB, Rest/binary>>) ->
-    <<(hex_to_int(HexA)*16+hex_to_int(HexB)), (uri_decode(Rest))/binary>>;
-uri_decode(<<C, Rest/binary>>) ->
-    <<C, (uri_decode(Rest))/binary>>;
-uri_decode(<<>>) ->
-    <<>>.
+uri_decode(<<>>, Acc) -> Acc;
+uri_decode(<<$+, Rest/binary>>, Acc) ->
+    uri_decode(Rest, <<Acc/binary, $\s>>);
+uri_decode(<<$%, H, L, Rest/binary>>, Acc) ->
+    uri_decode(Rest, <<Acc/binary, (hex_to_int(H)):4, (hex_to_int(L)):4>>);
+uri_decode(<<C, Rest/binary>>, Acc) ->
+    uri_decode(Rest, <<Acc/binary, C>>).
 
-hex_to_int(X) when X >= $0, X =< $9 -> X-$0;
-hex_to_int(X) when X >= $a, X =< $f -> X-$a+10;
-hex_to_int(X) when X >= $A, X =< $F -> X-$A+10.
--endif.
+-compile({inline, [hex_to_int/1]}).
+
+hex_to_int(X) when X >= $0, X =< $9 -> X - $0;
+hex_to_int(X) when X >= $a, X =< $f -> X - ($a-10);
+hex_to_int(X) when X >= $A, X =< $F -> X - ($A-10).
