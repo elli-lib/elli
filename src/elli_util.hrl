@@ -1,4 +1,3 @@
--define(I2L(I), integer_to_list(I)).
 
 -define(B2I(I), binary_to_integer(I)).
 
