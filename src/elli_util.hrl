@@ -1,10 +1,6 @@
 -define(I2L(I), integer_to_list(I)).
 
--ifdef('16.0').
 -define(B2I(I), binary_to_integer(I)).
--else.
--define(B2I(I), list_to_integer(binary_to_list(I))).
--endif.
 
 -ifdef('21.0').
 -include_lib("kernel/include/logger.hrl").
