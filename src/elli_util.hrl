@@ -1,6 +1,4 @@
 
--define(B2I(I), binary_to_integer(I)).
-
 -ifdef('21.0').
 -include_lib("kernel/include/logger.hrl").
 -else.
