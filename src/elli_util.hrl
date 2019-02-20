@@ -1,5 +1,5 @@
 
--ifdef('21.0').
+-ifdef(OTP_RELEASE).
 -include_lib("kernel/include/logger.hrl").
 -else.
 -define(LOG_ERROR(Str), error_logger:error_msg(Str)).
@@ -7,7 +7,7 @@
 -define(LOG_INFO(Format,Data), error_logger:info_msg(Format, Data)).
 -endif.
 
--ifdef('21.0').
+-ifdef(OTP_RELEASE).
 -define(WITH_STACKTRACE(T, R, S), T:R:S ->).
 -else.
 -define(WITH_STACKTRACE(T, R, S), T:R -> S = erlang:get_stacktrace(),).
