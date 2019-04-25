@@ -67,18 +67,12 @@ host(#req{host = Host})          -> Host.
 port(#req{port = Port})          -> Port.
 
 peer(#req{socket = Socket} = Req) ->
-    case get_header(<<"X-Forwarded-For">>, Req, undefined) of
-        undefined ->
-            case elli_tcp:peername(Socket) of
-                {ok, {Address, _}} ->
-                    list_to_binary(inet_parse:ntoa(Address));
-                {error, _} ->
-                    undefined
-            end;
-        Ip ->
-            Ip
+    case elli_tcp:peername(Socket) of
+        {ok, {Address, _}} ->
+            list_to_binary(inet_parse:ntoa(Address));
+        {error, _} ->
+            undefined
     end.
-
 
 %% @equiv proplists:get_value(Key, Headers)
 get_header(Key, #req{headers = Headers}) ->
