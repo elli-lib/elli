@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## v3.2.0
+
+ * Quell warnings on OTP-21: https://github.com/elli-lib/elli/pull/61
+
+ * Generate HTML docs: https://github.com/elli-lib/elli/pull/58
+
+ * Add OTP-21 to Travis build matrix: https://github.com/elli-lib/elli/pull/62
+
+ * Remove unnecessary `stacktrace_compat` dependency: https://github.com/elli-lib/elli/pull/63
+
+ * Export `elli_request/uri_decode/1` and improve performance: https://github.com/elli-lib/elli/pull/67
+
+ * Update Travis config: https://github.com/elli-lib/elli/pull/69
+
+ * Drop support for OTP-16: https://github.com/elli-lib/elli/pull/71
+
+ * Prefer `OTP_RELEASE` over `rebar_erl_vsn` plugin: https://github.com/elli-lib/elli/pull/73
+
+ * Remove old `maintainers` metadata: https://github.com/elli-lib/elli/pull/74
+
 ## v3.1.0
 
  * Update docs: https://github.com/elli-lib/elli/pull/57
