@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## v3.1.0
+
+ * Update docs: https://github.com/elli-lib/elli/pull/57
+
+ * Logging and stacktrace OTP-21 support: https://github.com/elli-lib/elli/pull/55
+
+ * Include req_body size in sizes list: https://github.com/elli-lib/elli/pull/52
+
+ * Update CHANGELOG.md for 3.0.0: https://github.com/elli-lib/elli/pull/49
+
 ## v3.0.0
 
  * `scheme`, `host`, and `port` added to the `#req{}` record. Corresponding
