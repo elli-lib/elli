@@ -66,7 +66,7 @@ host(#req{host = Host})          -> Host.
 %% @doc Return the `port'.
 port(#req{port = Port})          -> Port.
 
-peer(#req{socket = Socket} = Req) ->
+peer(#req{socket = Socket} = _Req) ->
     case elli_tcp:peername(Socket) of
         {ok, {Address, _}} ->
             list_to_binary(inet_parse:ntoa(Address));
