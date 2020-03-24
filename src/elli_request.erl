@@ -97,6 +97,7 @@ get_arg_decoded(Key, #req{} = Req) ->
 get_arg_decoded(Key, #req{args = Args}, Default) ->
     case proplists:get_value(Key, Args) of
         undefined    -> Default;
+        true         -> true;
         EncodedValue ->
             uri_decode(EncodedValue)
     end.
@@ -127,6 +128,7 @@ post_arg_decoded(Key, #req{} = Req) ->
 post_arg_decoded(Key, #req{} = Req, Default) ->
     case proplists:get_value(Key, body_qs(Req)) of
         undefined    -> Default;
+        true         -> true;
         EncodedValue ->
             uri_decode(EncodedValue)
     end.
