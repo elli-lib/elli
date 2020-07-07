@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v3.3.0
+
+ * Do not use x-forwarded-for for peer #75 
+ * Handle arguments with no value in (post|get)_arg_decoded #82
+ * Fix compile-time warnings on missing record info. from aleppo #81
+
 ## v3.2.0
 
  * Quell warnings on OTP-21: https://github.com/elli-lib/elli/pull/61
