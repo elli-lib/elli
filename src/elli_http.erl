@@ -427,7 +427,8 @@ get_request_(Socket, Buffer, Options, {Mod, Args} = Callback) ->
             exit(normal)
     end.
 
-recv_request(Socket, Buffer, Options, {Mod, Args} = _Callback) ->
+recv_request(Socket, Buffer, Options, {Mod, Args} = Callback) ->
+    ok = check_max_buffer_size(Socket, Buffer, Options, Callback, 414),
     case elli_tcp:recv(Socket, 0, request_timeout(Options)) of
         {ok, Data} ->
             <<Buffer/binary, Data/binary>>;
@@ -470,6 +471,7 @@ get_headers(Socket, Buffer, Headers, Count, Opts, {Mod, Args} = Callback) ->
         {ok, {http_error, _}, Rest} ->
             get_headers(Socket, Rest, Headers, Count, Opts, Callback);
         {more, _} ->
+            ok = check_max_buffer_size(Socket, Buffer, Opts, Callback, 413),
             case elli_tcp:recv(Socket, 0, header_timeout(Opts)) of
                 {ok, Data} ->
                     get_headers(Socket, <<Buffer/binary, Data/binary>>,
@@ -583,6 +585,33 @@ do_check_max_size_x2(Socket, ContentLength, Buffer, MaxSize)
     Response = http_response(413),
     elli_tcp:send(Socket, Response);
 do_check_max_size_x2(_, _, _, _) -> ok.
+
+%% @doc Same as check_max_size/5 but for arbitrary buffers (request line, headers)
+check_max_buffer_size(Socket, Buffer, Opts, {Mod, Args}, ErrorCode) ->
+    MaxSize = max_body_size(Opts),
+    BufferSize = size(Buffer),
+    case MaxSize > BufferSize of
+        true ->
+            ok;
+        false ->
+            case ErrorCode of
+                413 ->
+                    handle_event(Mod, bad_request, [{headers_size, BufferSize}], Args);
+                414 ->
+                    handle_event(Mod, bad_request, [{request_line_size, BufferSize}], Args)
+            end,
+
+            case MaxSize * 2 > BufferSize of
+                true ->
+                    Response = http_response(ErrorCode),
+                    elli_tcp:send(Socket, Response);
+                false ->
+                    ok
+            end,
+
+            elli_tcp:close(Socket),
+            exit(normal)
+    end.
 
 -spec mk_req(Method, PathTuple, Headers, Body, V, Socket, Callback) -> Req when
       Method    :: elli:http_method(),
