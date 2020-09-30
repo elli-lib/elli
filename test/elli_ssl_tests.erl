@@ -12,7 +12,8 @@ elli_ssl_test_() ->
        [
         ?_test(hello_world()),
         ?_test(chunked()),
-        ?_test(sendfile())
+        ?_test(sendfile()),
+        ?_test(acceptor_leak_regression())
        ]}
      ]}.
 
@@ -67,6 +68,15 @@ sendfile() ->
     ?assertNotMatch(undefined, get_timing_value(send_end)),
     ?assertNotMatch(undefined, get_timing_value(request_end)).
 
+acceptor_leak_regression() ->
+    {ok, Before} = elli:get_acceptors(elli_under_test),
+    Opts = [{verify, verify_peer},
+            {verify_fun, {fun(_,_) -> {fail, 23} end, []}},
+            {reuse_sessions, false}],
+    {error, _} = ssl:connect("localhost", 3443, Opts),
+    {ok, After} = elli:get_acceptors(elli_under_test),
+    ?assertEqual(length(Before), length(After)).
+
 %%% Internal helpers
 
 setup() ->
@@ -98,6 +108,7 @@ setup() ->
                                 {callback_args, Config}
                                ]),
     unlink(P),
+    erlang:register(elli_under_test, P),
     [P].
 
 teardown(Pids) ->
