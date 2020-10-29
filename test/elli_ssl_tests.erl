@@ -101,10 +101,10 @@ setup() ->
     [P].
 
 teardown(Pids) ->
+    [elli:stop(P) || P <- Pids],
     application:stop(ssl),
     application:stop(public_key),
-    application:stop(crypto),
-    [elli:stop(P) || P <- Pids].
+    application:stop(crypto).
 
 init_stats() ->
     ets:new(elli_stat_table, [set, named_table, public]).
