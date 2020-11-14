@@ -740,16 +740,45 @@ search(Pred, []) when is_function(Pred, 1) ->
 %% PATH HELPERS
 %%
 
-parse_path({abs_path, FullPath}) ->
-    Parsed = case binary:split(FullPath, [<<"?">>]) of
-                 [URL]       -> {FullPath, split_path(URL), []};
-                 [URL, Args] -> {FullPath, split_path(URL), split_args(Args)}
-             end,
-    {ok, {undefined, undefined, undefined}, Parsed};
-parse_path({absoluteURI, Scheme, Host, Port, Path}) ->
-    setelement(2, parse_path({abs_path, Path}), {Scheme, Host, Port});
-parse_path(_) ->
-    {error, unsupported_uri}.
+-ifdef(OTP_RELEASE).
+  -if(?OTP_RELEASE >= 22).
+    parse_path({abs_path, FullPath}) ->
+        URIMap = uri_string:parse(FullPath),
+        Host = maps:get(host, URIMap, undefined),
+        Scheme = maps:get(scheme, URIMap, undefined),
+        Path = maps:get(path, URIMap, <<>>),
+        Query = maps:get(query, URIMap, <<>>),
+        Port = maps:get(port, URIMap, case Scheme of http -> 80; https -> 443; _ -> undefined end),
+        {ok, {Scheme, Host, Port}, {Path, split_path(Path), uri_string:dissect_query(Query)}};
+    parse_path({absoluteURI, Scheme, Host, Port, Path}) ->
+        setelement(2, parse_path({abs_path, Path}), {Scheme, Host, Port});
+    parse_path(_) ->
+        {error, unsupported_uri}.
+  -else.
+    parse_path({abs_path, FullPath}) ->
+        Parsed = case binary:split(FullPath, [<<"?">>]) of
+                     [URL]       -> {FullPath, split_path(URL), []};
+                     [URL, Args] -> {FullPath, split_path(URL), split_args(Args)}
+                 end,
+        {ok, {undefined, undefined, undefined}, Parsed};
+    parse_path({absoluteURI, Scheme, Host, Port, Path}) ->
+        setelement(2, parse_path({abs_path, Path}), {Scheme, Host, Port});
+    parse_path(_) ->
+        {error, unsupported_uri}.
+  -endif.
+-else.
+  %% same as else branch above. can drop this when only OTP 21+ is supported
+  parse_path({abs_path, FullPath}) ->
+      Parsed = case binary:split(FullPath, [<<"?">>]) of
+                   [URL]       -> {FullPath, split_path(URL), []};
+                   [URL, Args] -> {FullPath, split_path(URL), split_args(Args)}
+               end,
+      {ok, {undefined, undefined, undefined}, Parsed};
+  parse_path({absoluteURI, Scheme, Host, Port, Path}) ->
+      setelement(2, parse_path({abs_path, Path}), {Scheme, Host, Port});
+  parse_path(_) ->
+      {error, unsupported_uri}.
+-endif.
 
 split_path(Path) ->
     [P || P <- binary:split(Path, [<<"/">>], [global]),
