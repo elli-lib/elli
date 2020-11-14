@@ -25,6 +25,7 @@
         , post_args_decoded/1
         , body_qs/1
         , headers/1
+        , parsed_headers/1
         , peer/1
         , method/1
         , body/1
@@ -53,8 +54,10 @@
 path(#req{path = Path})          -> Path.
 %% @doc Return the `raw_path', i.e. not split or parsed for query params.
 raw_path(#req{raw_path = Path})  -> Path.
-%% @doc Return the `headers'.
+%% @doc Return the original `headers'.
 headers(#req{headers = Headers}) -> Headers.
+%% @doc Return the `headers' that have had `string:casefold/1' run on each key.
+parsed_headers(#req{parsed_headers = Headers}) -> Headers.
 %% @doc Return the `method'.
 method(#req{method = Method})    -> Method.
 %% @doc Return the `body'.
@@ -74,13 +77,14 @@ peer(#req{socket = Socket} = _Req) ->
             undefined
     end.
 
-%% @equiv proplists:get_value(Key, Headers)
-get_header(Key, #req{headers = Headers}) ->
-    proplists:get_value(Key, Headers).
+get_header(Key, #req{parsed_headers = Headers}) ->
+    CaseFoldedKey = string:casefold(Key),
+    proplists:get_value(CaseFoldedKey, Headers).
 
-%% @equiv proplists:get_value(Key, Headers, Default)
-get_header(Key, #req{headers = Headers}, Default) ->
-    proplists:get_value(Key, Headers, Default).
+get_header(Key, #req{parsed_headers = Headers}, Default) ->
+    CaseFoldedKey = string:casefold(Key),
+    proplists:get_value(CaseFoldedKey, Headers, Default).
+
 
 %% @equiv get_arg(Key, Req, undefined)
 get_arg(Key, #req{} = Req) ->
@@ -172,8 +176,8 @@ query_str(#req{raw_path = Path}) ->
 %% The result is either a `byte_range_set()' or the atom `parse_error'.
 %% Use {@link elli_util:normalize_range/2} to get a validated, normalized range.
 -spec get_range(elli:req()) -> [http_range()] | parse_error.
-get_range(#req{headers = Headers})  ->
-    case proplists:get_value(<<"Range">>, Headers) of
+get_range(#req{parsed_headers = Headers})  ->
+    case proplists:get_value(<<"range">>, Headers) of
         <<"bytes=", RangeSetBin/binary>> ->
             parse_range_set(RangeSetBin);
         _ -> []

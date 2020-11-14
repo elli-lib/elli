@@ -38,9 +38,9 @@ chunked() ->
     Response = hackney:get("https://localhost:3443/chunked", [], <<>>, [insecure]),
 
     ?assertMatch(200, status(Response)),
-    ?assertEqual([{<<"Connection">>, <<"Keep-Alive">>},
-                  {<<"Content-Type">>, <<"text/event-stream">>},
-                  {<<"Transfer-Encoding">>,<<"chunked">>}], headers(Response)),
+    ?assertHeadersEqual([{<<"connection">>, <<"Keep-Alive">>},
+                         {<<"content-type">>, <<"text/event-stream">>},
+                         {<<"transfer-encoding">>,<<"chunked">>}], headers(Response)),
     ?assertMatch(Expected, body(Response)).
 
 sendfile() ->
@@ -48,8 +48,8 @@ sendfile() ->
     F              = ?README,
     {ok, Expected} = file:read_file(F),
 
-    ?assertEqual([{<<"Connection">>, <<"Keep-Alive">>},
-                  {<<"Content-Length">>, ?I2B(size(Expected))}],
+    ?assertHeadersEqual([{<<"connection">>, <<"Keep-Alive">>},
+                         {<<"content-length">>, ?I2B(size(Expected))}],
                  headers(Response)),
     ?assertEqual(Expected, body(Response)),
     %% sizes

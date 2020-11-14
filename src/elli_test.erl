@@ -21,7 +21,7 @@
 call(Method, Path, Headers, Body, Opts) ->
     Callback     = proplists:get_value(callback, Opts),
     CallbackArgs = proplists:get_value(callback_args, Opts),
-    Req = elli_http:mk_req(Method, {abs_path, Path}, Headers,
+    Req = elli_http:mk_req(Method, {abs_path, Path}, Headers, Headers,
                            Body, {1, 1}, undefined, {Callback, CallbackArgs}),
     ok  = Callback:handle_event(elli_startup, [], CallbackArgs),
     Callback:handle(Req, CallbackArgs).
@@ -37,11 +37,11 @@ hello_world_test() ->
                  elli_test:call('GET', <<"/hello/?name=Test1">>, [], <<>>,
                                 ?EXAMPLE_CONF)),
     ?assertMatch({ok,
-                  [{<<"Content-type">>,
+                  [{<<"content-type">>,
                     <<"application/json; charset=ISO-8859-1">>}],
                   <<"{\"name\" : \"Test2\"}">>},
                  elli_test:call('GET', <<"/type?name=Test2">>,
-                                [{<<"Accept">>, <<"application/json">>}], <<>>,
+                                [{<<"accept">>, <<"application/json">>}], <<>>,
                                 ?EXAMPLE_CONF)).
 
 -endif. %% TEST

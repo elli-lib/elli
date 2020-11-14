@@ -7,6 +7,7 @@
               raw_path :: binary(),
               version  :: elli_http:version(),
               headers  :: elli:headers(),
+              parsed_headers  :: elli:headers(),
               body     :: elli:body(),
               pid      :: pid(),
               socket   :: undefined | elli_tcp:socket(),

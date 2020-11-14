@@ -13,7 +13,7 @@
 
 -export([send_response/4]).
 
--export([mk_req/7, mk_req/10]). %% useful when testing.
+-export([mk_req/8, mk_req/11]). %% useful when testing.
 
 %% Exported for looping with a fully-qualified module name
 -export([accept/4, handle_request/4, chunk_loop/1, split_args/1,
@@ -23,6 +23,12 @@
 
 %% @type version(). HTTP version as a tuple, i.e. `{0, 9} | {1, 0} | {1, 1}'.
 -type version() :: {0, 9} | {1, 0} | {1, 1}.
+
+
+-define(CONTENT_LENGTH_HEADER, <<"content-length">>).
+-define(EXPECT_HEADER, <<"expect">>).
+-define(CONNECTION_HEADER, <<"connection">>).
+-define(TRANSFER_ENCODING_HEADER, <<"Transfer-Encoding">>).
 
 %% TODO: use this
 %% -type connection_token() :: keep_alive | close.
@@ -89,14 +95,14 @@ keepalive_loop(Socket, NumRequests, Buffer, Options, Callback) ->
 handle_request(S, PrevB, Opts, {Mod, Args} = Callback) ->
     {Method, RawPath, V, B0} = get_request(S, PrevB, Opts, Callback),
     t(headers_start),
-    {RequestHeaders, B1} = get_headers(S, V, B0, Opts, Callback),
+    {{RequestHeaders, ParsedRequestHeaders}, B1} = get_headers(S, V, B0, Opts, Callback),
     t(headers_end),
-    Req = mk_req(Method, RawPath, RequestHeaders, <<>>, V, S, Callback),
+    Req = mk_req(Method, RawPath, RequestHeaders, ParsedRequestHeaders, <<>>, V, S, Callback),
 
     case init(Req) of
         {ok, standard} ->
             t(body_start),
-            {RequestBody, B2} = get_body(S, RequestHeaders, B1, Opts, Callback),
+            {RequestBody, B2} = get_body(S, ParsedRequestHeaders, B1, Opts, Callback),
             t(body_end),
             Req1 = Req#req{body = RequestBody},
 
@@ -139,7 +145,7 @@ handle_response(Req, Buffer, {response, Code, UserHeaders, Body}) ->
 handle_response(Req, _Buffer, {chunk, UserHeaders, Initial}) ->
     #req{callback = {Mod, Args}} = Req,
 
-    ResponseHeaders = [{<<"Transfer-Encoding">>, <<"chunked">>},
+    ResponseHeaders = [{?TRANSFER_ENCODING_HEADER, <<"chunked">>},
                        connection(Req, UserHeaders)
                        | UserHeaders],
     send_response(Req, 200, ResponseHeaders, <<"">>),
@@ -448,32 +454,34 @@ recv_request(Socket, Buffer, Options, {Mod, Args} = _Callback) ->
       Buffer   :: binary(),
       Opts     :: proplists:proplist(),
       Callback :: elli_handler:callback(),
-      Headers  :: {elli:headers(), any()}. % TODO: refine
+      Headers  :: {{elli:headers(), elli:headers()}, any()}. % TODO: refine
 get_headers(_Socket, {0, 9}, _, _, _) ->
-    {[], <<>>};
+    {{[], []}, <<>>};
 get_headers(Socket, {1, _}, Buffer, Opts, Callback) ->
-    get_headers(Socket, Buffer, [], 0, Opts, Callback).
+    get_headers(Socket, Buffer, {[], []}, 0, Opts, Callback).
 
-get_headers(Socket, _, Headers, HeadersCount, _Opts, {Mod, Args})
+get_headers(Socket, _, {Headers, _}, HeadersCount, _Opts, {Mod, Args})
   when HeadersCount >= 100 ->
     handle_event(Mod, bad_request, [{too_many_headers, Headers}], Args),
     send_bad_request(Socket),
     elli_tcp:close(Socket),
     exit(normal);
-get_headers(Socket, Buffer, Headers, Count, Opts, {Mod, Args} = Callback) ->
+get_headers(Socket, Buffer, {Headers, ParsedHeaders}, Count, Opts, {Mod, Args} = Callback) ->
     case erlang:decode_packet(httph_bin, Buffer, []) of
         {ok, {http_header, _, Key, _, Value}, Rest} ->
-            NewHeaders = [{ensure_binary(Key), Value} | Headers],
-            get_headers(Socket, Rest, NewHeaders, Count + 1, Opts, Callback);
+            BinKey = ensure_binary(Key),
+            NewHeaders = [{BinKey, Value} | Headers],
+            NewParsedHeaders = [{string:casefold(BinKey), Value} | ParsedHeaders],
+            get_headers(Socket, Rest, {NewHeaders, NewParsedHeaders}, Count + 1, Opts, Callback);
         {ok, http_eoh, Rest} ->
-            {Headers, Rest};
+            {{Headers, ParsedHeaders}, Rest};
         {ok, {http_error, _}, Rest} ->
-            get_headers(Socket, Rest, Headers, Count, Opts, Callback);
+            get_headers(Socket, Rest, {Headers, ParsedHeaders}, Count, Opts, Callback);
         {more, _} ->
             case elli_tcp:recv(Socket, 0, header_timeout(Opts)) of
                 {ok, Data} ->
                     get_headers(Socket, <<Buffer/binary, Data/binary>>,
-                                Headers, Count, Opts, Callback);
+                                {Headers, ParsedHeaders}, Count, Opts, Callback);
                 {error, Closed} when Closed =:= closed orelse
                                      Closed =:= enotconn ->
                     handle_event(Mod, client_closed, [receiving_headers], Args),
@@ -505,7 +513,7 @@ get_headers(Socket, Buffer, Headers, Count, Opts, {Mod, Args} = Callback) ->
       Callback :: elli_handler:callback(),
       FullBody :: {elli:body(), binary()}.
 get_body(Socket, Headers, Buffer, Opts, Callback) ->
-    case proplists:get_value(<<"Content-Length">>, Headers, undefined) of
+    case get_header(?CONTENT_LENGTH_HEADER, Headers, undefined) of
         undefined ->
             {<<>>, Buffer};
         ContentLengthBin ->
@@ -553,7 +561,7 @@ maybe_send_continue(Socket, Headers) ->
     % According to RFC2616 section 8.2.3 an origin server must respond with
     % either a "100 Continue" or a final response code when the client
     % headers contains "Expect:100-continue"
-    case proplists:get_value(<<"Expect">>, Headers, undefined) of
+    case get_header(?EXPECT_HEADER, Headers, undefined) of
         <<"100-continue">> ->
             Response = http_response(100),
             elli_tcp:send(Socket, Response);
@@ -584,7 +592,7 @@ do_check_max_size_x2(Socket, ContentLength, Buffer, MaxSize)
     elli_tcp:send(Socket, Response);
 do_check_max_size_x2(_, _, _, _) -> ok.
 
--spec mk_req(Method, PathTuple, Headers, Body, V, Socket, Callback) -> Req when
+-spec mk_req(Method, PathTuple, Headers, Headers, Body, V, Socket, Callback) -> Req when
       Method    :: elli:http_method(),
       PathTuple :: {PathType :: atom(), RawPath :: binary()},
       Headers   :: elli:headers(),
@@ -593,14 +601,14 @@ do_check_max_size_x2(_, _, _, _) -> ok.
       Socket    :: elli_tcp:socket() | undefined,
       Callback  :: elli_handler:callback(),
       Req       :: elli:req().
-mk_req(Method, PathTuple, Headers, Body, V, Socket, {Mod, Args} = Callback) ->
+mk_req(Method, PathTuple, Headers, ParsedHeaders, Body, V, Socket, {Mod, Args} = Callback) ->
     case parse_path(PathTuple) of
         {ok, {Scheme, Host, Port}, {Path, URL, URLArgs}} ->
             #req{method   = Method, scheme   = Scheme, host    = Host,
                  port     = Port,   path     = URL,    args    = URLArgs,
                  version  = V,      raw_path = Path,   headers = Headers,
                  body     = Body,   pid      = self(), socket  = Socket,
-                 callback = Callback};
+                 callback = Callback, parsed_headers = ParsedHeaders};
         {error, Reason} ->
             handle_event(Mod, request_parse_error,
                          [{Reason, {Method, PathTuple}}], Args),
@@ -609,8 +617,8 @@ mk_req(Method, PathTuple, Headers, Body, V, Socket, {Mod, Args} = Callback) ->
             exit(normal)
     end.
 
-mk_req(Method, Scheme, Host, Port, PathTuple, Headers, Body, V, Socket, Callback) ->
-    Req = mk_req(Method, PathTuple, Headers, Body, V, Socket, Callback),
+mk_req(Method, Scheme, Host, Port, PathTuple, Headers, ParsedHeaders, Body, V, Socket, Callback) ->
+    Req = mk_req(Method, PathTuple, Headers, ParsedHeaders, Body, V, Socket, Callback),
     Req#req{scheme = Scheme, host = Host, port = Port}.
 
 
@@ -622,7 +630,7 @@ http_response(Code) ->
     http_response(Code, <<>>).
 
 http_response(Code, Body) ->
-    http_response(Code, [{<<"Content-Length">>, size(Body)}], Body).
+    http_response(Code, [{?CONTENT_LENGTH_HEADER, size(Body)}], Body).
 
 http_response(Code, Headers, <<>>) ->
     [<<"HTTP/1.1 ">>, status(Code), <<"\r\n">>,
@@ -647,15 +655,14 @@ encode_value(V) when is_integer(V) -> integer_to_binary(V);
 encode_value(V) when is_binary(V)  -> V;
 encode_value(V) when is_list(V)    -> list_to_binary(V).
 
-
 connection_token(#req{version = {1, 1}, headers = Headers}) ->
-    case proplists:get_value(<<"Connection">>, Headers) of
+    case get_header(?CONNECTION_HEADER, Headers) of
         <<"close">> -> <<"close">>;
         <<"Close">> -> <<"close">>;
         _           -> <<"Keep-Alive">>
     end;
 connection_token(#req{version = {1, 0}, headers = Headers}) ->
-    case proplists:get_value(<<"Connection">>, Headers) of
+    case get_header(?CONNECTION_HEADER, Headers) of
         <<"Keep-Alive">> -> <<"Keep-Alive">>;
         _                -> <<"close">>
     end;
@@ -664,7 +671,7 @@ connection_token(#req{version = {0, 9}}) ->
 
 
 close_or_keepalive(Req, UserHeaders) ->
-    case proplists:get_value(<<"Connection">>, UserHeaders) of
+    case get_header(?CONNECTION_HEADER, UserHeaders) of
         undefined ->
             case connection_token(Req) of
                 <<"Keep-Alive">> -> keep_alive;
@@ -677,16 +684,51 @@ close_or_keepalive(Req, UserHeaders) ->
 
 %% @doc Add appropriate connection header if the user did not add one already.
 connection(Req, UserHeaders) ->
-    case proplists:get_value(<<"Connection">>, UserHeaders) of
+    case get_header(?CONNECTION_HEADER, UserHeaders) of
         undefined ->
-            {<<"Connection">>, connection_token(Req)};
+            {?CONNECTION_HEADER, connection_token(Req)};
         _ ->
             []
     end.
 
 content_length(Headers, Body)->
-    ?IF(proplists:is_defined(<<"Content-Length">>, Headers), [],
-        {<<"Content-Length">>, iolist_size(Body)}).
+    ?IF(is_header_defined(?CONTENT_LENGTH_HEADER, Headers), [],
+        {?CONTENT_LENGTH_HEADER, iolist_size(Body)}).
+
+is_header_defined(Key, Headers) ->
+    Key1 = string:casefold(Key),
+    lists:any(fun({X, _}) -> string:equal(Key1, X, true) end, Headers).
+
+get_header(Key, Headers) ->
+    get_header(Key, Headers, undefined).
+
+-ifdef(OTP_RELEASE).
+get_header(Key, Headers, Default) ->
+    CaseFoldedKey = string:casefold(Key),
+    case lists:search(fun({N, _}) -> string:equal(CaseFoldedKey, N, true) end, Headers) of
+        {value, {_, Value}} ->
+            Value;
+        false ->
+            Default
+    end.
+-else.
+get_header(Key, Headers, Default) ->
+    CaseFoldedKey = string:casefold(Key),
+    case search(fun({N, _}) -> string:equal(CaseFoldedKey, N, true) end, Headers) of
+        {value, {_, Value}} ->
+            Value;
+        false ->
+            Default
+    end.
+
+search(Pred, [Hd|Tail]) ->
+    case Pred(Hd) of
+        true -> {value, Hd};
+        false -> search(Pred, Tail)
+    end;
+search(Pred, []) when is_function(Pred, 1) ->
+    false.
+-endif.
 
 %%
 %% PATH HELPERS
