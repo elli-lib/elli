@@ -170,7 +170,7 @@ hello_world() ->
     ?assert(?VTB(headers_start, headers_end, 1, 100)),
     ?assert(?VTB(body_start, body_end, 1, 100)),
     ?assert(?VTB(user_start, user_end, 1000000, 1200000)),
-    ?assert(?VTB(send_start, send_end, 1, 200)).
+    ?assert(?VTB(send_start, send_end, 1, 2000)).
 
 
 keep_alive_timings() ->
@@ -224,7 +224,7 @@ keep_alive_timings(Status, Headers, HCRef) ->
     ?assert(?VTB(headers_start, headers_end, 1, 100)),
     ?assert(?VTB(body_start, body_end, 1, 100)),
     ?assert(?VTB(user_start, user_end, 1000000, 1200000)),
-    ?assert(?VTB(send_start, send_end, 1, 200)).
+    ?assert(?VTB(send_start, send_end, 1, 2000)).
 
 not_found() ->
     Response = hackney:get("http://localhost:3001/foobarbaz"),
