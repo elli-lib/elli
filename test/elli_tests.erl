@@ -111,12 +111,12 @@ accessors_test_() ->
     Body = <<"name=knut%3D">>,
     Name = <<"knut=">>,
     Req1 = #req{raw_path = RawPath,
+                original_headers = Headers,
                 headers = Headers,
-                parsed_headers = Headers,
                 method = Method,
                 body = Body},
     Args = [{<<"name">>, Name}],
-    Req2 = #req{headers = Headers, parsed_headers = Headers, args = Args, body = <<>>},
+    Req2 = #req{original_headers = Headers, headers = Headers, args = Args, body = <<>>},
 
     [
      %% POST /foo/bar
@@ -627,8 +627,8 @@ body_qs_test() ->
     Body     = <<"foo=bar&baz=bang&found">>,
     Headers  = [{<<"content-type">>, <<"application/x-www-form-urlencoded">>}],
     ?assertMatch(Expected, elli_request:body_qs(#req{body = Body,
-                                                     headers = Headers,
-                                                     parsed_headers = Headers})).
+                                                     original_headers = Headers,
+                                                     headers = Headers})).
 
 to_proplist_test() ->
     Req  = #req{method   = 'GET',
@@ -636,8 +636,8 @@ to_proplist_test() ->
                 args     = [],
                 version  = {1, 1},
                 raw_path = <<"/crash">>,
-                headers  = [{<<"Host">>, <<"localhost:3001">>}],
-                parsed_headers  = [{<<"host">>, <<"localhost:3001">>}],
+                original_headers  = [{<<"Host">>, <<"localhost:3001">>}],
+                headers  = [{<<"host">>, <<"localhost:3001">>}],
                 body     = <<>>,
                 pid      = self(),
                 socket   = socket,
@@ -651,8 +651,8 @@ to_proplist_test() ->
             {args,     []},
             {raw_path, <<"/crash">>},
             {version,  {1, 1}},
-            {headers,  [{<<"Host">>, <<"localhost:3001">>}]},
-            {parsed_headers,  [{<<"host">>, <<"localhost:3001">>}]},
+            {headers,  [{<<"host">>, <<"localhost:3001">>}]},
+            {original_headers,  [{<<"Host">>, <<"localhost:3001">>}]},
             {body,     <<>>},
             {pid,      self()},
             {socket,   socket},
@@ -677,11 +677,11 @@ query_str_test_() ->
 
 
 get_range_test_() ->
-    Req       = #req{parsed_headers = [{<<"range">>,
+    Req       = #req{headers = [{<<"range">>,
                                         <<"bytes=0-99 ,500-999 , -800">>}]},
-    OffsetReq = #req{parsed_headers = [{<<"range">>, <<"bytes=200-">>}]},
-    UndefReq  = #req{parsed_headers = []},
-    BadReq    = #req{parsed_headers = [{<<"range">>, <<"bytes=--99,hallo-world">>}]},
+    OffsetReq = #req{headers = [{<<"range">>, <<"bytes=200-">>}]},
+    UndefReq  = #req{headers = []},
+    BadReq    = #req{headers = [{<<"range">>, <<"bytes=--99,hallo-world">>}]},
 
     ByteRangeSet = [{bytes, 0, 99}, {bytes, 500, 999}, {suffix, 800}],
 

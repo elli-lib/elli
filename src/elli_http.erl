@@ -606,9 +606,9 @@ mk_req(Method, PathTuple, Headers, ParsedHeaders, Body, V, Socket, {Mod, Args} =
         {ok, {Scheme, Host, Port}, {Path, URL, URLArgs}} ->
             #req{method   = Method, scheme   = Scheme, host    = Host,
                  port     = Port,   path     = URL,    args    = URLArgs,
-                 version  = V,      raw_path = Path,   headers = Headers,
+                 version  = V,      raw_path = Path,   original_headers = Headers,
                  body     = Body,   pid      = self(), socket  = Socket,
-                 callback = Callback, parsed_headers = ParsedHeaders};
+                 callback = Callback, headers = ParsedHeaders};
         {error, Reason} ->
             handle_event(Mod, request_parse_error,
                          [{Reason, {Method, PathTuple}}], Args),
@@ -620,7 +620,6 @@ mk_req(Method, PathTuple, Headers, ParsedHeaders, Body, V, Socket, {Mod, Args} =
 mk_req(Method, Scheme, Host, Port, PathTuple, Headers, ParsedHeaders, Body, V, Socket, Callback) ->
     Req = mk_req(Method, PathTuple, Headers, ParsedHeaders, Body, V, Socket, Callback),
     Req#req{scheme = Scheme, host = Host, port = Port}.
-
 
 %%
 %% HEADERS

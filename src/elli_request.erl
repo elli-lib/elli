@@ -24,8 +24,8 @@
         , post_args/1
         , post_args_decoded/1
         , body_qs/1
+        , original_headers/1
         , headers/1
-        , parsed_headers/1
         , peer/1
         , method/1
         , body/1
@@ -57,7 +57,7 @@ raw_path(#req{raw_path = Path})  -> Path.
 %% @doc Return the original `headers'.
 headers(#req{headers = Headers}) -> Headers.
 %% @doc Return the `headers' that have had `string:casefold/1' run on each key.
-parsed_headers(#req{parsed_headers = Headers}) -> Headers.
+original_headers(#req{original_headers = Headers}) -> Headers.
 %% @doc Return the `method'.
 method(#req{method = Method})    -> Method.
 %% @doc Return the `body'.
@@ -77,11 +77,11 @@ peer(#req{socket = Socket} = _Req) ->
             undefined
     end.
 
-get_header(Key, #req{parsed_headers = Headers}) ->
+get_header(Key, #req{headers = Headers}) ->
     CaseFoldedKey = string:casefold(Key),
     proplists:get_value(CaseFoldedKey, Headers).
 
-get_header(Key, #req{parsed_headers = Headers}, Default) ->
+get_header(Key, #req{headers = Headers}, Default) ->
     CaseFoldedKey = string:casefold(Key),
     proplists:get_value(CaseFoldedKey, Headers, Default).
 
@@ -176,7 +176,7 @@ query_str(#req{raw_path = Path}) ->
 %% The result is either a `byte_range_set()' or the atom `parse_error'.
 %% Use {@link elli_util:normalize_range/2} to get a validated, normalized range.
 -spec get_range(elli:req()) -> [http_range()] | parse_error.
-get_range(#req{parsed_headers = Headers})  ->
+get_range(#req{headers = Headers})  ->
     case proplists:get_value(<<"range">>, Headers) of
         <<"bytes=", RangeSetBin/binary>> ->
             parse_range_set(RangeSetBin);
