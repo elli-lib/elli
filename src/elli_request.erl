@@ -54,9 +54,9 @@
 path(#req{path = Path})          -> Path.
 %% @doc Return the `raw_path', i.e. not split or parsed for query params.
 raw_path(#req{raw_path = Path})  -> Path.
-%% @doc Return the original `headers'.
-headers(#req{headers = Headers}) -> Headers.
 %% @doc Return the `headers' that have had `string:casefold/1' run on each key.
+headers(#req{headers = Headers}) -> Headers.
+%% @doc Return the original `headers'.
 original_headers(#req{original_headers = Headers}) -> Headers.
 %% @doc Return the `method'.
 method(#req{method = Method})    -> Method.
