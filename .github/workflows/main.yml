@@ -3,10 +3,10 @@ name: Common Test
 on:
   pull_request:
     branches:
-      - 'master'
+      - 'main'
   push:
     branches:
-      - 'master'
+      - 'main'
 
 jobs:
   build:
@@ -15,13 +15,13 @@ jobs:
 
     strategy:
       matrix:
-        otp_version: ['23.0.2', '22.3.4.2', '21.3.8.16', '20.3.8.21', '19.3.6.13', '18.3.4.5']
-        otp_version: [22, 21, 20, 19, 18]
+        otp_version: ['23.1', '22.3.4.2', '21.3.8.16', '20.3.8.21']
         os: [ubuntu-latest]
 
     steps:
     - uses: actions/checkout@v2
-    - uses: gleam-lang/setup-erlang@v1.0.0
+
+    - uses: bajankristof/setup-erlang@master
       with:
         otp-version: ${{ matrix.otp_version }}
 
@@ -33,5 +33,11 @@ jobs:
       run: rebar3 dialyzer
     - name: XRef
       run: rebar3 xref
-    - name: Coveralls
-      run: rebar3 coveralls send
+
+    - name: Covertool
+      if: ${{ always() }}
+      run: rebar3 covertool generate
+    - uses: codecov/codecov-action@v1
+      with:
+        file: _build/test/covertool/elli.covertool.xml
+        env_vars: OTP_VERSION

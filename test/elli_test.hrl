@@ -1,5 +1,8 @@
 -define(I2B(I), list_to_binary(integer_to_list(I))).
 
+-define(assertHeadersEqual(H1, H2), ?assertEqual(lists:sort([{string:casefold(K), V} || {K, V} <- H1]),
+                                                 lists:sort([{string:casefold(K), V} || {K, V} <- H2]))).
+
 
 status({ok, Status, _Headers, _ClientRef}) ->
     Status;

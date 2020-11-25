@@ -3,16 +3,14 @@
 [![Hex.pm][hex badge]][hex package]
 [![Documentation][doc badge]][docs]
 [![Erlang][erlang badge]][erlang downloads]
-[![Travis CI][travis badge]][travis builds]
+![Common Test](https://github.com/elli-lib/elli/workflows/Common%20Test/badge.svg)
 [![Coverage Status][coveralls badge]][coveralls link]
 [![MIT License][license badge]](LICENSE)
 
-[travis builds]: https://travis-ci.org/elli-lib/elli
-[travis badge]: https://travis-ci.org/elli-lib/elli.svg
 [hex badge]: https://img.shields.io/hexpm/v/elli.svg
 [hex package]: https://hex.pm/packages/elli
 [latest release]: https://github.com/elli-lib/elli/releases/latest
-[erlang badge]: https://img.shields.io/badge/erlang-%E2%89%A518.0-red.svg
+[erlang badge]: https://img.shields.io/badge/erlang-%E2%89%A520.0-red.svg
 [erlang downloads]: http://www.erlang.org/downloads
 [doc badge]: https://img.shields.io/badge/docs-edown-green.svg
 [docs]: doc/README.md

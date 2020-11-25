@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## pre-v4.0.0
+
+ * Headers are now properly treated as case-insensitive
+ * Original headers that have not had `string:casefold/1` run on each header
+ name are still available in the request through `elli_request:original_headers`
+
 ## v3.3.0
 
  * Do not use x-forwarded-for for peer #75 

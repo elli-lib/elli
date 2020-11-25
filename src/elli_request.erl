@@ -24,6 +24,7 @@
         , post_args/1
         , post_args_decoded/1
         , body_qs/1
+        , original_headers/1
         , headers/1
         , peer/1
         , method/1
@@ -53,8 +54,10 @@
 path(#req{path = Path})          -> Path.
 %% @doc Return the `raw_path', i.e. not split or parsed for query params.
 raw_path(#req{raw_path = Path})  -> Path.
-%% @doc Return the `headers'.
+%% @doc Return the `headers' that have had `string:casefold/1' run on each key.
 headers(#req{headers = Headers}) -> Headers.
+%% @doc Return the original `headers'.
+original_headers(#req{original_headers = Headers}) -> Headers.
 %% @doc Return the `method'.
 method(#req{method = Method})    -> Method.
 %% @doc Return the `body'.
@@ -74,13 +77,14 @@ peer(#req{socket = Socket} = _Req) ->
             undefined
     end.
 
-%% @equiv proplists:get_value(Key, Headers)
 get_header(Key, #req{headers = Headers}) ->
-    proplists:get_value(Key, Headers).
+    CaseFoldedKey = string:casefold(Key),
+    proplists:get_value(CaseFoldedKey, Headers).
 
-%% @equiv proplists:get_value(Key, Headers, Default)
 get_header(Key, #req{headers = Headers}, Default) ->
-    proplists:get_value(Key, Headers, Default).
+    CaseFoldedKey = string:casefold(Key),
+    proplists:get_value(CaseFoldedKey, Headers, Default).
+
 
 %% @equiv get_arg(Key, Req, undefined)
 get_arg(Key, #req{} = Req) ->
@@ -173,7 +177,7 @@ query_str(#req{raw_path = Path}) ->
 %% Use {@link elli_util:normalize_range/2} to get a validated, normalized range.
 -spec get_range(elli:req()) -> [http_range()] | parse_error.
 get_range(#req{headers = Headers})  ->
-    case proplists:get_value(<<"Range">>, Headers) of
+    case proplists:get_value(<<"range">>, Headers) of
         <<"bytes=", RangeSetBin/binary>> ->
             parse_range_set(RangeSetBin);
         _ -> []
