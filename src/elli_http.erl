@@ -901,6 +901,7 @@ status(506) -> <<"506 Variant Also Negotiates">>;
 status(507) -> <<"507 Insufficient Storage">>;
 status(510) -> <<"510 Not Extended">>;
 status(511) -> <<"511 Network Authentication Required">>;
+status(I) when is_integer(I), I >= 100, I < 1000 -> list_to_binary(io_lib:format("~B Status", [I]));
 status(B) when is_binary(B) -> B.
 
 
