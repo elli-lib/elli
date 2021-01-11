@@ -13,11 +13,17 @@
 
 -export([send_response/4]).
 
+-export([send_file/5]).
+
 -export([mk_req/8, mk_req/11]). %% useful when testing.
 
 %% Exported for looping with a fully-qualified module name
 -export([accept/4, handle_request/4, chunk_loop/1, split_args/1,
          parse_path/1, keepalive_loop/3, keepalive_loop/5]).
+
+%% Exported for correctly handling session keep-alive for handlers
+%% operating in handler mode.
+-export([close_or_keepalive/2]).
 
 -export_type([version/0]).
 
@@ -668,7 +674,13 @@ connection_token(#req{version = {1, 0}, headers = Headers}) ->
 connection_token(#req{version = {0, 9}}) ->
     <<"close">>.
 
-
+%% @doc Return the preferred session handling setting to close or keep the
+%% current session alive based on the presence of a header or the standard
+%% default based on the version of HTTP of the request.
+-spec close_or_keepalive(Req, Headers) -> KeepaliveOpt when
+      Req       :: elli:req(),
+      Headers   :: elli:headers(),
+      KeepaliveOpt :: close | keep_alive.
 close_or_keepalive(Req, UserHeaders) ->
     case get_header(?CONNECTION_HEADER, UserHeaders) of
         undefined ->
