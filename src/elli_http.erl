@@ -682,12 +682,7 @@ connection_token(#req{version = {0, 9}}) ->
       Headers   :: elli:headers(),
       KeepaliveOpt :: close | keep_alive.
 close_or_keepalive(Req, UserHeaders) ->
-    case get_header(?CONNECTION_HEADER, UserHeaders) of
-        undefined ->
-            case connection_token(Req) of
-                <<"Keep-Alive">> -> keep_alive;
-                <<"close">>      -> close
-            end;
+    case get_header(?CONNECTION_HEADER, UserHeaders, connection_token(Req)) of
         <<"close">>      -> close;
         <<"Keep-Alive">> -> keep_alive
     end.
