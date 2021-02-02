@@ -87,6 +87,7 @@ keepalive_loop(Socket, NumRequests, Buffer, Options, Callback) ->
       Callback  :: elli_handler:callback(),
       ConnToken :: {'keep_alive' | 'close', binary()}.
 handle_request(S, PrevB, Opts, {Mod, Args} = Callback) ->
+    elli_tcp:setopts(S, [{active, 100}]),
     {Method, RawPath, V, B0} = get_request(S, PrevB, Opts, Callback),
     t(headers_start),
     {RequestHeaders, B1} = get_headers(S, V, B0, Opts, Callback),
@@ -404,7 +405,7 @@ send_chunk(Socket, Data) ->
 
 %% @doc Retrieve the request line.
 get_request(Socket, <<>>, Options, Callback) ->
-    NewBuffer = recv_request(Socket, <<>>, Options, Callback),
+    NewBuffer = recv_request(Socket, <<>>, request_timeout(Options), Options, Callback),
     get_request(Socket, NewBuffer, Options, Callback);
 get_request(Socket, Buffer, Options, Callback) ->
     t(request_start),
@@ -413,7 +414,7 @@ get_request(Socket, Buffer, Options, Callback) ->
 get_request_(Socket, Buffer, Options, {Mod, Args} = Callback) ->
     case erlang:decode_packet(http_bin, Buffer, []) of
         {more, _} ->
-            NewBuffer = recv_request(Socket, Buffer, Options, Callback),
+            NewBuffer = recv_request(Socket, Buffer, request_timeout(Options), Options, Callback),
             get_request_(Socket, NewBuffer, Options, Callback);
         {ok, {http_request, Method, RawPath, Version}, Rest} ->
             {Method, RawPath, Version, Rest};
@@ -427,19 +428,49 @@ get_request_(Socket, Buffer, Options, {Mod, Args} = Callback) ->
             exit(normal)
     end.
 
-recv_request(Socket, Buffer, Options, {Mod, Args} = _Callback) ->
-    case elli_tcp:recv(Socket, 0, request_timeout(Options)) of
-        {ok, Data} ->
+recv_request(Socket, Buffer, Timeout, Options, {Mod, Args} = Callback) ->
+    receive
+        {tcp, _Socket, Data} ->
             <<Buffer/binary, Data/binary>>;
-        {error, timeout} ->
-            handle_event(Mod, request_timeout, [], Args),
-            elli_tcp:close(Socket),
-            exit(normal);
-        {error, Closed} when Closed =:= closed orelse
-                             Closed =:= enotconn ->
+        {tcp_passive, _Socket} ->
+            elli_tcp:setopts(Socket, [{active, 100}]),
+            recv_request(Socket, Buffer, Timeout, Options, Callback);
+        {tcp_closed, _Socket} ->
             handle_event(Mod, request_closed, [], Args),
             elli_tcp:close(Socket),
+            exit(normal);
+        {tcp_error, _Socket, timeout} ->
+            handle_event(Mod, request_timeout, [], Args),
+            elli_tcp:close(Socket),
             exit(normal)
+        %% TODO: Handle other error reasons?
+        %% {tcp_error, Socket, _} ->
+        %%     handle_event(Mod, request_closed, [], Args),
+        %%     elli_tcp:close(Socket),
+        %%     exit(normal)
+    after
+        Timeout ->
+            handle_event(Mod, request_timeout, [], Args),
+            elli_tcp:close(Socket),
+            exit(normal)
+    end.
+
+recv(Socket, Timeout) ->
+    receive
+        {tcp, _Socket, Data} ->
+            {ok, Data};
+        {tcp_passive, _Socket} ->
+            elli_tcp:setopts(Socket, [{active, 100}]),
+            recv(Socket, Timeout);
+        {tcp_closed, _Socket} ->
+            {error, closed};
+        {tcp_error, _Socket, timeout} ->
+            {error, timeout};
+        {tcp_error, _Socket, Reason} ->
+            {error, Reason}
+    after
+        Timeout ->
+            {error, timeout}
     end.
 
 -spec get_headers(Socket, V, Buffer, Opts, Callback) -> Headers when
@@ -470,12 +501,12 @@ get_headers(Socket, Buffer, Headers, Count, Opts, {Mod, Args} = Callback) ->
         {ok, {http_error, _}, Rest} ->
             get_headers(Socket, Rest, Headers, Count, Opts, Callback);
         {more, _} ->
-            case elli_tcp:recv(Socket, 0, header_timeout(Opts)) of
+            case recv(Socket, header_timeout(Opts)) of
                 {ok, Data} ->
                     get_headers(Socket, <<Buffer/binary, Data/binary>>,
                                 Headers, Count, Opts, Callback);
-                {error, Closed} when Closed =:= closed orelse
-                                     Closed =:= enotconn ->
+                {error, Reason} when Reason =:= closed orelse
+                                     Reason =:= enotconn ->
                     handle_event(Mod, client_closed, [receiving_headers], Args),
                     elli_tcp:close(Socket),
                     exit(normal);
@@ -532,19 +563,55 @@ get_body(Socket, Headers, Buffer, Opts, Callback) ->
             Result
     end.
 
-do_get_body(Socket, Buffer, Opts, N, {Mod, Args}) ->
-    case elli_tcp:recv(Socket, N, body_timeout(Opts)) of
-        {ok, Data} ->
-            {<<Buffer/binary, Data/binary>>, <<>>};
-        {error, Closed} when Closed =:= closed orelse Closed =:= enotconn ->
-            handle_event(Mod, client_closed, [receiving_body], Args),
-            ok = elli_tcp:close(Socket),
+do_get_body(Socket, Buffer, Opts, N, Callback) ->
+    {Body, Rest} = do_get_body_(Socket, <<>>, Opts, N, Callback),
+    {<<Buffer/binary, Body/binary>>, Rest}.
+
+do_get_body_(Socket, Buffer, Opts, N, {Mod, Args} = Callback) ->
+    Timeout = body_timeout(Opts),
+    receive
+        {tcp, _Socket, <<Data:N/binary, Rest/binary>>} ->
+            Body = <<Buffer/binary, Data/binary>>,
+            {Body, Rest};
+        {tcp, _Socket, Data} ->
+            Body = <<Buffer/binary, Data/binary>>,
+            do_get_body_(Socket, Body, Opts, N - byte_size(Body), Callback);
+        {tcp_passive, _Socket} ->
+            elli_tcp:setopts(Socket, [{active, 100}]),
+            do_get_body_(Socket, Buffer, Opts, N, Callback);
+        {tcp_closed, _Socket} ->
+            handle_event(Mod, request_closed, [], Args),
+            elli_tcp:close(Socket),
             exit(normal);
-        {error, timeout} ->
-            handle_event(Mod, client_timeout, [receiving_body], Args),
-            ok = elli_tcp:close(Socket),
+        {tcp_error, _Socket, timeout} ->
+            handle_event(Mod, request_timeout, [], Args),
+            elli_tcp:close(Socket),
+            exit(normal)
+        %% TODO: Handle other error reasons?
+        %% {tcp_error, Socket, _} ->
+        %%     handle_event(Mod, request_closed, [], Args),
+        %%     elli_tcp:close(Socket),
+        %%     exit(normal)
+    after
+        Timeout ->
+            handle_event(Mod, request_timeout, [], Args),
+            elli_tcp:close(Socket),
             exit(normal)
     end.
+
+
+    %% case elli_tcp:recv(Socket, N, ) of
+    %%     {ok, Data} ->
+    %%         {<<Buffer/binary, Data/binary>>, <<>>};
+    %%     {error, Closed} when Closed =:= closed orelse Closed =:= enotconn ->
+    %%         handle_event(Mod, client_closed, [receiving_body], Args),
+    %%         ok = elli_tcp:close(Socket),
+    %%         exit(normal);
+    %%     {error, timeout} ->
+    %%         handle_event(Mod, client_timeout, [receiving_body], Args),
+    %%         ok = elli_tcp:close(Socket),
+    %%         exit(normal)
+    %% end.
 
 ensure_binary(Bin) when is_binary(Bin) -> Bin;
 ensure_binary(Atom) when is_atom(Atom) -> atom_to_binary(Atom, latin1).
