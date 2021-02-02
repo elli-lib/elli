@@ -6,7 +6,7 @@
    https://github.com/elli-lib/elli/pull/91
 
  * Do not spawn a new acceptor until after a successful TLS handhake:
-   https://github.com/elli-lib/elli/pull/90/files
+   https://github.com/elli-lib/elli/pull/90
 
  * Headers are now properly treated as case-insensitive
    Original headers that have not had `string:casefold/1` run on each header
