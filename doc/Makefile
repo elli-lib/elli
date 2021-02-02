@@ -3,9 +3,9 @@ SOURCE_DOCS := $(wildcard *.md)
 EXPORTED_DOCS=\
  $(SOURCE_DOCS:.md=.html)
 
-RM=/bin/rm
+RM ?= /bin/rm -f
 
-PANDOC=pandoc
+PANDOC ?= pandoc
 
 PANDOC_HTML_OPTIONS=--standalone --highlight-style=tango --template tpl.html -f gfm --to html5
 
@@ -18,4 +18,4 @@ PANDOC_HTML_OPTIONS=--standalone --highlight-style=tango --template tpl.html -f 
 all : $(EXPORTED_DOCS)
 
 clean:
-	- $(RM) -f $(EXPORTED_DOCS)
+	- $(RM) $(EXPORTED_DOCS)
