@@ -2,13 +2,26 @@
 
 ## pre-v4.0.0
 
+ * Fix unexpected crash during SSL tests:
+   https://github.com/elli-lib/elli/pull/91
+
+ * Do not spawn a new acceptor until after a successful TLS handhake:
+   https://github.com/elli-lib/elli/pull/90/files
+
  * Headers are now properly treated as case-insensitive
- * Original headers that have not had `string:casefold/1` run on each header
- name are still available in the request through `elli_request:original_headers`
+   Original headers that have not had `string:casefold/1` run on each header
+   name are still available in the request through `elli_request:original_headers`:
+   https://github.com/elli-lib/elli/pull/92
+
+ * Handle uncommon integer status codes (as per `elli:response_code/0`):
+   https://github.com/elli-lib/elli/pull/96
+
+  * In `elli_http` export `send_file/5` and `close_or_keepalive/2`:
+    https://github.com/elli-lib/elli/pull/98
 
 ## v3.3.0
 
- * Do not use x-forwarded-for for peer #75 
+ * Do not use x-forwarded-for for peer #75
  * Handle arguments with no value in (post|get)_arg_decoded #82
  * Fix compile-time warnings on missing record info. from aleppo #81
 
