@@ -129,11 +129,13 @@ init([Opts]) ->
     MinAcceptors   = proplists:get_value(min_acceptors, Opts, 20),
 
     UseSSL         = proplists:get_value(ssl, Opts, false),
-    KeyFile        = proplists:get_value(keyfile, Opts),
-    CertFile       = proplists:get_value(certfile, Opts),
+    %% KeyFile        = proplists:get_value(keyfile, Opts),
+    %% CertFile       = proplists:get_value(certfile, Opts),
     SockType       = ?IF(UseSSL, ssl, plain),
+    %% Pass all the supplied Opts, Erlang SSL will pick out only
+    %% what it needs / understands. Don't discard other options user intends to pass for SSL config
     SSLSockOpts    = ?IF(UseSSL,
-                         [{keyfile, KeyFile}, {certfile, CertFile}],
+                         Opts,
                          []),
 
     AcceptTimeout  = proplists:get_value(accept_timeout, Opts, 10000),
