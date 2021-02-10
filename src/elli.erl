@@ -140,7 +140,7 @@ init([Opts]) ->
     Opts3 = proplists:delete(packet, Opts2),
     Opts4 = proplists:delete(active, Opts3),
     Opts5 = proplists:delete(ssl, Opts4),
-    
+
     SSLSockOpts    = ?IF(UseSSL,
                          Opts5,
                          []),
