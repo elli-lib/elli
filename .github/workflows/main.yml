@@ -15,15 +15,16 @@ jobs:
 
     strategy:
       matrix:
-        otp_version: ['23.1', '22.3.4.2', '21.3.8.16', '20.3.8.21']
+        otp_version: ['24', '23', '22', '21']
         os: [ubuntu-latest]
 
     steps:
     - uses: actions/checkout@v2
 
-    - uses: bajankristof/setup-erlang@master
+    - uses: erlef/setup-beam@v1
       with:
         otp-version: ${{ matrix.otp_version }}
+        rebar3-version: '3.14'
 
     - name: Compile
       run: rebar3 compile
