@@ -2,9 +2,9 @@
 
 # elli #
 
-Copyright (c) 2012-2016 Knut Nesheim, 2016-2018 elli-lib team
+Copyright (c) 2012-2016 Knut Nesheim, 2016-2021 elli-lib team
 
-__Version:__ 3.0.0
+__Version:__ 4.0.0
 
 __Authors:__ Knut Nesheim, elli-lib team.
 

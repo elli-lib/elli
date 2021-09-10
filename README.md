@@ -14,8 +14,8 @@
 [erlang downloads]: http://www.erlang.org/downloads
 [doc badge]: https://img.shields.io/badge/docs-edown-green.svg
 [docs]: doc/README.md
-[coveralls badge]: https://coveralls.io/repos/github/elli-lib/elli/badge.svg?branch=develop
-[coveralls link]: https://coveralls.io/github/elli-lib/elli?branch=develop
+[coveralls badge]: https://coveralls.io/repos/github/elli-lib/elli/badge.svg?branch=main
+[coveralls link]: https://coveralls.io/github/elli-lib/elli?branch=main
 [license badge]: https://img.shields.io/badge/license-MIT-blue.svg
 
 Elli is a webserver you can run inside your Erlang application to
@@ -27,7 +27,7 @@ webserver, `elli` might be for you. If you're building web services,
 not web sites, then `elli` might be for you.
 
 Elli is used in production at Wooga and Game Analytics. Elli requires
-OTP 18.0 or newer.
+OTP 20.0 or newer.
 
 
 ## Installation
@@ -40,7 +40,7 @@ Add `elli` to your application by adding it as a dependency to your
 ```erlang
 {deps, [
   %% ...
-  {elli, "3.0.0"}
+  {elli, "4.0.0"}
 ]}.
 ```
 

@@ -3,25 +3,23 @@
 [![Hex.pm][hex badge]][hex package]
 [![Documentation][doc badge]][docs]
 [![Erlang][erlang badge]][erlang downloads]
-[![Travis CI][travis badge]][travis builds]
+![Common Test](https://github.com/elli-lib/elli/workflows/Common%20Test/badge.svg)
 [![Coverage Status][coveralls badge]][coveralls link]
 [![MIT License][license badge]](LICENSE)
 
-[travis builds]: https://travis-ci.org/elli-lib/elli
-[travis badge]: https://travis-ci.org/elli-lib/elli.svg
 [hex badge]: https://img.shields.io/hexpm/v/elli.svg
 [hex package]: https://hex.pm/packages/elli
 [latest release]: https://github.com/elli-lib/elli/releases/latest
-[erlang badge]: https://img.shields.io/badge/erlang-%E2%89%A518.0-red.svg
+[erlang badge]: https://img.shields.io/badge/erlang-%E2%89%A520.0-red.svg
 [erlang downloads]: http://www.erlang.org/downloads
 [doc badge]: https://img.shields.io/badge/docs-edown-green.svg
 [docs]: doc/README.md
-[coveralls badge]: https://coveralls.io/repos/github/elli-lib/elli/badge.svg?branch=develop
-[coveralls link]: https://coveralls.io/github/elli-lib/elli?branch=develop
+[coveralls badge]: https://coveralls.io/repos/github/elli-lib/elli/badge.svg?branch=main
+[coveralls link]: https://coveralls.io/github/elli-lib/elli?branch=main
 [license badge]: https://img.shields.io/badge/license-MIT-blue.svg
 
 Elli is a webserver you can run inside your Erlang application to
-expose an HTTP API. Elli is a aimed exclusively at building
+expose an HTTP API. Elli is aimed exclusively at building
 high-throughput, low-latency HTTP APIs. If robustness and performance
 is more important than general purpose features, then `elli` might be
 for you. If you find yourself digging into the implementation of a
@@ -29,7 +27,7 @@ webserver, `elli` might be for you. If you're building web services,
 not web sites, then `elli` might be for you.
 
 Elli is used in production at Wooga and Game Analytics. Elli requires
-OTP 18.0 or newer.
+OTP 20.0 or newer.
 
 
 ## Installation
@@ -40,7 +38,10 @@ Add `elli` to your application by adding it as a dependency to your
 [`rebar.config`](http://www.rebar3.org/docs/configuration):
 
 ```erlang
-{deps, [elli]}.
+{deps, [
+  %% ...
+  {elli, "4.0.0"}
+]}.
 ```
 
 Afterwards you can run:
@@ -302,4 +303,4 @@ about benchmarking HTTP servers.
 
 Elli is licensed under [The MIT License](LICENSE).
 
-Copyright (c) 2012-2016 Knut Nesheim, 2016-2018 elli-lib team
+Copyright (c) 2012-2016 Knut Nesheim, 2016-2021 elli-lib team
