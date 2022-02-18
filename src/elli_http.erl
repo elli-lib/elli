@@ -610,7 +610,7 @@ do_check_max_size_x2(_, _, _, _) -> ok.
 mk_req(Method, PathTuple, Headers, ParsedHeaders, Body, V, Socket, {Mod, Args} = Callback) ->
     case parse_path(PathTuple) of
         {ok, {Scheme, Host, Port}, {Path, URL, URLArgs}} ->
-            #req{method   = Method, scheme   = Scheme, host    = Host,
+            #req{method   = Method, scheme   = update_scheme(Socket, Scheme), host    = Host,
                  port     = Port,   path     = URL,    args    = URLArgs,
                  version  = V,      raw_path = Path,   original_headers = Headers,
                  body     = Body,   pid      = self(), socket  = Socket,
@@ -625,7 +625,14 @@ mk_req(Method, PathTuple, Headers, ParsedHeaders, Body, V, Socket, {Mod, Args} =
 
 mk_req(Method, Scheme, Host, Port, PathTuple, Headers, ParsedHeaders, Body, V, Socket, Callback) ->
     Req = mk_req(Method, PathTuple, Headers, ParsedHeaders, Body, V, Socket, Callback),
-    Req#req{scheme = Scheme, host = Host, port = Port}.
+    Req#req{scheme = update_scheme(Socket, Scheme), host = Host, port = Port}.
+
+update_scheme({plain, _}, undefined) ->
+    <<"http">>;
+update_scheme({ssl, _}, undefined) ->
+    <<"https">>;
+update_scheme(_, Scheme) ->
+    Scheme.
 
 %%
 %% HEADERS
