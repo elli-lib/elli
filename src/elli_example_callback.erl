@@ -191,6 +191,9 @@ handle('GET', [<<"ip">>], Req) ->
 handle('GET', [<<"scheme">>], Req) ->
     {<<"200 OK">>, elli_request:scheme(Req)};
 
+handle('GET', [<<"host">>], Req) ->
+    {<<"200 OK">>, elli_request:host(Req)};
+
 handle('GET', [<<"304">>], _Req) ->
     %% A "Not Modified" response is exactly like a normal response (so
     %% Content-Length is included), but the body will not be sent.

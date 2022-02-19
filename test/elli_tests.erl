@@ -64,7 +64,8 @@ elli_test_() ->
         ?_test(head()),
         ?_test(no_body()),
         ?_test(sends_continue()),
-        ?_test(check_scheme_parsing())
+        ?_test(check_scheme_parsing()),
+        ?_test(check_host_parsing())
        ]}
      ]}.
 
@@ -603,6 +604,11 @@ check_scheme_parsing() ->
     Response = hackney:get("http://localhost:3001/scheme"),
     ?assertMatch(200, status(Response)),
     ?assertMatch(<<"http">>, body(Response)).
+
+check_host_parsing() ->
+    Response = hackney:get("http://localhost:3001/host"),
+    ?assertMatch(200, status(Response)),
+    ?assertMatch(<<"localhost">>, body(Response)).
 
 %%% Slow client, sending only the specified byte size every millisecond
 

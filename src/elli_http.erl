@@ -19,7 +19,7 @@
 
 %% Exported for looping with a fully-qualified module name
 -export([accept/4, handle_request/4, chunk_loop/1, split_args/1,
-         parse_path/1, keepalive_loop/3, keepalive_loop/5]).
+         parse_path/3, keepalive_loop/3, keepalive_loop/5]).
 
 %% Exported for correctly handling session keep-alive for handlers
 %% operating in handler mode.
@@ -31,6 +31,7 @@
 -type version() :: {0, 9} | {1, 0} | {1, 1}.
 
 
+-define(HOST_HEADER, <<"host">>).
 -define(CONTENT_LENGTH_HEADER, <<"content-length">>).
 -define(EXPECT_HEADER, <<"expect">>).
 -define(CONNECTION_HEADER, <<"connection">>).
@@ -608,10 +609,12 @@ do_check_max_size_x2(_, _, _, _) -> ok.
       Callback  :: elli_handler:callback(),
       Req       :: elli:req().
 mk_req(Method, PathTuple, Headers, ParsedHeaders, Body, V, Socket, {Mod, Args} = Callback) ->
-    case parse_path(PathTuple) of
+    HostHeader = get_header(?HOST_HEADER, ParsedHeaders, undefined),
+    SocketScheme = scheme(Socket),
+    case parse_path(SocketScheme, HostHeader, PathTuple) of
         {ok, {Scheme, Host, Port}, {Path, URL, URLArgs}} ->
-            #req{method   = Method, scheme   = update_scheme(Socket, Scheme), host    = Host,
-                 port     = Port,   path     = URL,    args    = URLArgs,
+            #req{method   = Method, scheme   = Scheme,
+                 host = Host, port     = Port,   path     = URL,    args    = URLArgs,
                  version  = V,      raw_path = Path,   original_headers = Headers,
                  body     = Body,   pid      = self(), socket  = Socket,
                  callback = Callback, headers = ParsedHeaders};
@@ -625,14 +628,12 @@ mk_req(Method, PathTuple, Headers, ParsedHeaders, Body, V, Socket, {Mod, Args} =
 
 mk_req(Method, Scheme, Host, Port, PathTuple, Headers, ParsedHeaders, Body, V, Socket, Callback) ->
     Req = mk_req(Method, PathTuple, Headers, ParsedHeaders, Body, V, Socket, Callback),
-    Req#req{scheme = update_scheme(Socket, Scheme), host = Host, port = Port}.
+    Req#req{scheme = Scheme, host = Host, port = Port}.
 
-update_scheme({plain, _}, undefined) ->
+scheme({plain, _}) ->
     <<"http">>;
-update_scheme({ssl, _}, undefined) ->
-    <<"https">>;
-update_scheme(_, Scheme) ->
-    Scheme.
+scheme({ssl, _}) ->
+    <<"https">>.
 
 %%
 %% HEADERS
@@ -743,47 +744,67 @@ search(Pred, []) when is_function(Pred, 1) ->
     false.
 -endif.
 
+default_scheme_port(<<"http">>) ->
+    80;
+default_scheme_port(<<"https">>) ->
+    443;
+default_scheme_port(_) ->
+    undefined.
+
 %%
 %% PATH HELPERS
 %%
 
 -ifdef(OTP_RELEASE).
   -if(?OTP_RELEASE >= 22).
-    parse_path({abs_path, FullPath}) ->
-        URIMap = uri_string:parse(FullPath),
-        Host = maps:get(host, URIMap, undefined),
-        Scheme = maps:get(scheme, URIMap, undefined),
+    parse_path(SocketScheme, HostHeader, {abs_path, FullPath}) ->
+        case uri_string:parse(FullPath) of
+            URIMap when not is_map_key(host, URIMap) ,
+                        SocketScheme =/= undefined ,
+                        HostHeader =/= undefined ->
+                HostMap = uri_string:parse(
+                            unicode:characters_to_binary([SocketScheme, "://", HostHeader])),
+                Host = maps:get(host, HostMap, HostHeader),
+                Scheme = maps:get(scheme, HostMap, SocketScheme),
+                Port = maps:get(port, HostMap, default_scheme_port(Scheme));
+            URIMap ->
+                Host = maps:get(host, URIMap, HostHeader),
+                Scheme = maps:get(scheme, URIMap, SocketScheme),
+                Port = maps:get(port, URIMap, default_scheme_port(Scheme))
+        end,
+
         Path = maps:get(path, URIMap, <<>>),
         Query = maps:get(query, URIMap, <<>>),
-        Port = maps:get(port, URIMap, case Scheme of http -> 80; https -> 443; _ -> undefined end),
-        {ok, {Scheme, Host, Port}, {Path, split_path(Path), uri_string:dissect_query(Query)}};
-    parse_path({absoluteURI, Scheme, Host, Port, Path}) ->
-        setelement(2, parse_path({abs_path, Path}), {Scheme, Host, Port});
-    parse_path(_) ->
+
+        {ok, {Scheme, Host, Port},
+         {Path, split_path(Path), uri_string:dissect_query(Query)}};
+    parse_path(_Scheme, _HostHeader, {absoluteURI, Scheme, Host, Port, Path}) ->
+        setelement(2, parse_path(undefined, undefined, {abs_path, Path}), {Scheme, Host, Port});
+    parse_path(_, _, _) ->
         {error, unsupported_uri}.
   -else.
-    parse_path({abs_path, FullPath}) ->
+    parse_path(_Scheme, _HostHeader, {abs_path, FullPath}) ->
         Parsed = case binary:split(FullPath, [<<"?">>]) of
                      [URL]       -> {FullPath, split_path(URL), []};
                      [URL, Args] -> {FullPath, split_path(URL), split_args(Args)}
                  end,
         {ok, {undefined, undefined, undefined}, Parsed};
-    parse_path({absoluteURI, Scheme, Host, Port, Path}) ->
-        setelement(2, parse_path({abs_path, Path}), {Scheme, Host, Port});
-    parse_path(_) ->
+    parse_path(Scheme, HostHeader, {absoluteURI, Scheme, Host, Port, Path}) ->
+        setelement(2, parse_path(Scheme, HostHeader, {abs_path, Path}), {Scheme, Host, Port});
+    parse_path(_, _, _) ->
         {error, unsupported_uri}.
   -endif.
 -else.
   %% same as else branch above. can drop this when only OTP 21+ is supported
-  parse_path({abs_path, FullPath}) ->
+  parse_path(Scheme, HostHeader, {abs_path, FullPath}) ->
       Parsed = case binary:split(FullPath, [<<"?">>]) of
                    [URL]       -> {FullPath, split_path(URL), []};
                    [URL, Args] -> {FullPath, split_path(URL), split_args(Args)}
                end,
       {ok, {undefined, undefined, undefined}, Parsed};
-  parse_path({absoluteURI, Scheme, Host, Port, Path}) ->
-      setelement(2, parse_path({abs_path, Path}), {Scheme, Host, Port});
-  parse_path(_) ->
+  parse_path(Scheme, HostHeader, {absoluteURI, Scheme, Host, Port, Path}) ->
+      setelement(2, parse_path(Scheme, HostHeader, {abs_path, Path}), {Scheme, Host, Port});
+  parse_path(_, _, _) ->
       {error, unsupported_uri}.
 -endif.
 
