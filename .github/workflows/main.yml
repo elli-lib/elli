@@ -15,7 +15,7 @@ jobs:
 
     strategy:
       matrix:
-        otp_version: ['24', '23', '22', '21']
+        otp_version: ['24', '23', '22']
         os: [ubuntu-latest]
 
     steps:

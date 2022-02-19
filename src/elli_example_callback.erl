@@ -15,6 +15,7 @@
 -behaviour(elli_handler).
 
 -include_lib("kernel/include/file.hrl").
+-include_lib("kernel/include/logger.hrl").
 
 %%
 %% ELLI REQUEST CALLBACK
