@@ -22,7 +22,7 @@ call(Method, Path, Headers, Body, Opts) ->
     Callback     = proplists:get_value(callback, Opts),
     CallbackArgs = proplists:get_value(callback_args, Opts),
     Req = elli_http:mk_req(Method, {abs_path, Path}, Headers, Headers,
-                           Body, {1, 1}, undefined, {Callback, CallbackArgs}),
+                           Body, {1, 1}, {plain, undefined}, {Callback, CallbackArgs}),
     ok  = Callback:handle_event(elli_startup, [], CallbackArgs),
     Callback:handle(Req, CallbackArgs).
 

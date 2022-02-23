@@ -7,13 +7,8 @@
 -define(VTB(T1, T2, LB, UB),
         time_diff_to_micro_seconds(T1, T2) >= LB andalso
         time_diff_to_micro_seconds(T1, T2) =< UB).
--ifdef(OTP_RELEASE).
+
 -include_lib("kernel/include/logger.hrl").
--else.
--define(LOG_ERROR(Str), error_logger:error_msg(Str)).
--define(LOG_ERROR(Format,Data), error_logger:error_msg(Format, Data)).
--define(LOG_INFO(Format,Data), error_logger:info_msg(Format, Data)).
--endif.
 
 time_diff_to_micro_seconds(T1, T2) ->
     erlang:convert_time_unit(
@@ -63,7 +58,9 @@ elli_test_() ->
         ?_test(get_pipeline()),
         ?_test(head()),
         ?_test(no_body()),
-        ?_test(sends_continue())
+        ?_test(sends_continue()),
+        ?_test(check_scheme_parsing()),
+        ?_test(check_host_parsing())
        ]}
      ]}.
 
@@ -108,12 +105,14 @@ accessors_test_() ->
     RawPath = <<"/foo/bar">>,
     Headers = [{<<"content-type">>, <<"application/x-www-form-urlencoded">>}],
     Method = 'POST',
+    Scheme = <<"http">>,
     Body = <<"name=knut%3D">>,
     Name = <<"knut=">>,
     Req1 = #req{raw_path = RawPath,
                 original_headers = Headers,
                 headers = Headers,
                 method = Method,
+                scheme = Scheme,
                 body = Body},
     Args = [{<<"name">>, Name}],
     Req2 = #req{original_headers = Headers, headers = Headers, args = Args, body = <<>>},
@@ -123,6 +122,7 @@ accessors_test_() ->
      ?_assertMatch(RawPath, elli_request:raw_path(Req1)),
      ?_assertMatch(Headers, elli_request:headers(Req1)),
      ?_assertMatch(Method, elli_request:method(Req1)),
+     ?_assertMatch(Scheme, elli_request:scheme(Req1)),
      ?_assertMatch(Body, elli_request:body(Req1)),
      ?_assertMatch(Args, elli_request:post_args_decoded(Req1)),
      ?_assertMatch(undefined, elli_request:post_arg(<<"foo">>, Req1)),
@@ -594,6 +594,16 @@ sends_continue() ->
                          "Hello elli of New York">>,
     ?assertMatch({ok, ExpectedResponse},
                  gen_tcp:recv(Socket, size(ExpectedResponse))).
+
+check_scheme_parsing() ->
+    Response = hackney:get("http://localhost:3001/scheme"),
+    ?assertMatch(200, status(Response)),
+    ?assertMatch(<<"http">>, body(Response)).
+
+check_host_parsing() ->
+    Response = hackney:get("http://localhost:3001/host"),
+    ?assertMatch(200, status(Response)),
+    ?assertMatch(<<"localhost">>, body(Response)).
 
 %%% Slow client, sending only the specified byte size every millisecond
 

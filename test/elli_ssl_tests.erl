@@ -13,7 +13,8 @@ elli_ssl_test_() ->
         ?_test(hello_world()),
         ?_test(chunked()),
         ?_test(sendfile()),
-        ?_test(acceptor_leak_regression())
+        ?_test(acceptor_leak_regression()),
+        ?_test(check_scheme_parsing())
        ]}
      ]}.
 
@@ -32,6 +33,12 @@ hello_world() ->
                            [], <<>>, [insecure]),
     ?assertMatch(200, status(Response)),
     ?assertMatch({ok, 200, _, _}, Response).
+
+check_scheme_parsing() ->
+    Response = hackney:get("https://localhost:3443/scheme",
+                           [], <<>>, [insecure]),
+    ?assertMatch(200, status(Response)),
+    ?assertMatch(<<"https">>, body(Response)).
 
 chunked() ->
     Expected = <<"chunk10chunk9chunk8chunk7chunk6chunk5chunk4chunk3chunk2chunk1">>,

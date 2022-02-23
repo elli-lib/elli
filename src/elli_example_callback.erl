@@ -15,6 +15,7 @@
 -behaviour(elli_handler).
 
 -include_lib("kernel/include/file.hrl").
+-include_lib("kernel/include/logger.hrl").
 
 %%
 %% ELLI REQUEST CALLBACK
@@ -187,6 +188,12 @@ handle('GET', [<<"shorthand">>], _Req) ->
 
 handle('GET', [<<"ip">>], Req) ->
     {<<"200 OK">>, elli_request:peer(Req)};
+
+handle('GET', [<<"scheme">>], Req) ->
+    {<<"200 OK">>, elli_request:scheme(Req)};
+
+handle('GET', [<<"host">>], Req) ->
+    {<<"200 OK">>, elli_request:host(Req)};
 
 handle('GET', [<<"304">>], _Req) ->
     %% A "Not Modified" response is exactly like a normal response (so

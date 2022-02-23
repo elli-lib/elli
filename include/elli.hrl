@@ -10,7 +10,7 @@
               original_headers :: elli:headers(),
               body             :: elli:body(),
               pid              :: pid(),
-              socket           :: undefined | elli_tcp:socket(),
+              socket           :: undefined | elli_tcp:socket() | {plain, undefined},
               callback         :: elli_handler:callback()
              }).
 

@@ -9,6 +9,7 @@
 -behaviour(gen_server).
 -include("elli.hrl").
 -include("elli_util.hrl").
+-include_lib("kernel/include/logger.hrl").
 
 %% API
 -export([start_link/0,
