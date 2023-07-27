@@ -30,15 +30,11 @@ jobs:
         - tuple:
             otp_version: 23
             os: ubuntu-20.04
-            rebar3_version: 3.15
+            rebar3_version: 3.18
         - tuple:
             otp_version: 22
             os: ubuntu-20.04
-            rebar3_version: 3.15
-        - tuple:
-            otp_version: 21
-            os: ubuntu-20.04
-            rebar3_version: 3.15
+            rebar3_version: 3.18
 
     steps:
     - uses: actions/checkout@v3

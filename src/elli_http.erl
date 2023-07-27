@@ -721,7 +721,6 @@ get_header(Key, Headers, Default) ->
 %% PATH HELPERS
 %%
 
--if(?OTP_RELEASE >= 22).
 parse_path({abs_path, FullPath}) ->
     URIMap = uri_string:parse(FullPath),
     Host = maps:get(host, URIMap, undefined),
@@ -734,18 +733,6 @@ parse_path({absoluteURI, Scheme, Host, Port, Path}) ->
     setelement(2, parse_path({abs_path, Path}), {Scheme, Host, Port});
 parse_path(_) ->
     {error, unsupported_uri}.
--else.
-parse_path({abs_path, FullPath}) ->
-    Parsed = case binary:split(FullPath, [<<"?">>]) of
-                 [URL]       -> {FullPath, split_path(URL), []};
-                 [URL, Args] -> {FullPath, split_path(URL), split_args(Args)}
-             end,
-    {ok, {undefined, undefined, undefined}, Parsed};
-parse_path({absoluteURI, Scheme, Host, Port, Path}) ->
-    setelement(2, parse_path({abs_path, Path}), {Scheme, Host, Port});
-parse_path(_) ->
-    {error, unsupported_uri}.
--endif.
 
 split_path(Path) ->
     [P || P <- binary:split(Path, [<<"/">>], [global]),
