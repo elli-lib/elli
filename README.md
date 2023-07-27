@@ -1,22 +1,11 @@
 # elli - Erlang web server for HTTP APIs
 
-[![Hex.pm][hex badge]][hex package]
-[![Documentation][doc badge]][docs]
-[![Erlang][erlang badge]][erlang downloads]
+[![Hex.pm](https://img.shields.io/hexpm/v/elli.svg)](https://hex.pm/packages/elli)
+[![Documentation](https://img.shields.io/badge/docs-edown-green.svg)](doc/README.md)
+[![Erlang](https://img.shields.io/badge/erlang-%E2%89%A520.0-red.svg)](http://www.erlang.org/downloads)
 ![Common Test](https://github.com/elli-lib/elli/workflows/Common%20Test/badge.svg)
-[![Coverage Status][coveralls badge]][coveralls link]
-[![MIT License][license badge]](LICENSE)
-
-[hex badge]: https://img.shields.io/hexpm/v/elli.svg
-[hex package]: https://hex.pm/packages/elli
-[latest release]: https://github.com/elli-lib/elli/releases/latest
-[erlang badge]: https://img.shields.io/badge/erlang-%E2%89%A520.0-red.svg
-[erlang downloads]: http://www.erlang.org/downloads
-[doc badge]: https://img.shields.io/badge/docs-edown-green.svg
-[docs]: doc/README.md
-[coveralls badge]: https://coveralls.io/repos/github/elli-lib/elli/badge.svg?branch=develop
-[coveralls link]: https://coveralls.io/github/elli-lib/elli?branch=develop
-[license badge]: https://img.shields.io/badge/license-MIT-blue.svg
+[![Coverage Status](https://coveralls.io/repos/github/elli-lib/elli/badge.svg?branch=develop)](https://coveralls.io/github/elli-lib/elli?branch=develop)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Elli is a webserver you can run inside your Erlang application to
 expose an HTTP API. Elli is aimed exclusively at building
@@ -28,7 +17,6 @@ not web sites, then `elli` might be for you.
 
 Elli is used in production at Wooga and Game Analytics. Elli requires
 OTP 18.0 or newer.
-
 
 ## Installation
 
@@ -46,14 +34,14 @@ Add `elli` to your application by adding it as a dependency to your
 
 Afterwards you can run:
 
-```sh
-$ rebar3 compile
+```console
+rebar3 compile
 ```
 
-
 ## Usage
-```sh
-$ rebar3 shell
+
+```console
+rebar3 shell
 ```
 
 ```erlang
@@ -66,8 +54,7 @@ $ rebar3 shell
 ### Callback Module
 
 The best source to learn how to write a callback module
-is [src/elli_example_callback.erl](src/elli_example_callback.erl) and
-its [generated documentation](doc/elli_example_callback.md). There are a bunch
+is [`elli_example_callback.erl`](elli_example_callback.html). There are a bunch
 of examples used in the tests as well as descriptions of all the events.
 
 A minimal callback module could look like this:
@@ -97,7 +84,6 @@ handle_event(_Event, _Data, _Args) ->
     ok.
 ```
 
-
 ### Supervisor Childspec
 
 To add `elli` to a supervisor you can use the following example and adapt it to
@@ -125,12 +111,10 @@ init([]) ->
     {ok, { {one_for_one, 5, 10}, [ElliSpec]} }.
 ```
 
-
 ## Further Reading
 
 For more information about the features and design philosophy of `elli` check
 out the [overview](doc/README.md).
-
 
 ## License
 
