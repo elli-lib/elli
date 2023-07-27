@@ -1,4 +1,4 @@
-# elli - Erlang web server for HTTP APIs
+# Elli - Erlang web server for HTTP APIs
 
 [![Hex.pm](https://img.shields.io/hexpm/v/elli.svg)](https://hex.pm/packages/elli)
 [![Documentation](https://img.shields.io/badge/docs-edown-green.svg)](doc/README.md)
@@ -8,36 +8,35 @@
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Elli is a webserver you can run inside your Erlang application to
-expose an HTTP API. Elli is aimed exclusively at building
+expose an HTTP API. It is aimed exclusively at building
 high-throughput, low-latency HTTP APIs. If robustness and performance
-is more important than general purpose features, then `elli` might be
+is more important to you than general purpose features, then Elli might be
 for you. If you find yourself digging into the implementation of a
-webserver, `elli` might be for you. If you're building web services,
-not web sites, then `elli` might be for you.
+webserver, then Elli might be for you. If you're building web services,
+not web sites, then Elli might be for you.
 
 Elli requires OTP 20.0 or newer.
 
 ## Installation
 
-To use `elli` you will need a working installation of Erlang 18.0 (or later).
-
-Add `elli` to your application by adding it as a dependency to your
-[`rebar.config`](http://www.rebar3.org/docs/configuration):
+Add `elli` to your application as a dependency to your
+[`rebar.config`](https://www.rebar3.org/docs/configuration):
 
 ```erlang
 {deps, [
-  %% ...
-  {elli, "3.0.0"}
+  {elli, "3.3.0"}
 ]}.
 ```
 
-Afterwards you can run:
+Afterwards, to compile it, you can run:
 
 ```console
 rebar3 compile
 ```
 
 ## Usage
+
+To boot Elli inside an Erlang shell, run:
 
 ```console
 rebar3 shell
@@ -53,67 +52,80 @@ rebar3 shell
 ### Callback Module
 
 The best source to learn how to write a callback module
-is [`elli_example_callback.erl`](elli_example_callback.html). There are a bunch
+is [`elli_example_callback`](elli_example_callback.html).
+There are also a bunch
 of examples used in the tests as well as descriptions of all the events.
 
-A minimal callback module could look like this:
+A minimal callback module looks something like this:
 
 ```erlang
 -module(elli_minimal_callback).
--export([handle/2, handle_event/3]).
+-behaviour(elli_handler).
 
 -include_lib("elli/include/elli.hrl").
--behaviour(elli_handler).
+
+-export([handle/2, handle_event/3]).
 
 handle(Req, _Args) ->
     %% Delegate to our handler function
-    handle(Req#req.method, elli_request:path(Req), Req).
+    Method = Req#req.method,
+    Path = elli_request:path(Req),
+    handle(Method, Path, Req).
 
-handle('GET',[<<"hello">>, <<"world">>], _Req) ->
+handle('GET' = _Method, [<<"hello">>, <<"world">>] = _Path, _Req) ->
     %% Reply with a normal response. `ok' can be used instead of `200'
     %% to signal success.
-    {ok, [], <<"Hello World!">>};
+    StatusCode = ok,
+    Headers = [],
+    Body = <<"Hello World!">>,
+    {StatusCode, Headers, Body};
 
-handle(_, _, _Req) ->
+handle(_Method, _Path, _Req) ->
     {404, [], <<"Not Found">>}.
 
-%% @doc Handle request events, like request completed, exception
+%% @doc Handle request events: request completed, exception
 %% thrown, client timeout, etc. Must return `ok'.
 handle_event(_Event, _Data, _Args) ->
     ok.
 ```
 
-### Supervisor Childspec
+### Supervisor ChildSpec
 
 To add `elli` to a supervisor you can use the following example and adapt it to
 your needs.
 
 ```erlang
--module(fancyapi_sup).
+-module(elli_minimal_sup).
 -behaviour(supervisor).
--export([start_link/0]).
--export([init/1]).
+
+-export([start_link/0, init/1]).
 
 start_link() ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, []).
+    SupName = {local, ?MODULE},
+    Module = ?MODULE,
+    Args = [],
+    supervisor:start_link(SupName, Module, Args).
 
-init([]) ->
-    ElliOpts = [{callback, fancyapi_callback}, {port, 3000}],
+init([] = _Args) ->
+    ElliOpts = [
+        {callback, elli_minimal_callback},
+        {port, 3000}
+    ],
     ElliSpec = {
-        fancy_http,
-        {elli, start_link, [ElliOpts]},
-        permanent,
-        5000,
-        worker,
-        [elli]},
+        _Id = elli_minimal_http,
+        _Start = {elli, start_link, [ElliOpts]},
+        _Restart = permanent,
+        _Shutdown = 5000,
+        _Worker = worker,
+        _Modules = [elli]},
 
-    {ok, { {one_for_one, 5, 10}, [ElliSpec]} }.
+    {ok, {{_Strategy = one_for_one, _Intensity = 5, _Period = 10}, [ElliSpec]} }.
 ```
 
-## Further Reading
+## Further reading
 
-For more information about the features and design philosophy of `elli` check
-out the [overview](doc/README.md).
+For more information about the features and design philosophy of Elli check
+out the [`overview`](overview.html).
 
 ## License
 
