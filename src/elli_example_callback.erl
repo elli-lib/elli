@@ -135,7 +135,7 @@ handle('GET', [<<"decoded-list">>], Req) ->
 handle('GET', [<<"sendfile">>], _Req) ->
     %% Returning {file, "/path/to/file"} instead of the body results
     %% in Elli using sendfile.
-    F    = "README.md",
+    F    = filename:join(code:priv_dir(elli), "README.md"),
     {ok, [], {file, F}};
 
 handle('GET', [<<"send_no_file">>], _Req) ->
@@ -145,14 +145,14 @@ handle('GET', [<<"send_no_file">>], _Req) ->
     {ok, [], {file, F}};
 
 handle('GET', [<<"sendfile">>, <<"error">>], _Req) ->
-    F    = "test",
+    F    = code:priv_dir(elli),
     {ok, [], {file, F}};
 
 handle('GET', [<<"sendfile">>, <<"range">>], Req) ->
     %% Read the Range header of the request and use the normalized
     %% range with sendfile, otherwise send the entire file when
     %% no range is present, or respond with a 416 if the range is invalid.
-    F     = "README.md",
+    F     = filename:join(code:priv_dir(elli), "README.md"),
     {ok, [], {file, F, elli_request:get_range(Req)}};
 
 handle('GET', [<<"compressed">>], _Req) ->
