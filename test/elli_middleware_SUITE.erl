@@ -1,33 +1,66 @@
--module(elli_middleware_tests).
--include_lib("eunit/include/eunit.hrl").
--include("elli_test.hrl").
+-module(elli_middleware_SUITE).
+-include_lib("stdlib/include/assert.hrl").
+-include("test/support/elli_test.hrl").
 
-elli_test_() ->
-    {setup,
-     fun setup/0, fun teardown/1,
-     [
-      ?_test(hello_world()),
-      ?_test(short_circuit()),
-      ?_test(compress()),
-      ?_test(no_callbacks())
-     ]}.
+-compile([export_all, nowarn_export_all]).
 
+%
+% Configuration.
 
-%%
-%% TESTS
-%%
+all() ->
+    [
+        Fun
+     || {Fun, 1} <- ?MODULE:module_info(exports),
+        not lists:member(Fun, [module_info, init_per_suite, end_per_suite,
+                               status, body, headers])
+    ].
 
-short_circuit() ->
+init_per_suite(Config0) ->
+    {ok, StartedApps} = application:ensure_all_started(hackney),
+
+    Config = [
+              {mods, [
+                      {elli_access_log, [{name, elli_syslog},
+                                         {ip, "127.0.0.1"},
+                                         {port, 514}]},
+                      {elli_example_middleware, []},
+                      {elli_middleware_compress, []},
+                      {elli_example_callback, []}
+                     ]}
+             ],
+
+    {ok, P1} = elli:start_link([{callback, elli_middleware},
+                                {callback_args, Config},
+                                {port, 3002}]),
+    unlink(P1),
+    {ok, P2} = elli:start_link([{callback, elli_middleware},
+                                {callback_args, [{mods, []}]},
+                                {port, 3004}]),
+    unlink(P2),
+    [{pids, [P1, P2]}, {started_apps, StartedApps} | Config0].
+
+end_per_suite(Config) ->
+    Pids = proplists:get_value(pids, Config),
+    [elli:stop(P) || P <- Pids],
+    lists:foreach(fun (App) ->
+                      application:stop(App)
+                  end,
+                  proplists:get_value(started_apps, Config)).
+
+%
+% Tests.
+
+short_circuit(_Config) ->
     URL      = "http://localhost:3002/middleware/short-circuit",
     Response = hackney:get(URL),
     ?assertMatch(<<"short circuit!">>, body(Response)).
 
-hello_world() ->
+hello_world(_Config) ->
     URL      = "http://localhost:3002/hello/world",
     Response = hackney:get(URL),
     ?assertMatch(<<"Hello World!">>, body(Response)).
 
-compress() ->
+compress(_Config) ->
     URL      = "http://localhost:3002/compressed",
     Headers  = [{<<"Accept-Encoding">>, <<"gzip">>}],
     Response = hackney:get(URL, Headers),
@@ -61,42 +94,7 @@ compress() ->
     ?assertEqual(iolist_to_binary(lists:duplicate(86, "Hello World!")),
                  body(Response3)).
 
-no_callbacks() ->
+no_callbacks(_Config) ->
     Response = hackney:get("http://localhost:3004/whatever"),
     ?assertMatch(404, status(Response)),
     ?assertMatch(<<"Not Found">>, body(Response)).
-
-
-%%
-%% HELPERS
-%%
-
-setup() ->
-    application:start(crypto),
-    application:start(public_key),
-    application:start(ssl),
-    {ok, _} = application:ensure_all_started(hackney),
-
-    Config = [
-              {mods, [
-                      {elli_access_log, [{name, elli_syslog},
-                                         {ip, "127.0.0.1"},
-                                         {port, 514}]},
-                      {elli_example_middleware, []},
-                      {elli_middleware_compress, []},
-                      {elli_example_callback, []}
-                     ]}
-             ],
-
-    {ok, P1} = elli:start_link([{callback, elli_middleware},
-                                {callback_args, Config},
-                                {port, 3002}]),
-    unlink(P1),
-    {ok, P2} = elli:start_link([{callback, elli_middleware},
-                                {callback_args, [{mods, []}]},
-                                {port, 3004}]),
-    unlink(P2),
-    [P1, P2].
-
-teardown(Pids) ->
-    [elli:stop(P) || P <- Pids].
