@@ -323,17 +323,17 @@ execute_callback(#req{callback = {Mod, Args}} = Req) ->
     catch
         throw:{ResponseCode, Headers, Body} when is_integer(ResponseCode) ->
             {response, ResponseCode, Headers, Body};
-        ?WITH_STACKTRACE(throw, Exc, Stacktrace)
+        throw:Exc:Stacktrace ->
             handle_event(Mod, request_throw,
                          [Req, Exc, Stacktrace],
                          Args),
             {response, 500, [], <<"Internal server error">>};
-        ?WITH_STACKTRACE(error, Error, Stacktrace)
+        error:Error:Stacktrace ->
             handle_event(Mod, request_error,
                          [Req, Error, Stacktrace],
                          Args),
             {response, 500, [], <<"Internal server error">>};
-        ?WITH_STACKTRACE(exit, Exit, Stacktrace)
+        exit:Exit:Stacktrace ->
             handle_event(Mod, request_exit,
                          [Req, Exit, Stacktrace],
                          Args),
@@ -708,7 +708,6 @@ is_header_defined(Key, Headers) ->
 get_header(Key, Headers) ->
     get_header(Key, Headers, undefined).
 
--ifdef(OTP_RELEASE).
 get_header(Key, Headers, Default) ->
     CaseFoldedKey = string:casefold(Key),
     case lists:search(fun({N, _}) -> string:equal(CaseFoldedKey, N, true) end, Headers) of
@@ -717,67 +716,35 @@ get_header(Key, Headers, Default) ->
         false ->
             Default
     end.
--else.
-get_header(Key, Headers, Default) ->
-    CaseFoldedKey = string:casefold(Key),
-    case search(fun({N, _}) -> string:equal(CaseFoldedKey, N, true) end, Headers) of
-        {value, {_, Value}} ->
-            Value;
-        false ->
-            Default
-    end.
-
-search(Pred, [Hd|Tail]) ->
-    case Pred(Hd) of
-        true -> {value, Hd};
-        false -> search(Pred, Tail)
-    end;
-search(Pred, []) when is_function(Pred, 1) ->
-    false.
--endif.
 
 %%
 %% PATH HELPERS
 %%
 
--ifdef(OTP_RELEASE).
-  -if(?OTP_RELEASE >= 22).
-    parse_path({abs_path, FullPath}) ->
-        URIMap = uri_string:parse(FullPath),
-        Host = maps:get(host, URIMap, undefined),
-        Scheme = maps:get(scheme, URIMap, undefined),
-        Path = maps:get(path, URIMap, <<>>),
-        Query = maps:get(query, URIMap, <<>>),
-        Port = maps:get(port, URIMap, case Scheme of http -> 80; https -> 443; _ -> undefined end),
-        {ok, {Scheme, Host, Port}, {Path, split_path(Path), uri_string:dissect_query(Query)}};
-    parse_path({absoluteURI, Scheme, Host, Port, Path}) ->
-        setelement(2, parse_path({abs_path, Path}), {Scheme, Host, Port});
-    parse_path(_) ->
-        {error, unsupported_uri}.
-  -else.
-    parse_path({abs_path, FullPath}) ->
-        Parsed = case binary:split(FullPath, [<<"?">>]) of
-                     [URL]       -> {FullPath, split_path(URL), []};
-                     [URL, Args] -> {FullPath, split_path(URL), split_args(Args)}
-                 end,
-        {ok, {undefined, undefined, undefined}, Parsed};
-    parse_path({absoluteURI, Scheme, Host, Port, Path}) ->
-        setelement(2, parse_path({abs_path, Path}), {Scheme, Host, Port});
-    parse_path(_) ->
-        {error, unsupported_uri}.
-  -endif.
+-if(?OTP_RELEASE >= 22).
+parse_path({abs_path, FullPath}) ->
+    URIMap = uri_string:parse(FullPath),
+    Host = maps:get(host, URIMap, undefined),
+    Scheme = maps:get(scheme, URIMap, undefined),
+    Path = maps:get(path, URIMap, <<>>),
+    Query = maps:get(query, URIMap, <<>>),
+    Port = maps:get(port, URIMap, case Scheme of http -> 80; https -> 443; _ -> undefined end),
+    {ok, {Scheme, Host, Port}, {Path, split_path(Path), uri_string:dissect_query(Query)}};
+parse_path({absoluteURI, Scheme, Host, Port, Path}) ->
+    setelement(2, parse_path({abs_path, Path}), {Scheme, Host, Port});
+parse_path(_) ->
+    {error, unsupported_uri}.
 -else.
-  %% same as else branch above. can drop this when only OTP 21+ is supported
-  parse_path({abs_path, FullPath}) ->
-      Parsed = case binary:split(FullPath, [<<"?">>]) of
-                   [URL]       -> {FullPath, split_path(URL), []};
-                   [URL, Args] -> {FullPath, split_path(URL), split_args(Args)}
-               end,
-      {ok, {undefined, undefined, undefined}, Parsed};
-  parse_path({absoluteURI, Scheme, Host, Port, Path}) ->
-      setelement(2, parse_path({abs_path, Path}), {Scheme, Host, Port});
-  parse_path(_) ->
-      {error, unsupported_uri}.
+parse_path({abs_path, FullPath}) ->
+    Parsed = case binary:split(FullPath, [<<"?">>]) of
+                 [URL]       -> {FullPath, split_path(URL), []};
+                 [URL, Args] -> {FullPath, split_path(URL), split_args(Args)}
+             end,
+    {ok, {undefined, undefined, undefined}, Parsed};
+parse_path({absoluteURI, Scheme, Host, Port, Path}) ->
+    setelement(2, parse_path({abs_path, Path}), {Scheme, Host, Port});
+parse_path(_) ->
+    {error, unsupported_uri}.
 -endif.
 
 split_path(Path) ->
@@ -813,7 +780,7 @@ handle_event(Mod, Name, EventArgs, ElliArgs) ->
     try
         Mod:handle_event(Name, EventArgs, ElliArgs)
     catch
-        ?WITH_STACKTRACE(EvClass, EvError, Stacktrace)
+        EvClass:EvError:Stacktrace ->
             ?LOG_ERROR("~p:handle_event/3 crashed ~p:~p~n~p",
                        [Mod, EvClass, EvError, Stacktrace])
     end.

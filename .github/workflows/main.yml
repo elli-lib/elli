@@ -10,21 +10,43 @@ on:
 
 jobs:
   build:
-    name: Test on OTP ${{ matrix.otp_version }} and ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: Test on OTP ${{ matrix.tuple.otp_version }} and ${{ matrix.tuple.os }}
+    runs-on: ${{ matrix.tuple.os }}
 
     strategy:
       matrix:
-        otp_version: ['24', '23', '22', '21']
-        os: [ubuntu-latest]
+        - tuple:
+            otp_version: 26
+            os: ubuntu-22.04
+            rebar3_version: 3.22
+        - tuple:
+            otp_version: 25
+            os: ubuntu-22.04
+            rebar3_version: 3.22
+        - tuple:
+            otp_version: 24
+            os: ubuntu-22.04
+            rebar3_version: 3.22
+        - tuple:
+            otp_version: 23
+            os: ubuntu-20.04
+            rebar3_version: 3.15
+        - tuple:
+            otp_version: 22
+            os: ubuntu-20.04
+            rebar3_version: 3.15
+        - tuple:
+            otp_version: 21
+            os: ubuntu-20.04
+            rebar3_version: 3.15
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - uses: erlef/setup-beam@v1
       with:
-        otp-version: ${{ matrix.otp_version }}
-        rebar3-version: '3.14'
+        otp-version: ${{ matrix.tuple.otp_version }}
+        rebar3-version: ${{ matrix.tuple.rebar3_version }}
 
     - name: Compile
       run: rebar3 compile
@@ -36,9 +58,8 @@ jobs:
       run: rebar3 xref
 
     - name: Covertool
-      if: ${{ always() }}
       run: rebar3 covertool generate
-    - uses: codecov/codecov-action@v1
+    - uses: codecov/codecov-action@v3
       with:
-        file: _build/test/covertool/elli.covertool.xml
+        files: _build/test/covertool/elli.covertool.xml
         env_vars: OTP_VERSION
