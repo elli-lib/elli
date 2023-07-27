@@ -15,8 +15,7 @@ for you. If you find yourself digging into the implementation of a
 webserver, `elli` might be for you. If you're building web services,
 not web sites, then `elli` might be for you.
 
-Elli is used in production at Wooga and Game Analytics. Elli requires
-OTP 18.0 or newer.
+Elli requires OTP 20.0 or newer.
 
 ## Installation
 
