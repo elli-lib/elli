@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.32.2">
+    <meta name="project" content="elli v3.3.0">
+
+
+    <title>elli_handler — elli v3.3.0</title>
+    <link rel="stylesheet" href="dist/html-erlang-EBZIIHAS.css" />
+
+
+    <script src="dist/handlebars.runtime-NWIB6V2M.js"></script>
+    <script src="dist/handlebars.templates-K7URE6B4.js"></script>
+    <script src="dist/sidebar_items-FF1D4582.js"></script>
+    <script src="docs_config.js"></script>
+    <script async src="dist/html-BHYOTRCH.js"></script>
+
+
+  </head>
+  <body data-type="modules" class="page-behaviour">
+    <script>
+
+      try {
+        var settings = JSON.parse(localStorage.getItem('ex_doc:settings') || '{}');
+
+        if (settings.theme === 'dark' ||
+           ((settings.theme === 'system' || settings.theme == null) &&
+             window.matchMedia('(prefers-color-scheme: dark)').matches)
+           ) {
+          document.body.classList.add('dark')
+        }
+      } catch (error) { }
+    </script>
+
+<div class="body-wrapper">
+
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
+
+<nav id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
+
+      <div>
+        <a href="readme.html" class="sidebar-projectName" translate="no">
+elli
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v3.3.0
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-listNav" class="sidebar-listNav" role="tablist">
+      <li>
+        <button id="extras-list-tab-button" role="tab" data-type="extras" aria-controls="extras-tab-panel" aria-selected="true" tabindex="0">
+Pages
+        </button>
+      </li>
+
+        <li>
+          <button id="modules-list-tab-button" role="tab" data-type="modules" aria-controls="modules-tab-panel" aria-selected="false" tabindex="-1">
+            Modules
+          </button>
+        </li>
+
+
+    </ul>
+  </div>
+
+  <div id="extras-tab-panel" class="sidebar-tabpanel" role="tabpanel" aria-labelledby="extras-list-tab-button">
+    <ul id="extras-full-list" class="full-list"></ul>
+  </div>
+
+    <div id="modules-tab-panel" class="sidebar-tabpanel" role="tabpanel" aria-labelledby="modules-list-tab-button" hidden>
+      <ul id="modules-full-list" class="full-list"></ul>
+    </div>
+
+
+</nav>
+
+<main class="content">
+  <output role="status" id="toast"></output>
+
+  <div id="content" class="content-inner">
+    <div class="top-search">
+      <div class="search-settings">
+        <form class="search-bar" action="search.html">
+          <label class="search-label">
+            <span class="sr-only">Search documentation of elli</span>
+            <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+          </label>
+          <button type="submit" class="search-button" aria-label="Submit Search">
+            <i class="ri-search-2-line ri-lg" aria-hidden="true" title="Submit search"></i>
+          </button>
+          <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+            <i class="ri-close-line ri-lg" title="Cancel search"></i>
+          </button>
+        </form>
+        <div class="autocomplete">
+        </div>
+        <button class="icon-settings display-settings">
+          <i class="ri-settings-3-line"></i>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+
+<div id="top-content">
+  <h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_handler.erl#L1" title="View Source" class="icon-action" rel="help">
+        <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        <span class="sr-only">View Source</span>
+      </a>
+
+    <span translate="no">elli_handler</span> <small>behaviour</small>
+    <small class="app-vsn" translate="no">(elli v3.3.0)</small>
+
+  </h1>
+
+
+</div>
+
+  <section id="summary" class="details-list">
+    <h1 class="section-heading">
+      <a class="hover-link" href="#summary">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Summary</span>
+    </h1>
+<div class="summary-types summary">
+  <h2>
+    <a href="#types">Types</a>
+  </h2>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#t:callback/0" data-no-tooltip translate="no">callback/0</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>A tuple of a <code>t:callback_mod()</code> and <code>t:callback_args()</code>.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#t:callback_args/0" data-no-tooltip translate="no">callback_args/0</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Arguments to pass to a <code>t:callback_mod()</code></p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#t:callback_mod/0" data-no-tooltip translate="no">callback_mod/0</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>A callback module.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#t:event/0" data-no-tooltip translate="no">event/0</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Fired throughout processing a request. See <a href="elli_example_callback.html#handle_event/3"><code>elli_example_callback:handle_event/3</code></a> for descriptions.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#t:result/0" data-no-tooltip translate="no">result/0</a>
+
+      </div>
+
+    </div>
+
+</div>
+<div class="summary-callbacks summary">
+  <h2>
+    <a href="#callbacks">Callbacks</a>
+  </h2>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#c:handle/2" data-no-tooltip translate="no">handle/2</a>
+
+      </div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#c:handle_event/3" data-no-tooltip translate="no">handle_event/3</a>
+
+      </div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#c:init/2" data-no-tooltip translate="no">init/2</a>
+
+      </div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#c:postprocess/3" data-no-tooltip translate="no">postprocess/3</a>
+
+      </div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#c:preprocess/2" data-no-tooltip translate="no">preprocess/2</a>
+
+      </div>
+
+    </div>
+
+</div>
+
+  </section>
+
+
+  <section id="types" class="details-list">
+    <h1 class="section-heading">
+      <a class="hover-link" href="#types">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Types</span>
+    </h1>
+    <div class="types-list">
+<section class="detail" id="t:callback/0">
+
+  <div class="detail-header">
+    <a href="#t:callback/0" class="detail-link" data-no-tooltip title="Link to this type">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <h1 class="signature" translate="no">callback/0</h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_handler.erl#L7" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-type</span> callback() :: {<a href="#t:callback_mod/0">callback_mod</a>(), <a href="#t:callback_args/0">callback_args</a>()}.</pre>
+
+      </div>
+
+<p>A tuple of a <code>t:callback_mod()</code> and <code>t:callback_args()</code>.</p>
+  </section>
+</section>
+<section class="detail" id="t:callback_args/0">
+
+  <div class="detail-header">
+    <a href="#t:callback_args/0" class="detail-link" data-no-tooltip title="Link to this type">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <h1 class="signature" translate="no">callback_args/0</h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_handler.erl#L13" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-type</span> callback_args() :: <a href="https://www.erlang.org/doc/man/erlang.html#type-list">list</a>().</pre>
+
+      </div>
+
+<p>Arguments to pass to a <code>t:callback_mod()</code></p>
+  </section>
+</section>
+<section class="detail" id="t:callback_mod/0">
+
+  <div class="detail-header">
+    <a href="#t:callback_mod/0" class="detail-link" data-no-tooltip title="Link to this type">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <h1 class="signature" translate="no">callback_mod/0</h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_handler.erl#L10" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-type</span> callback_mod() :: <a href="https://www.erlang.org/doc/man/erlang.html#type-module">module</a>().</pre>
+
+      </div>
+
+<p>A callback module.</p>
+  </section>
+</section>
+<section class="detail" id="t:event/0">
+
+  <div class="detail-header">
+    <a href="#t:event/0" class="detail-link" data-no-tooltip title="Link to this type">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <h1 class="signature" translate="no">event/0</h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_handler.erl#L16" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-type</span> event() ::
+          elli_startup | bad_request | file_error | chunk_complete | request_complete | request_throw |
+          request_error | request_exit | request_closed | request_parse_error | client_closed |
+          client_timeout | invalid_return.</pre>
+
+      </div>
+
+<p>Fired throughout processing a request. See <a href="elli_example_callback.html#handle_event/3"><code>elli_example_callback:handle_event/3</code></a> for descriptions.</p>
+  </section>
+</section>
+<section class="detail" id="t:result/0">
+
+  <div class="detail-header">
+    <a href="#t:result/0" class="detail-link" data-no-tooltip title="Link to this type">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <h1 class="signature" translate="no">result/0</h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_handler.erl#L26" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-type</span> result() ::
+          {<a href="elli.html#t:response_code/0">elli:response_code</a>() | ok,
+           <a href="elli.html#t:headers/0">elli:headers</a>(),
+           {file, <a href="https://www.erlang.org/doc/man/file.html#type-name_all">file:name_all</a>()} | {file, <a href="https://www.erlang.org/doc/man/file.html#type-name_all">file:name_all</a>(), <a href="elli_util.html#t:range/0">elli_util:range</a>()}} |
+          {<a href="elli.html#t:response_code/0">elli:response_code</a>() | ok, <a href="elli.html#t:headers/0">elli:headers</a>(), <a href="elli.html#t:body/0">elli:body</a>()} |
+          {<a href="elli.html#t:response_code/0">elli:response_code</a>() | ok, <a href="elli.html#t:body/0">elli:body</a>()} |
+          {chunk, <a href="elli.html#t:headers/0">elli:headers</a>()} |
+          {chunk, <a href="elli.html#t:headers/0">elli:headers</a>(), <a href="elli.html#t:body/0">elli:body</a>()} |
+          ignore.</pre>
+
+      </div>
+
+
+  </section>
+</section>
+
+    </div>
+  </section>
+
+  <section id="callbacks" class="details-list">
+    <h1 class="section-heading">
+      <a class="hover-link" href="#callbacks">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Callbacks</span>
+    </h1>
+    <div class="callbacks-list">
+<section class="detail" id="c:handle/2">
+
+  <div class="detail-header">
+    <a href="#c:handle/2" class="detail-link" data-no-tooltip title="Link to this callback">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this callback</span>
+    </a>
+    <h1 class="signature" translate="no">handle/2</h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_handler.erl#L36" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-callback</span> handle(Req :: <a href="elli.html#t:req/0">elli:req</a>(), <a href="#t:callback_args/0">callback_args</a>()) -> <a href="#t:result/0">result</a>().</pre>
+
+      </div>
+
+
+  </section>
+</section>
+<section class="detail" id="c:handle_event/3">
+
+  <div class="detail-header">
+    <a href="#c:handle_event/3" class="detail-link" data-no-tooltip title="Link to this callback">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this callback</span>
+    </a>
+    <h1 class="signature" translate="no">handle_event/3</h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_handler.erl#L38" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-callback</span> handle_event(Event, Args, Config) -> ok
+                          when Event :: <a href="#t:event/0">event</a>(), Args :: <a href="#t:callback_args/0">callback_args</a>(), Config :: [<a href="https://www.erlang.org/doc/man/erlang.html#type-tuple">tuple</a>()].</pre>
+
+      </div>
+
+
+  </section>
+</section>
+<section class="detail" id="c:init/2">
+
+  <div class="detail-header">
+    <a href="#c:init/2" class="detail-link" data-no-tooltip title="Link to this callback">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this callback</span>
+    </a>
+    <h1 class="signature" translate="no">init/2</h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_handler.erl#L43" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+      <span class="note">(optional)</span>
+
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-callback</span> init(Req, Args) -> {ok, standard | handover} when Req :: <a href="elli.html#t:req/0">elli:req</a>(), Args :: <a href="#t:callback_args/0">callback_args</a>().</pre>
+
+      </div>
+
+
+  </section>
+</section>
+<section class="detail" id="c:postprocess/3">
+
+  <div class="detail-header">
+    <a href="#c:postprocess/3" class="detail-link" data-no-tooltip title="Link to this callback">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this callback</span>
+    </a>
+    <h1 class="signature" translate="no">postprocess/3</h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_handler.erl#L52" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+      <span class="note">(optional)</span>
+
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-callback</span> postprocess(Req, Res1, Args) -> Res2
+                         when Req :: <a href="elli.html#t:req/0">elli:req</a>(), Res1 :: <a href="#t:result/0">result</a>(), Args :: <a href="#t:callback_args/0">callback_args</a>(), Res2 :: <a href="#t:result/0">result</a>().</pre>
+
+      </div>
+
+
+  </section>
+</section>
+<section class="detail" id="c:preprocess/2">
+
+  <div class="detail-header">
+    <a href="#c:preprocess/2" class="detail-link" data-no-tooltip title="Link to this callback">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this callback</span>
+    </a>
+    <h1 class="signature" translate="no">preprocess/2</h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_handler.erl#L47" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+      <span class="note">(optional)</span>
+
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-callback</span> preprocess(Req1, Args) -> Req2
+                        when Req1 :: <a href="elli.html#t:req/0">elli:req</a>(), Args :: <a href="#t:callback_args/0">callback_args</a>(), Req2 :: <a href="elli.html#t:req/0">elli:req</a>().</pre>
+
+      </div>
+
+
+  </section>
+</section>
+
+    </div>
+  </section>
+
+    <footer class="footer">
+      <p>
+
+          <span class="line">
+            <a href="https://hex.pm/packages/elli/3.3.0" class="footer-hex-package">Hex Package</a>
+
+            <a href="https://preview.hex.pm/preview/elli/3.3.0">Hex Preview</a>
+
+          </span>
+
+        <span class="line">
+          <button class="a-main footer-button display-quick-switch" title="Search HexDocs packages">
+            Search HexDocs
+          </button>
+
+            <a href="elli.epub" title="ePub version">
+              Download ePub version
+            </a>
+
+        </span>
+      </p>
+
+      <p class="built-using">
+        Built using
+        <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.32.2) for the
+
+          <a href="https://erlang.org" title="Erlang" target="_blank" translate="no">Erlang programming language</a>
+
+      </p>
+
+    </footer>
+  </div>
+</main>
+</div>
+
+
+  </body>
+</html>

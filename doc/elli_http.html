@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.32.2">
+    <meta name="project" content="elli v3.3.0">
+
+
+    <title>elli_http — elli v3.3.0</title>
+    <link rel="stylesheet" href="dist/html-erlang-EBZIIHAS.css" />
+
+
+    <script src="dist/handlebars.runtime-NWIB6V2M.js"></script>
+    <script src="dist/handlebars.templates-K7URE6B4.js"></script>
+    <script src="dist/sidebar_items-FF1D4582.js"></script>
+    <script src="docs_config.js"></script>
+    <script async src="dist/html-BHYOTRCH.js"></script>
+
+
+  </head>
+  <body data-type="modules" class="page-module">
+    <script>
+
+      try {
+        var settings = JSON.parse(localStorage.getItem('ex_doc:settings') || '{}');
+
+        if (settings.theme === 'dark' ||
+           ((settings.theme === 'system' || settings.theme == null) &&
+             window.matchMedia('(prefers-color-scheme: dark)').matches)
+           ) {
+          document.body.classList.add('dark')
+        }
+      } catch (error) { }
+    </script>
+
+<div class="body-wrapper">
+
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
+
+<nav id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
+
+      <div>
+        <a href="readme.html" class="sidebar-projectName" translate="no">
+elli
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v3.3.0
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-listNav" class="sidebar-listNav" role="tablist">
+      <li>
+        <button id="extras-list-tab-button" role="tab" data-type="extras" aria-controls="extras-tab-panel" aria-selected="true" tabindex="0">
+Pages
+        </button>
+      </li>
+
+        <li>
+          <button id="modules-list-tab-button" role="tab" data-type="modules" aria-controls="modules-tab-panel" aria-selected="false" tabindex="-1">
+            Modules
+          </button>
+        </li>
+
+
+    </ul>
+  </div>
+
+  <div id="extras-tab-panel" class="sidebar-tabpanel" role="tabpanel" aria-labelledby="extras-list-tab-button">
+    <ul id="extras-full-list" class="full-list"></ul>
+  </div>
+
+    <div id="modules-tab-panel" class="sidebar-tabpanel" role="tabpanel" aria-labelledby="modules-list-tab-button" hidden>
+      <ul id="modules-full-list" class="full-list"></ul>
+    </div>
+
+
+</nav>
+
+<main class="content">
+  <output role="status" id="toast"></output>
+
+  <div id="content" class="content-inner">
+    <div class="top-search">
+      <div class="search-settings">
+        <form class="search-bar" action="search.html">
+          <label class="search-label">
+            <span class="sr-only">Search documentation of elli</span>
+            <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+          </label>
+          <button type="submit" class="search-button" aria-label="Submit Search">
+            <i class="ri-search-2-line ri-lg" aria-hidden="true" title="Submit search"></i>
+          </button>
+          <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+            <i class="ri-close-line ri-lg" title="Cancel search"></i>
+          </button>
+        </form>
+        <div class="autocomplete">
+        </div>
+        <button class="icon-settings display-settings">
+          <i class="ri-settings-3-line"></i>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+
+<div id="top-content">
+  <h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_http.erl#L6" title="View Source" class="icon-action" rel="help">
+        <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        <span class="sr-only">View Source</span>
+      </a>
+
+    <span translate="no">elli_http</span> 
+    <small class="app-vsn" translate="no">(elli v3.3.0)</small>
+
+  </h1>
+
+
+    <section id="moduledoc">
+<p>Elli HTTP request implementation</p><p>An elli_http process blocks in <a href="elli_tcp.html#accept/3"><code>elli_tcp:accept/3</code></a> until a client connects. It then handles requests on that connection until it's closed either by the client timing out or explicitly by the user.</p>
+    </section>
+
+</div>
+
+  <section id="summary" class="details-list">
+    <h1 class="section-heading">
+      <a class="hover-link" href="#summary">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Summary</span>
+    </h1>
+<div class="summary-types summary">
+  <h2>
+    <a href="#types">Types</a>
+  </h2>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#t:version/0" data-no-tooltip translate="no">version/0</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>HTTP version as a tuple, i.e. <code>{0, 9} | {1, 0} | {1, 1}</code>.</p></div>
+
+    </div>
+
+</div>
+<div class="summary-functions summary">
+  <h2>
+    <a href="#functions">Functions</a>
+  </h2>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#accept/4" data-no-tooltip translate="no">accept(Server, ListenSocket, Options, Callback)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Accept on the socket until a client connects. Handle the request, then loop if we're using keep alive or chunked transfer. If <a href="elli_tcp.html#accept/3"><code>elli_tcp:accept/3</code></a> doesn't return a socket within a configurable timeout, loop to allow code upgrades of this module.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#chunk_loop/1" data-no-tooltip translate="no">chunk_loop(Socket)</a>
+
+      </div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#close_or_keepalive/2" data-no-tooltip translate="no">close_or_keepalive(Req, Headers)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Return the preferred session handling setting to close or keep the current session alive based on the presence of a header or the standard default based on the version of HTTP of the request.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#handle_request/4" data-no-tooltip translate="no">handle_request(Socket, PrevBin, Options, Callback)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Handle a HTTP request that will possibly come on the socket. Returns the appropriate connection token and any buffer containing (parts of) the next request.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#keepalive_loop/3" data-no-tooltip translate="no">keepalive_loop(Socket, Options, Callback)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Handle multiple requests on the same connection, i.e. <code>&quot;keep alive&quot;</code>.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#keepalive_loop/5" data-no-tooltip translate="no">keepalive_loop(Socket, NumRequests, Buffer, Options, Callback)</a>
+
+      </div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#mk_req/8" data-no-tooltip translate="no">mk_req(Method, PathTuple, Headers, Headers, Body, V, Socket, Callback)</a>
+
+      </div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#mk_req/11" data-no-tooltip translate="no">mk_req(Method, Scheme, Host, Port, PathTuple, Headers, ParsedHeaders, Body, V, Socket, Callback)</a>
+
+      </div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#parse_path/1" data-no-tooltip translate="no">parse_path(_)</a>
+
+      </div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#send_file/5" data-no-tooltip translate="no">send_file(Req, Code, Headers, Filename, Range)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Send a HTTP response to the client where the body is the contents of the given file. Assumes correctly set response code and headers.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#send_response/4" data-no-tooltip translate="no">send_response(Req, Code, Headers, UserBody)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Generate a HTTP response and send it to the client.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#split_args/1" data-no-tooltip translate="no">split_args(Qs)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Split the URL arguments into a proplist. Lifted from cowboy_http:x_www_form_urlencoded/2.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#start_link/4" data-no-tooltip translate="no">start_link(Server, ListenSocket, Options, Callback)</a>
+
+      </div>
+
+    </div>
+
+</div>
+
+  </section>
+
+
+  <section id="types" class="details-list">
+    <h1 class="section-heading">
+      <a class="hover-link" href="#types">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Types</span>
+    </h1>
+    <div class="types-list">
+<section class="detail" id="t:version/0">
+
+  <div class="detail-header">
+    <a href="#t:version/0" class="detail-link" data-no-tooltip title="Link to this type">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <h1 class="signature" translate="no">version/0</h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_http.erl#L30" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-type</span> version() :: {0, 9} | {1, 0} | {1, 1}.</pre>
+
+      </div>
+
+<p>HTTP version as a tuple, i.e. <code>{0, 9} | {1, 0} | {1, 1}</code>.</p>
+  </section>
+</section>
+
+    </div>
+  </section>
+
+  <section id="functions" class="details-list">
+    <h1 class="section-heading">
+      <a class="hover-link" href="#functions">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Functions</span>
+    </h1>
+    <div class="functions-list">
+<section class="detail" id="accept/4">
+
+  <div class="detail-header">
+    <a href="#accept/4" class="detail-link" data-no-tooltip title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">accept(Server, ListenSocket, Options, Callback)</h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_http.erl#L62" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> accept(Server, ListenSocket, Options, Callback) -> ok
+                when
+                    Server :: <a href="https://www.erlang.org/doc/man/erlang.html#type-pid">pid</a>(),
+                    ListenSocket :: <a href="elli_tcp.html#t:socket/0">elli_tcp:socket</a>(),
+                    Options :: <a href="https://www.erlang.org/doc/man/proplists.html#type-proplist">proplists:proplist</a>(),
+                    Callback :: <a href="elli_handler.html#t:callback/0">elli_handler:callback</a>().</pre>
+
+      </div>
+
+<p>Accept on the socket until a client connects. Handle the request, then loop if we're using keep alive or chunked transfer. If <a href="elli_tcp.html#accept/3"><code>elli_tcp:accept/3</code></a> doesn't return a socket within a configurable timeout, loop to allow code upgrades of this module.</p>
+  </section>
+</section>
+<section class="detail" id="chunk_loop/1">
+
+  <div class="detail-header">
+    <a href="#chunk_loop/1" class="detail-link" data-no-tooltip title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">chunk_loop(Socket)</h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_http.erl#L360" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+
+  </section>
+</section>
+<section class="detail" id="close_or_keepalive/2">
+
+  <div class="detail-header">
+    <a href="#close_or_keepalive/2" class="detail-link" data-no-tooltip title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">close_or_keepalive(Req, Headers)</h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_http.erl#L686" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> close_or_keepalive(Req, Headers) -> KeepaliveOpt
+                            when
+                                Req :: <a href="elli.html#t:req/0">elli:req</a>(),
+                                Headers :: <a href="elli.html#t:headers/0">elli:headers</a>(),
+                                KeepaliveOpt :: close | keep_alive.</pre>
+
+      </div>
+
+<p>Return the preferred session handling setting to close or keep the current session alive based on the presence of a header or the standard default based on the version of HTTP of the request.</p>
+  </section>
+</section>
+<section class="detail" id="handle_request/4">
+
+  <div class="detail-header">
+    <a href="#handle_request/4" class="detail-link" data-no-tooltip title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">handle_request(Socket, PrevBin, Options, Callback)</h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_http.erl#L103" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> handle_request(Socket, PrevBin, Options, Callback) -> ConnToken
+                        when
+                            Socket :: <a href="elli_tcp.html#t:socket/0">elli_tcp:socket</a>(),
+                            PrevBin :: <a href="https://www.erlang.org/doc/man/erlang.html#type-binary">binary</a>(),
+                            Options :: <a href="https://www.erlang.org/doc/man/proplists.html#type-proplist">proplists:proplist</a>(),
+                            Callback :: <a href="elli_handler.html#t:callback/0">elli_handler:callback</a>(),
+                            ConnToken :: {keep_alive | close, <a href="https://www.erlang.org/doc/man/erlang.html#type-binary">binary</a>()}.</pre>
+
+      </div>
+
+<p>Handle a HTTP request that will possibly come on the socket. Returns the appropriate connection token and any buffer containing (parts of) the next request.</p>
+  </section>
+</section>
+<section class="detail" id="keepalive_loop/3">
+
+  <div class="detail-header">
+    <a href="#keepalive_loop/3" class="detail-link" data-no-tooltip title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">keepalive_loop(Socket, Options, Callback)</h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_http.erl#L81" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+<p>Handle multiple requests on the same connection, i.e. <code>&quot;keep alive&quot;</code>.</p>
+  </section>
+</section>
+<section class="detail" id="keepalive_loop/5">
+
+  <div class="detail-header">
+    <a href="#keepalive_loop/5" class="detail-link" data-no-tooltip title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">keepalive_loop(Socket, NumRequests, Buffer, Options, Callback)</h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_http.erl#L84" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+
+  </section>
+</section>
+<section class="detail" id="mk_req/8">
+
+  <div class="detail-header">
+    <a href="#mk_req/8" class="detail-link" data-no-tooltip title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">mk_req(Method, PathTuple, Headers, Headers, Body, V, Socket, Callback)</h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_http.erl#L612" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> mk_req(Method, PathTuple, Headers, Headers, Body, V, Socket, Callback) -> Req
+                when
+                    Method :: <a href="elli.html#t:http_method/0">elli:http_method</a>(),
+                    PathTuple :: {PathType :: <a href="https://www.erlang.org/doc/man/erlang.html#type-atom">atom</a>(), RawPath :: <a href="https://www.erlang.org/doc/man/erlang.html#type-binary">binary</a>()},
+                    Headers :: <a href="elli.html#t:headers/0">elli:headers</a>(),
+                    Body :: <a href="elli.html#t:body/0">elli:body</a>(),
+                    V :: <a href="#t:version/0">version</a>(),
+                    Socket :: <a href="elli_tcp.html#t:socket/0">elli_tcp:socket</a>() | undefined,
+                    Callback :: <a href="elli_handler.html#t:callback/0">elli_handler:callback</a>(),
+                    Req :: <a href="elli.html#t:req/0">elli:req</a>().</pre>
+
+      </div>
+
+
+  </section>
+</section>
+<section class="detail" id="mk_req/11">
+
+  <div class="detail-header">
+    <a href="#mk_req/11" class="detail-link" data-no-tooltip title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">mk_req(Method, Scheme, Host, Port, PathTuple, Headers, ParsedHeaders, Body, V, Socket, Callback)</h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_http.erl#L628" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+
+  </section>
+</section>
+<section class="detail" id="parse_path/1">
+
+  <div class="detail-header">
+    <a href="#parse_path/1" class="detail-link" data-no-tooltip title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">parse_path(_)</h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_http.erl#L726" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+
+  </section>
+</section>
+<section class="detail" id="send_file/5">
+
+  <div class="detail-header">
+    <a href="#send_file/5" class="detail-link" data-no-tooltip title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">send_file(Req, Code, Headers, Filename, Range)</h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_http.erl#L257" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> send_file(Req, Code, Headers, Filename, Range) -> ok
+                   when
+                       Req :: <a href="elli.html#t:req/0">elli:req</a>(),
+                       Code :: <a href="elli.html#t:response_code/0">elli:response_code</a>(),
+                       Headers :: <a href="elli.html#t:headers/0">elli:headers</a>(),
+                       Filename :: <a href="https://www.erlang.org/doc/man/file.html#type-filename">file:filename</a>(),
+                       Range :: <a href="elli_util.html#t:range/0">elli_util:range</a>().</pre>
+
+      </div>
+
+<p>Send a HTTP response to the client where the body is the contents of the given file. Assumes correctly set response code and headers.</p>
+  </section>
+</section>
+<section class="detail" id="send_response/4">
+
+  <div class="detail-header">
+    <a href="#send_response/4" class="detail-link" data-no-tooltip title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">send_response(Req, Code, Headers, UserBody)</h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_http.erl#L226" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+<p>Generate a HTTP response and send it to the client.</p>
+  </section>
+</section>
+<section class="detail" id="split_args/1">
+
+  <div class="detail-header">
+    <a href="#split_args/1" class="detail-link" data-no-tooltip title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">split_args(Qs)</h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_http.erl#L746" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> split_args(<a href="https://www.erlang.org/doc/man/erlang.html#type-binary">binary</a>()) -> [{<a href="https://www.erlang.org/doc/man/erlang.html#type-binary">binary</a>(), <a href="https://www.erlang.org/doc/man/erlang.html#type-binary">binary</a>() | true}].</pre>
+
+      </div>
+
+<p>Split the URL arguments into a proplist. Lifted from cowboy_http:x_www_form_urlencoded/2.</p>
+  </section>
+</section>
+<section class="detail" id="start_link/4">
+
+  <div class="detail-header">
+    <a href="#start_link/4" class="detail-link" data-no-tooltip title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">start_link(Server, ListenSocket, Options, Callback)</h1>
+
+      <a href="https://github.com/elli-lib/elli/blob/v3.3.0/src/elli_http.erl#L49" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <div class="specs">
+
+          <pre translate="no"><span class="attribute">-spec</span> start_link(Server, ListenSocket, Options, Callback) -> <a href="https://www.erlang.org/doc/man/erlang.html#type-pid">pid</a>()
+                    when
+                        Server :: <a href="https://www.erlang.org/doc/man/erlang.html#type-pid">pid</a>(),
+                        ListenSocket :: <a href="elli_tcp.html#t:socket/0">elli_tcp:socket</a>(),
+                        Options :: <a href="https://www.erlang.org/doc/man/proplists.html#type-proplist">proplists:proplist</a>(),
+                        Callback :: <a href="elli_handler.html#t:callback/0">elli_handler:callback</a>().</pre>
+
+      </div>
+
+
+  </section>
+</section>
+
+    </div>
+  </section>
+
+    <footer class="footer">
+      <p>
+
+          <span class="line">
+            <a href="https://hex.pm/packages/elli/3.3.0" class="footer-hex-package">Hex Package</a>
+
+            <a href="https://preview.hex.pm/preview/elli/3.3.0">Hex Preview</a>
+
+          </span>
+
+        <span class="line">
+          <button class="a-main footer-button display-quick-switch" title="Search HexDocs packages">
+            Search HexDocs
+          </button>
+
+            <a href="elli.epub" title="ePub version">
+              Download ePub version
+            </a>
+
+        </span>
+      </p>
+
+      <p class="built-using">
+        Built using
+        <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.32.2) for the
+
+          <a href="https://erlang.org" title="Erlang" target="_blank" translate="no">Erlang programming language</a>
+
+      </p>
+
+    </footer>
+  </div>
+</main>
+</div>
+
+
+  </body>
+</html>
