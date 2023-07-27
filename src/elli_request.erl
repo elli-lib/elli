@@ -47,7 +47,7 @@
 -elvis([{elvis_style, god_modules, disable}]).
 
 %%
-%% Helpers for working with a #req{}
+%% Helpers for working with a `#req{}'
 %%
 
 
@@ -87,15 +87,15 @@ get_header(Key, #req{headers = Headers}, Default) ->
     proplists:get_value(CaseFoldedKey, Headers, Default).
 
 
-%% @equiv get_arg(Key, Req, undefined)
+%% The same as `get_arg(Key, Req, undefined)'
 get_arg(Key, #req{} = Req) ->
     get_arg(Key, Req, undefined).
 
-%% @equiv proplists:get_value(Key, Args, Default)
+%% The same as `proplists:get_value(Key, Args, Default)'
 get_arg(Key, #req{args = Args}, Default) ->
     proplists:get_value(Key, Args, Default).
 
-%% @equiv get_arg_decoded(Key, Req, undefined)
+%% The same as `get_arg_decoded(Key, Req, undefined)'
 get_arg_decoded(Key, #req{} = Req) ->
     get_arg_decoded(Key, Req, undefined).
 
@@ -119,14 +119,14 @@ body_qs(#req{body = Body} = Req) ->
             erlang:error(badarg)
     end.
 
-%% @equiv post_arg(Key, Req, undefined)
+%% The same as `post_arg(Key, Req, undefined)'
 post_arg(Key, #req{} = Req) ->
     post_arg(Key, Req, undefined).
 
 post_arg(Key, #req{} = Req, Default) ->
     proplists:get_value(Key, body_qs(Req), Default).
 
-%% @equiv post_arg_decoded(Key, Req, undefined)
+%% The same as `post_arg_decoded(Key, Req, undefined)'
 post_arg_decoded(Key, #req{} = Req) ->
     post_arg_decoded(Key, Req, undefined).
 
@@ -174,8 +174,8 @@ query_str(#req{raw_path = Path}) ->
 
 
 %% @doc Parse the `Range' header from the request.
-%% The result is either a `byte_range_set()' or the atom `parse_error'.
-%% Use {@link elli_util:normalize_range/2} to get a validated, normalized range.
+%% The result is either a `[http_range()]' or the atom `parse_error'.
+%% Use `elli_util:normalize_range/2' to get a validated, normalized range.
 -spec get_range(elli:req()) -> [http_range()] | parse_error.
 get_range(#req{headers = Headers})  ->
     case proplists:get_value(<<"range">>, Headers) of
@@ -242,7 +242,7 @@ chunk_ref(#req{}) ->
 
 %% @doc Explicitly close the chunked connection.
 %% Return `{error, closed}' if the client already closed the connection.
-%% @equiv send_chunk(Ref, close)
+%% The same as `send_chunk(Ref, close)'
 close_chunk(Ref) ->
     send_chunk(Ref, close).
 
