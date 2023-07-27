@@ -667,10 +667,10 @@ is_request_test() ->
 query_str_test_() ->
     MakeReq = fun(Path) -> #req{raw_path = Path} end,
     [
-     %% For empty query strings, expect `query_str` to return an empty binary.
+     %% For empty query strings, expect `query_str' to return an empty binary.
      ?_assertMatch(<<>>, elli_request:query_str(MakeReq(<<"/foo">>))),
      ?_assertMatch(<<>>, elli_request:query_str(MakeReq(<<"/foo?">>))),
-     %% Otherwise it should return everything to the right hand side of `?`.
+     %% Otherwise it should return everything to the right hand side of `?'.
      ?_assertMatch(<<"bar=baz&baz=bang">>,
                    elli_request:query_str(MakeReq(<<"/foo?bar=baz&baz=bang">>)))
     ].
