@@ -196,8 +196,8 @@ keep_alive_timings() ->
 
 keep_alive_timings(Status, Headers, HCRef) ->
     ?assertMatch(200, Status),
-    ?assertHeadersEqual([{<<"connection">>,<<"Keep-Alive">>},
-                         {<<"content-length">>,<<"12">>}], Headers),
+    ?assertHeadersEqual([{<<"connection">>, <<"Keep-Alive">>},
+                         {<<"content-length">>, <<"12">>}], Headers),
     ?assertMatch({ok, <<"Hello World!">>}, hackney:body(HCRef)),
     %% sizes
     ?assertMatch(63, get_size_value(resp_headers)),
@@ -472,7 +472,8 @@ sendfile_range() ->
     ?assertMatch(206, status(Response)),
     ?assertHeadersEqual([{<<"connection">>, <<"Keep-Alive">>},
                          {<<"content-length">>, <<"400">>},
-                         {<<"Content-Range">>, iolist_to_binary(["bytes 300-699/", integer_to_binary(Size)])}],
+                         {<<"Content-Range">>,
+                          iolist_to_binary(["bytes 300-699/", integer_to_binary(Size)])}],
                         headers(Response)),
     ?assertEqual(Expected, body(Response)).
 
@@ -717,7 +718,7 @@ normalize_range_test_() ->
 
 
 encode_range_test() ->
-    Expected = [<<"bytes ">>,<<"*">>,<<"/">>,<<"42">>],
+    Expected = [<<"bytes ">>, <<"*">>, <<"/">>, <<"42">>],
     ?assertMatch(Expected, elli_util:encode_range(invalid_range, 42)).
 
 register_test() ->
@@ -735,7 +736,8 @@ register_test() ->
     ok.
 
 invalid_callback_test() ->
-    case catch elli:start_link([{callback, elli}]) of
-        E ->
+    try
+        elli:start_link([{callback, elli}])
+    catch throw:E ->
             ?assertMatch(invalid_callback, E)
     end.

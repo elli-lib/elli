@@ -36,6 +36,8 @@
 -define(CONNECTION_HEADER, <<"connection">>).
 -define(TRANSFER_ENCODING_HEADER, <<"Transfer-Encoding">>).
 
+-elvis([{elvis_style, max_function_arity, disable}]).
+
 %% TODO: use this
 %% -type connection_token() :: keep_alive | close.
 
@@ -58,7 +60,7 @@ start_link(Server, ListenSocket, Options, Callback) ->
       Options      :: proplists:proplist(),
       Callback     :: elli_handler:callback().
 accept(Server, ListenSocket, Options, Callback) ->
-    case catch elli_tcp:accept(ListenSocket, Server, accept_timeout(Options)) of
+    case elli_tcp:accept(ListenSocket, Server, accept_timeout(Options)) of
         {ok, Socket} ->
             t(accepted),
             ?MODULE:keepalive_loop(Socket, Options, Callback);
@@ -697,7 +699,7 @@ connection(Req, UserHeaders) ->
             []
     end.
 
-content_length(Headers, Body)->
+content_length(Headers, Body) ->
     ?IF(is_header_defined(?CONTENT_LENGTH_HEADER, Headers), [],
         {?CONTENT_LENGTH_HEADER, iolist_size(Body)}).
 
@@ -729,7 +731,7 @@ parse_path({abs_path, FullPath}) ->
     Query = maps:get(query, URIMap, <<>>),
     Port = maps:get(port, URIMap, case Scheme of http -> 80; https -> 443; _ -> undefined end),
     {ok, {Scheme, Host, Port}, {Path, split_path(Path), uri_string:dissect_query(Query)}};
-parse_path({absoluteURI, Scheme, Host, Port, Path}) ->
+parse_path({'absoluteURI', Scheme, Host, Port, Path}) ->
     setelement(2, parse_path({abs_path, Path}), {Scheme, Host, Port});
 parse_path(_) ->
     {error, unsupported_uri}.

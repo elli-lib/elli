@@ -89,7 +89,7 @@ handle_event(Event, Args, Config) ->
       Callbacks :: [elli_handler:callback()].
 do_init(_, []) ->
     {ok, standard};
-do_init(Req, [{Mod, Args}|Mods]) ->
+do_init(Req, [{Mod, Args} | Mods]) ->
     ?IF_NOT_EXPORTED(Mod, init, 2, do_init(Req, Mods),
                      case Mod:init(Req, Args) of
                          ignore -> do_init(Req, Mods);

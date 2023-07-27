@@ -40,10 +40,11 @@
 
 -export_type([http_range/0]).
 
--type http_range() :: {First::non_neg_integer(), Last::non_neg_integer()}
-                    | {offset, Offset::non_neg_integer()}
-                    | {suffix, Length::pos_integer()}.
+-type http_range() :: {First :: non_neg_integer(), Last :: non_neg_integer()}
+                    | {offset, Offset :: non_neg_integer()}
+                    | {suffix, Length :: pos_integer()}.
 
+-elvis([{elvis_style, god_modules, disable}]).
 
 %%
 %% Helpers for working with a #req{}
@@ -184,7 +185,7 @@ get_range(#req{headers = Headers})  ->
     end.
 
 
--spec parse_range_set(Bin::binary()) -> [http_range()] | parse_error.
+-spec parse_range_set(Bin :: binary()) -> [http_range()] | parse_error.
 parse_range_set(<<ByteRangeSet/binary>>) ->
     RangeBins = binary:split(ByteRangeSet, <<",">>, [global]),
     Parsed    = [parse_range(remove_whitespace(RangeBin))
@@ -194,7 +195,7 @@ parse_range_set(<<ByteRangeSet/binary>>) ->
         false -> Parsed
     end.
 
--spec parse_range(Bin::binary()) -> http_range() | parse_error.
+-spec parse_range(Bin :: binary()) -> http_range() | parse_error.
 parse_range(<<$-, SuffixBin/binary>>) ->
     %% suffix-byte-range
     try {suffix, binary_to_integer(SuffixBin)}
@@ -295,5 +296,5 @@ uri_decode(<<C, Rest/binary>>, Acc) ->
 -compile({inline, [hex_to_int/1]}).
 
 hex_to_int(X) when X >= $0, X =< $9 -> X - $0;
-hex_to_int(X) when X >= $a, X =< $f -> X - ($a-10);
-hex_to_int(X) when X >= $A, X =< $F -> X - ($A-10).
+hex_to_int(X) when X >= $a, X =< $f -> X - ($a - 10);
+hex_to_int(X) when X >= $A, X =< $F -> X - ($A - 10).

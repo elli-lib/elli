@@ -6,6 +6,7 @@
 -export([sendfile/5]).
 
 -type sendfile_opts() :: [{chunk_size, non_neg_integer()}].
+-export_type([sendfile_opts/0]).
 
 %% @doc Send part of a file on a socket.
 %%

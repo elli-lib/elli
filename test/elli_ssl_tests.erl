@@ -41,7 +41,7 @@ chunked() ->
     ?assertMatch(200, status(Response)),
     ?assertHeadersEqual([{<<"connection">>, <<"Keep-Alive">>},
                          {<<"content-type">>, <<"text/event-stream">>},
-                         {<<"transfer-encoding">>,<<"chunked">>}], headers(Response)),
+                         {<<"transfer-encoding">>, <<"chunked">>}], headers(Response)),
     ?assertMatch(Expected, body(Response)).
 
 sendfile() ->
@@ -71,7 +71,7 @@ sendfile() ->
 acceptor_leak_regression() ->
     {ok, Before} = elli:get_acceptors(elli_under_test),
     Opts = [{verify, verify_peer},
-            {verify_fun, {fun(_,_) -> {fail, 23} end, []}},
+            {verify_fun, {fun(_, _) -> {fail, 23} end, []}},
             {reuse_sessions, false}],
     {error, _} = ssl:connect("localhost", 3443, Opts),
     {ok, After} = elli:get_acceptors(elli_under_test),

@@ -28,6 +28,7 @@
 
 %% @type req(). A record representing an HTTP request.
 -type req() :: #req{}.
+-elvis([{elvis_style, private_data_types, disable}]).
 
 %% @type http_method(). An uppercase atom representing a known HTTP verb or a
 %% binary for other verbs.
@@ -37,7 +38,7 @@
 %% @type body(). A binary or iolist.
 -type body() :: binary() | iolist().
 
--type header()  :: {Key::binary(), Value::binary() | string()}.
+-type header()  :: {Key :: binary(), Value :: binary() | string()}.
 -type headers() :: [header()].
 
 -type response_code() :: 100..999.
@@ -162,12 +163,8 @@ init([Opts]) ->
                                                     | SSLSockOpts]),
 
     Acceptors = ets:new(acceptors, [private, set]),
-    [begin
-         Pid = elli_http:start_link(self(), Socket, Options,
-                                    {Callback, CallbackArgs}),
-         ets:insert(Acceptors, {Pid})
-     end
-     || _ <- lists:seq(1, MinAcceptors)],
+    [http_start(Socket, Options, Callback, CallbackArgs, Acceptors)
+        || _ <- lists:seq(1, MinAcceptors)],
 
     {ok, #state{socket    = Socket,
                 acceptors = Acceptors,
@@ -175,6 +172,9 @@ init([Opts]) ->
                 options   = Options,
                 callback  = {Callback, CallbackArgs}}}.
 
+http_start(Socket, Options, Callback, CallbackArgs, Acceptors) ->
+    Pid = elli_http:start_link(self(), Socket, Options, {Callback, CallbackArgs}),
+    ets:insert(Acceptors, {Pid}).
 
 %% @hidden
 -spec handle_call(get_acceptors, {pid(), _Tag}, state()) ->

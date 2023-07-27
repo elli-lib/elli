@@ -229,7 +229,7 @@ chunk_loop(Ref, N) ->
         {error, Reason} -> ?LOG_ERROR("error in sending chunk: ~p~n", [Reason])
     end,
 
-    chunk_loop(Ref, N-1).
+    chunk_loop(Ref, N - 1).
 
 
 %%

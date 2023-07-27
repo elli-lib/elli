@@ -28,9 +28,9 @@ hello_world() ->
     ?assertMatch(<<"Hello World!">>, body(Response)).
 
 compress() ->
-    Url      = "http://localhost:3002/compressed",
+    URL      = "http://localhost:3002/compressed",
     Headers  = [{<<"Accept-Encoding">>, <<"gzip">>}],
-    Response = hackney:get(Url, Headers),
+    Response = hackney:get(URL, Headers),
     ?assertHeadersEqual([{<<"Connection">>, <<"Keep-Alive">>},
                          {<<"Content-Encoding">>, <<"gzip">>},
                          {<<"Content-Length">>, <<"41">>}],
@@ -43,9 +43,9 @@ compress() ->
                         headers(Response1)),
     ?assertEqual(iolist_to_binary(lists:duplicate(86, "Hello World!")),
                  body(Response1)),
-    Url2      = "http://localhost:3002/compressed-io_list",
+    URL2      = "http://localhost:3002/compressed-io_list",
     Headers2  = [{<<"Accept-Encoding">>, <<"gzip">>}],
-    Response2 = hackney:get(Url2, Headers2),
+    Response2 = hackney:get(URL2, Headers2),
     ?assertMatch(200, status(Response2)),
     ?assertHeadersEqual([{<<"Connection">>, <<"Keep-Alive">>},
                          {<<"Content-Encoding">>, <<"gzip">>},
