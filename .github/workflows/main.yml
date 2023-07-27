@@ -51,12 +51,18 @@ jobs:
 
     - name: Compile
       run: rebar3 compile
-    - name: EUnit tests
-      run: rebar3 eunit
-    - name: Dialyzer
-      run: rebar3 dialyzer
+
     - name: XRef
       run: rebar3 xref
+
+    - name: Dialyzer
+      run: rebar3 dialyzer
+
+    - name: Elvis
+      run: rebar3 lint
+
+    - name: Common Test
+      run: rebar3 do ct, cover
 
     - name: Covertool
       run: rebar3 covertool generate
