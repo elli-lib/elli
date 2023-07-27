@@ -1,10 +1,9 @@
 .rebar3
-doc/*.html
-!doc/tpl.html
 _build
 deps/**
 ebin/**
 *.beam
+doc
 .eunit
 *~
 #*
