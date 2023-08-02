@@ -86,10 +86,10 @@ handle_event(Event, Args, Config) ->
 
 -spec do_init(Req, Callbacks) -> {ok, standard | handover} when
       Req       :: elli:req(),
-      Callbacks :: elli_handler:callbacks().
+      Callbacks :: [elli_handler:callback()].
 do_init(_, []) ->
     {ok, standard};
-do_init(Req, [{Mod, Args}|Mods]) ->
+do_init(Req, [{Mod, Args} | Mods]) ->
     ?IF_NOT_EXPORTED(Mod, init, 2, do_init(Req, Mods),
                      case Mod:init(Req, Args) of
                          ignore -> do_init(Req, Mods);

@@ -229,7 +229,7 @@ chunk_loop(Ref, N) ->
         {error, Reason} -> ?LOG_ERROR("error in sending chunk: ~p~n", [Reason])
     end,
 
-    chunk_loop(Ref, N-1).
+    chunk_loop(Ref, N - 1).
 
 
 %%
@@ -297,7 +297,7 @@ chunk_loop(Ref, N) ->
 %% `file_error' is sent when the user wants to return a file as a
 %% response, but for some reason it cannot be opened.
 -spec handle_event(Event, Args, Config) -> ok when
-      Event  :: elli:event(),
+      Event  :: elli_handler:event(),
       Args   :: elli_handler:callback_args(),
       Config :: [tuple()].
 handle_event(elli_startup, [], _) -> ok;

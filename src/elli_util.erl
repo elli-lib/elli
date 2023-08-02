@@ -11,7 +11,7 @@
 
 -export_type([range/0]).
 
--type range() :: {Offset::non_neg_integer(), Length::non_neg_integer()}.
+-type range() :: {Offset :: non_neg_integer(), Length :: non_neg_integer()}.
 
 -spec normalize_range(RangeOrSet, Size) -> Normalized when
       RangeOrSet :: any(),
@@ -42,8 +42,8 @@ normalize_range([], _Size) -> undefined;
 normalize_range(_, _Size)  -> invalid_range.
 
 
--spec encode_range(Range::range() | invalid_range,
-                   Size::non_neg_integer()) -> ByteRange::iolist().
+-spec encode_range(Range :: range() | invalid_range,
+                   Size :: non_neg_integer()) -> ByteRange :: iolist().
 %% @doc: Encode Range to a Content-Range value.
 encode_range(Range, Size) ->
     [<<"bytes ">>, encode_range_bytes(Range),
