@@ -13,14 +13,14 @@
 
 -type range() :: {Offset::non_neg_integer(), Length::non_neg_integer()}.
 
+%% @doc If a valid byte-range, or byte-range-set of size 1,
+%% is supplied, returns a normalized range in the format
+%% `{Offset, Length}'. Returns `undefined' when an empty byte-range-set
+%% is supplied and the atom `invalid_range' in all other cases.
 -spec normalize_range(RangeOrSet, Size) -> Normalized when
       RangeOrSet :: any(),
       Size       :: integer(),
       Normalized :: range() | undefined | invalid_range.
-%% @doc: If a valid byte-range, or byte-range-set of size 1
-%% is supplied, returns a normalized range in the format
-%% {Offset, Length}. Returns undefined when an empty byte-range-set
-%% is supplied and the atom `invalid_range' in all other cases.
 normalize_range({suffix, Length}, Size)
   when is_integer(Length), Length > 0 ->
     Length0 = erlang:min(Length, Size),
@@ -42,9 +42,9 @@ normalize_range([], _Size) -> undefined;
 normalize_range(_, _Size)  -> invalid_range.
 
 
+%% @doc Encode `Range' to a `Content-Range' value.
 -spec encode_range(Range::range() | invalid_range,
                    Size::non_neg_integer()) -> ByteRange::iolist().
-%% @doc: Encode Range to a Content-Range value.
 encode_range(Range, Size) ->
     [<<"bytes ">>, encode_range_bytes(Range),
      <<"/">>, integer_to_binary(Size)].
@@ -56,11 +56,11 @@ encode_range_bytes({Offset, Length}) ->
 encode_range_bytes(invalid_range) -> <<"*">>.
 
 
+%% @doc Get the size, in bytes, of the file.
 -spec file_size(Filename) -> Size | {error, Reason} when
       Filename :: file:name_all(),
       Size     :: non_neg_integer(),
       Reason   :: file:posix() | badarg | invalid_file.
-%% @doc: Get the size in bytes of the file.
 file_size(Filename) ->
     case file:read_file_info(Filename) of
         {ok, #file_info{type = regular, access = Perm, size = Size}}

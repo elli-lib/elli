@@ -23,12 +23,12 @@
 %%% '''
 %%%
 %%% The configured modules may implement the elli behaviour, in which case all
-%%% the callbacks will be used as normal. If {@link handle/2} returns `ignore',
+%%% the callbacks will be used as normal. If `link handle/2' returns `ignore',
 %%% elli will continue on to the next callback in the list.
 %%%
-%%% Pre-processing and post-processing is implemented in {@link preprocess/2}
-%%% and {@link postprocess/3}. {@link preprocess/2} is called for each
-%%% middleware in the order specified, while {@link postprocess/3} is called in
+%%% Pre-processing and post-processing is implemented in `preprocess/2'
+%%% and `postprocess/3'. `preprocess/2' is called for each
+%%% middleware in the order specified, while `postprocess/3' is called in
 %%% the reverse order.
 %%%
 %%% TODO: Don't call all postprocess middlewares when a middleware
@@ -48,7 +48,7 @@
 %% ELLI CALLBACKS
 %%
 
-%% @hidden
+%% @private
 -spec init(Req, Args) -> {ok, standard | handover} when
       Req  :: elli:req(),
       Args :: elli_handler:callback_args().
@@ -56,7 +56,7 @@ init(Req, Args) ->
     do_init(Req, callbacks(Args)).
 
 
-%% @hidden
+%% @private
 -spec handle(Req :: elli:req(), Config :: [tuple()]) -> elli_handler:result().
 handle(CleanReq, Config) ->
     Callbacks = callbacks(Config),
@@ -65,7 +65,7 @@ handle(CleanReq, Config) ->
     postprocess(PreReq, Res, lists:reverse(Callbacks)).
 
 
-%% @hidden
+%% @private
 -spec handle_event(Event, Args, Config) -> ok when
       Event  :: elli_handler:event(),
       Args   :: elli_handler:callback_args(),
