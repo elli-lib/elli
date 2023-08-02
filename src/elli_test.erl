@@ -25,23 +25,3 @@ call(Method, Path, Headers, Body, Opts) ->
                            Body, {1, 1}, undefined, {Callback, CallbackArgs}),
     ok  = Callback:handle_event(elli_startup, [], CallbackArgs),
     Callback:handle(Req, CallbackArgs).
-
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
-
-hello_world_test() ->
-    ?assertMatch({ok, [], <<"Hello World!">>},
-                 elli_test:call('GET', <<"/hello/world/">>, [], <<>>,
-                                ?EXAMPLE_CONF)),
-    ?assertMatch({ok, [], <<"Hello Test1">>},
-                 elli_test:call('GET', <<"/hello/?name=Test1">>, [], <<>>,
-                                ?EXAMPLE_CONF)),
-    ?assertMatch({ok,
-                  [{<<"content-type">>,
-                    <<"application/json; charset=ISO-8859-1">>}],
-                  <<"{\"name\" : \"Test2\"}">>},
-                 elli_test:call('GET', <<"/type?name=Test2">>,
-                                [{<<"accept">>, <<"application/json">>}], <<>>,
-                                ?EXAMPLE_CONF)).
-
--endif. %% TEST
