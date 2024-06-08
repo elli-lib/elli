@@ -28,6 +28,7 @@
 
 %% @type req(). A record representing an HTTP request.
 -type req() :: #req{}.
+-elvis([{elvis_style, private_data_types, disable}]).
 
 %% @type http_method(). An uppercase atom representing a known HTTP verb or a
 %% binary for other verbs.
