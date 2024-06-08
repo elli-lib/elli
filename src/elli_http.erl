@@ -729,7 +729,7 @@ parse_path({abs_path, FullPath}) ->
     Query = maps:get(query, URIMap, <<>>),
     Port = maps:get(port, URIMap, case Scheme of http -> 80; https -> 443; _ -> undefined end),
     {ok, {Scheme, Host, Port}, {Path, split_path(Path), uri_string:dissect_query(Query)}};
-parse_path({absoluteURI, Scheme, Host, Port, Path}) ->
+parse_path({'absoluteURI', Scheme, Host, Port, Path}) ->
     setelement(2, parse_path({abs_path, Path}), {Scheme, Host, Port});
 parse_path(_) ->
     {error, unsupported_uri}.
