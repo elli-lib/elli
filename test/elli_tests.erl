@@ -735,7 +735,8 @@ register_test() ->
     ok.
 
 invalid_callback_test() ->
-    case catch elli:start_link([{callback, elli}]) of
-        E ->
-            ?assertMatch(invalid_callback, E)
+    try
+        elli:start_link([{callback, elli}])
+    catch throw:E ->
+        ?assertMatch(invalid_callback, E)
     end.
