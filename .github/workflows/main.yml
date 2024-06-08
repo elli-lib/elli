@@ -17,12 +17,6 @@ jobs:
       fail-fast: false
       matrix:
         tuple:
-          - otp_version: 27
-            os: ubuntu-22.04
-            rebar3_version: 3.23
-          - otp_version: 26
-            os: ubuntu-22.04
-            rebar3_version: 3.22
           - otp_version: 25
             os: ubuntu-22.04
             rebar3_version: 3.22
