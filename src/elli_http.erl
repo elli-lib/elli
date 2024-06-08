@@ -36,6 +36,8 @@
 -define(CONNECTION_HEADER, <<"connection">>).
 -define(TRANSFER_ENCODING_HEADER, <<"Transfer-Encoding">>).
 
+-elvis([{elvis_style, max_function_arity, disable}]).
+
 %% TODO: use this
 %% -type connection_token() :: keep_alive | close.
 
