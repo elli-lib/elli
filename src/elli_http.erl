@@ -58,7 +58,7 @@ start_link(Server, ListenSocket, Options, Callback) ->
       Options      :: proplists:proplist(),
       Callback     :: elli_handler:callback().
 accept(Server, ListenSocket, Options, Callback) ->
-    case catch elli_tcp:accept(ListenSocket, Server, accept_timeout(Options)) of
+    case elli_tcp:accept(ListenSocket, Server, accept_timeout(Options)) of
         {ok, Socket} ->
             t(accepted),
             ?MODULE:keepalive_loop(Socket, Options, Callback);
