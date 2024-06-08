@@ -20,6 +20,7 @@ jobs:
           - otp_version: 25
             os: ubuntu-22.04
             rebar3_version: 3.22
+            latest: true
           - otp_version: 24
             os: ubuntu-22.04
             rebar3_version: 3.22
@@ -61,6 +62,8 @@ jobs:
 
     - name: Compile
       run: rebar3 compile
+    - name: Lint
+      run: if [[ "${{ matrix.latest }}" == "true" ]]; then rebar3 lint; fi
     - name: EUnit tests
       run: rebar3 eunit
     - name: Dialyzer
