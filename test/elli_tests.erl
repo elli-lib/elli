@@ -7,13 +7,7 @@
 -define(VTB(T1, T2, LB, UB),
         time_diff_to_micro_seconds(T1, T2) >= LB andalso
         time_diff_to_micro_seconds(T1, T2) =< UB).
--ifdef(OTP_RELEASE).
 -include_lib("kernel/include/logger.hrl").
--else.
--define(LOG_ERROR(Str), error_logger:error_msg(Str)).
--define(LOG_ERROR(Format,Data), error_logger:error_msg(Format, Data)).
--define(LOG_INFO(Format,Data), error_logger:info_msg(Format, Data)).
--endif.
 
 time_diff_to_micro_seconds(T1, T2) ->
     erlang:convert_time_unit(

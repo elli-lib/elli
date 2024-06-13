@@ -14,17 +14,50 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     strategy:
+      fail-fast: false
       matrix:
-        otp_version: ['24', '23', '22', '21']
-        os: [ubuntu-latest]
+        include:
+          - otp_version: 25
+            os: ubuntu-22.04
+            rebar3_version: 3.22
+          - otp_version: 24
+            os: ubuntu-22.04
+            rebar3_version: 3.22
+          - otp_version: 23
+            os: ubuntu-20.04
+            rebar3_version: 3.18
+          - otp_version: 22
+            os: ubuntu-20.04
+            rebar3_version: 3.18
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - uses: erlef/setup-beam@v1
+      id: setup-beam
       with:
         otp-version: ${{ matrix.otp_version }}
-        rebar3-version: '3.14'
+        rebar3-version: ${{ matrix.rebar3_version }}
+
+    - name: Restore _build
+      uses: actions/cache@v3
+      with:
+        path: _build
+        key: "_build-cache-for\
+              -os-${{ matrix.os }}\
+              -otp-${{ steps.setup-beam.outputs.otp-version }}\
+              -rebar3-${{ steps.setup-beam.outputs.rebar3-version }}\
+              -hash-${{ hashFiles('rebar.lock') }}"
+
+    - name: Restore rebar3's cache
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/rebar3
+        key: "rebar3-cache-for\
+              -os-${{ matrix.os }}\
+              -otp-${{ steps.setup-beam.outputs.otp-version }}\
+              -rebar3-${{ steps.setup-beam.outputs.rebar3-version }}\
+              -hash-${{ hashFiles('rebar.lock') }}"
 
     - name: Compile
       run: rebar3 compile
@@ -36,9 +69,8 @@ jobs:
       run: rebar3 xref
 
     - name: Covertool
-      if: ${{ always() }}
       run: rebar3 covertool generate
-    - uses: codecov/codecov-action@v1
+    - uses: codecov/codecov-action@v4
       with:
-        file: _build/test/covertool/elli.covertool.xml
+        files: _build/test/covertool/elli.covertool.xml
         env_vars: OTP_VERSION
