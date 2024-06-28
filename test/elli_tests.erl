@@ -738,6 +738,6 @@ register_test() ->
 invalid_callback_test() ->
     try
         elli:start_link([{callback, elli}])
-    catch throw:E ->
+    catch _:E ->
         ?assertMatch(invalid_callback, E)
     end.
