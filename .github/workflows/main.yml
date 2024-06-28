@@ -16,19 +16,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - otp_version: 25
-            os: ubuntu-22.04
-            rebar3_version: 3.22
-          - otp_version: 24
-            os: ubuntu-22.04
-            rebar3_version: 3.22
-          - otp_version: 23
-            os: ubuntu-20.04
-            rebar3_version: 3.18
-          - otp_version: 22
-            os: ubuntu-20.04
-            rebar3_version: 3.18
+        otp_version: [24, 25]
+        os: [ubuntu-22.04]
+        rebar3_version: [3.22]
 
     steps:
     - uses: actions/checkout@v4

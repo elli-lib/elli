@@ -472,7 +472,8 @@ sendfile_range() ->
     ?assertMatch(206, status(Response)),
     ?assertHeadersEqual([{<<"connection">>, <<"Keep-Alive">>},
                          {<<"content-length">>, <<"400">>},
-                         {<<"Content-Range">>, iolist_to_binary(["bytes 300-699/", integer_to_binary(Size)])}],
+                         {<<"Content-Range">>,
+                          iolist_to_binary(["bytes 300-699/", integer_to_binary(Size)])}],
                         headers(Response)),
     ?assertEqual(Expected, body(Response)).
 
@@ -735,7 +736,8 @@ register_test() ->
     ok.
 
 invalid_callback_test() ->
-    case catch elli:start_link([{callback, elli}]) of
-        E ->
-            ?assertMatch(invalid_callback, E)
+    try
+        elli:start_link([{callback, elli}])
+    catch _:E ->
+        ?assertMatch(invalid_callback, E)
     end.

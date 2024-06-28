@@ -28,9 +28,9 @@ hello_world() ->
     ?assertMatch(<<"Hello World!">>, body(Response)).
 
 compress() ->
-    Url      = "http://localhost:3002/compressed",
+    URL      = "http://localhost:3002/compressed",
     Headers  = [{<<"Accept-Encoding">>, <<"gzip">>}],
-    Response = hackney:get(Url, Headers),
+    Response = hackney:get(URL, Headers),
     ?assertHeadersEqual([{<<"Connection">>, <<"Keep-Alive">>},
                          {<<"Content-Encoding">>, <<"gzip">>},
                          {<<"Content-Length">>, <<"41">>}],

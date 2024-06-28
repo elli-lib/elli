@@ -44,6 +44,7 @@
                     | {offset, Offset::non_neg_integer()}
                     | {suffix, Length::pos_integer()}.
 
+-elvis([{elvis_style, god_modules, disable}]).
 
 %%
 %% Helpers for working with a #req{}
