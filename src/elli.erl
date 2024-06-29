@@ -107,7 +107,7 @@ set_callback(S, Callback, CallbackArgs) ->
     gen_server:call(S, {set_callback, Callback, CallbackArgs}).
 
 %% @doc Stop `Server'.
--spec stop(Server :: atom()) -> {stop, normal, ok, state()}.
+-spec stop(Server :: atom()) -> ok.
 stop(S) ->
     gen_server:call(S, stop).
 
