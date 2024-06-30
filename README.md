@@ -15,7 +15,7 @@ for you. If you find yourself digging into the implementation of a
 webserver, then Elli might be for you. If you're building web services,
 not web sites, then Elli might be for you.
 
-Elli requires OTP 20.0 or newer.
+Elli requires OTP 22.0 or newer.
 
 ## Installation
 

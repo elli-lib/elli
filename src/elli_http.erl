@@ -25,6 +25,10 @@
 %% operating in handler mode.
 -export([close_or_keepalive/2]).
 
+-ifdef(TEST).
+-export([get_body/5]).
+-endif.
+
 -export_type([version/0]).
 
 -type version() :: {0, 9} | {1, 0} | {1, 1}.
