@@ -2,12 +2,6 @@
 doc/*.html
 !doc/tpl.html
 _build
-deps/**
-ebin/**
-*.beam
-.eunit
-*~
-#*
 .dialyzer.plt
 .rebar
 rebar3.crashdump

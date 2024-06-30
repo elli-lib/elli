@@ -1,79 +1,30 @@
--module(elli_tests).
--include_lib("eunit/include/eunit.hrl").
+-module(elli_SUITE).
+-include_lib("stdlib/include/assert.hrl").
 -include("elli.hrl").
--include("elli_test.hrl").
+-include("test/support/elli_test.hrl").
 
--define(README, "README.md").
+-compile([export_all, nowarn_export_all]).
+
+-define(README, filename:join(code:priv_dir(elli), "README.md")).
 -define(VTB(T1, T2, LB, UB),
         time_diff_to_micro_seconds(T1, T2) >= LB andalso
         time_diff_to_micro_seconds(T1, T2) =< UB).
 -include_lib("kernel/include/logger.hrl").
 
-time_diff_to_micro_seconds(T1, T2) ->
-    erlang:convert_time_unit(
-      get_timing_value(T2) -
-          get_timing_value(T1),
-      native,
-      micro_seconds).
+%
+% Configuration.
 
-elli_test_() ->
-    {setup,
-     fun setup/0, fun teardown/1,
-     [{foreach,
-       fun init_stats/0, fun clear_stats/1,
-       [?_test(hello_world()),
-        ?_test(keep_alive_timings()),
-        ?_test(not_found()),
-        ?_test(crash()),
-        ?_test(invalid_return()),
-        ?_test(no_compress()),
-        ?_test(gzip()),
-        ?_test(deflate()),
-        ?_test(exception_flow()),
-        ?_test(hello_iolist()),
-        ?_test(accept_content_type()),
-        ?_test(user_connection()),
-        ?_test(get_args()),
-        ?_test(decoded_get_args()),
-        ?_test(decoded_get_args_list()),
-        ?_test(post_args()),
-        ?_test(shorthand()),
-        ?_test(ip()),
-        ?_test(found()),
-        ?_test(too_many_headers()),
-        ?_test(too_big_body()),
-        ?_test(way_too_big_body()),
-        ?_test(bad_request_line()),
-        ?_test(content_length()),
-        ?_test(user_content_length()),
-        ?_test(headers()),
-        ?_test(chunked()),
-        ?_test(sendfile()),
-        ?_test(send_no_file()),
-        ?_test(sendfile_error()),
-        ?_test(sendfile_range()),
-        ?_test(slow_client()),
-        ?_test(post_pipeline()),
-        ?_test(get_pipeline()),
-        ?_test(head()),
-        ?_test(no_body()),
-        ?_test(sends_continue())
-       ]}
-     ]}.
+all() ->
+    [
+        Fun
+     || {Fun, 1} <- ?MODULE:module_info(exports),
+        not lists:member(Fun, [module_info, init_per_suite, end_per_suite,
+                               get_timing_value, get_size_value,
+                               status, body, headers])
+    ].
 
-get_timing_value(Key) ->
-    [{timings, Timings}] = ets:lookup(elli_stat_table, timings),
-    proplists:get_value(Key, Timings).
-
-get_size_value(Key) ->
-    [{sizes, Sizes}] = ets:lookup(elli_stat_table, sizes),
-    proplists:get_value(Key, Sizes).
-
-setup() ->
-    application:start(crypto),
-    application:start(public_key),
-    application:start(ssl),
-    {ok, _} = application:ensure_all_started(hackney),
+init_per_suite(Config0) ->
+    {ok, StartedApps} = application:ensure_all_started(hackney),
 
     Config = [
               {mods, [
@@ -86,19 +37,28 @@ setup() ->
                                {callback_args, Config},
                                {port, 3001}]),
     unlink(P),
-    [P].
+    [{pids, [P]}, {started_apps, StartedApps} | Config0].
 
-teardown(Pids) ->
-    [elli:stop(P) || P <- Pids].
+end_per_suite(Config) ->
+    Pids = proplists:get_value(pids, Config),
+    [elli:stop(P) || P <- Pids],
+    lists:foreach(fun (App) ->
+                      application:stop(App)
+                  end,
+                  proplists:get_value(started_apps, Config)).
 
-init_stats() ->
-    ets:new(elli_stat_table, [set, named_table, public]).
+init_per_testcase(_Testcase, Config) ->
+    ets:new(elli_stat_table, [set, named_table, public]),
+    Config.
 
-clear_stats(_) ->
-    ets:delete(elli_stat_table).
+end_per_testcase(_Testcase, Config) ->
+    ets:delete(elli_stat_table),
+    Config.
 
+%
+% Tests.
 
-accessors_test_() ->
+accessors(_Config) ->
     RawPath = <<"/foo/bar">>,
     Headers = [{<<"content-type">>, <<"application/x-www-form-urlencoded">>}],
     Method = 'POST',
@@ -114,30 +74,26 @@ accessors_test_() ->
 
     [
      %% POST /foo/bar
-     ?_assertMatch(RawPath, elli_request:raw_path(Req1)),
-     ?_assertMatch(Headers, elli_request:headers(Req1)),
-     ?_assertMatch(Method, elli_request:method(Req1)),
-     ?_assertMatch(Body, elli_request:body(Req1)),
-     ?_assertMatch(Args, elli_request:post_args_decoded(Req1)),
-     ?_assertMatch(undefined, elli_request:post_arg(<<"foo">>, Req1)),
-     ?_assertMatch(undefined, elli_request:post_arg_decoded(<<"foo">>, Req1)),
-     ?_assertMatch(Name, elli_request:post_arg_decoded(<<"name">>, Req1)),
+     ?assertMatch(RawPath, elli_request:raw_path(Req1)),
+     ?assertMatch(Headers, elli_request:headers(Req1)),
+     ?assertMatch(Method, elli_request:method(Req1)),
+     ?assertMatch(Body, elli_request:body(Req1)),
+     ?assertMatch(Args, elli_request:post_args_decoded(Req1)),
+     ?assertMatch(undefined, elli_request:post_arg(<<"foo">>, Req1)),
+     ?assertMatch(undefined, elli_request:post_arg_decoded(<<"foo">>, Req1)),
+     ?assertMatch(Name, elli_request:post_arg_decoded(<<"name">>, Req1)),
      %% GET /foo/bar
-     ?_assertMatch(Headers, elli_request:headers(Req2)),
+     ?assertMatch(Headers, elli_request:headers(Req2)),
 
-     ?_assertMatch(Args, elli_request:get_args(Req2)),
-     ?_assertMatch(undefined, elli_request:get_arg_decoded(<<"foo">>, Req2)),
-     ?_assertMatch(Name, elli_request:get_arg_decoded(<<"name">>, Req2)),
-     ?_assertMatch([], elli_request:post_args(Req2)),
+     ?assertMatch(Args, elli_request:get_args(Req2)),
+     ?assertMatch(undefined, elli_request:get_arg_decoded(<<"foo">>, Req2)),
+     ?assertMatch(Name, elli_request:get_arg_decoded(<<"name">>, Req2)),
+     ?assertMatch([], elli_request:post_args(Req2)),
 
-     ?_assertMatch({error, not_supported}, elli_request:chunk_ref(#req{}))
+     ?assertMatch({error, not_supported}, elli_request:chunk_ref(#req{}))
     ].
 
-
-%%% Integration tests
-%%%   Use hackney to actually call Elli over the network.
-
-hello_world() ->
+hello_world(_Config) ->
     Response = hackney:get("http://localhost:3001/hello/world"),
     ?assertMatch(200, status(Response)),
     ?assertHeadersEqual([{<<"connection">>, <<"Keep-Alive">>},
@@ -166,8 +122,7 @@ hello_world() ->
     ?assert(?VTB(user_start, user_end, 1000000, 1200000)),
     ?assert(?VTB(send_start, send_end, 1, 2000)).
 
-
-keep_alive_timings() ->
+keep_alive_timings(_Config) ->
 
     Transport = hackney_tcp,
     Host = <<"localhost">>,
@@ -194,47 +149,21 @@ keep_alive_timings() ->
 
     hackney:close(ConnRef).
 
-keep_alive_timings(Status, Headers, HCRef) ->
-    ?assertMatch(200, Status),
-    ?assertHeadersEqual([{<<"connection">>,<<"Keep-Alive">>},
-                         {<<"content-length">>,<<"12">>}], Headers),
-    ?assertMatch({ok, <<"Hello World!">>}, hackney:body(HCRef)),
-    %% sizes
-    ?assertMatch(63, get_size_value(resp_headers)),
-    ?assertMatch(12, get_size_value(resp_body)),
-    %% timings
-    ?assertNotMatch(undefined, get_timing_value(request_start)),
-    ?assertNotMatch(undefined, get_timing_value(headers_start)),
-    ?assertNotMatch(undefined, get_timing_value(headers_end)),
-    ?assertNotMatch(undefined, get_timing_value(body_start)),
-    ?assertNotMatch(undefined, get_timing_value(body_end)),
-    ?assertNotMatch(undefined, get_timing_value(user_start)),
-    ?assertNotMatch(undefined, get_timing_value(user_end)),
-    ?assertNotMatch(undefined, get_timing_value(send_start)),
-    ?assertNotMatch(undefined, get_timing_value(send_end)),
-    ?assertNotMatch(undefined, get_timing_value(request_end)),
-    %% check timings
-    ?assert(?VTB(request_start, request_end, 1000000, 1200000)),
-    ?assert(?VTB(headers_start, headers_end, 1, 100)),
-    ?assert(?VTB(body_start, body_end, 1, 100)),
-    ?assert(?VTB(user_start, user_end, 1000000, 1200000)),
-    ?assert(?VTB(send_start, send_end, 1, 2000)).
-
-not_found() ->
+not_found(_Config) ->
     Response = hackney:get("http://localhost:3001/foobarbaz"),
     ?assertMatch(404, status(Response)),
     ?assertHeadersEqual([{<<"connection">>, <<"Keep-Alive">>},
                   {<<"content-length">>, <<"9">>}], headers(Response)),
     ?assertMatch(<<"Not Found">>, body(Response)).
 
-crash() ->
+crash(_Config) ->
     Response = hackney:get("http://localhost:3001/crash"),
     ?assertMatch(500, status(Response)),
     ?assertHeadersEqual([{<<"connection">>, <<"Keep-Alive">>},
                   {<<"content-length">>, <<"21">>}], headers(Response)),
     ?assertMatch(<<"Internal server error">>, body(Response)).
 
-invalid_return() ->
+invalid_return(_Config) ->
     %% Elli should return 500 for handlers returning bogus responses.
     Response = hackney:get("http://localhost:3001/invalid_return"),
     ?assertMatch(500, status(Response)),
@@ -242,7 +171,7 @@ invalid_return() ->
                   {<<"content-length">>, <<"21">>}], headers(Response)),
     ?assertMatch(<<"Internal server error">>, body(Response)).
 
-no_compress() ->
+no_compress(_Config) ->
     Response = hackney:get("http://localhost:3001/compressed"),
     ?assertMatch(200, status(Response)),
     ?assertHeadersEqual([{<<"connection">>, <<"Keep-Alive">>},
@@ -250,36 +179,23 @@ no_compress() ->
     ?assertEqual(binary:copy(<<"Hello World!">>, 86),
                  body(Response)).
 
-compress(Encoding, Length) ->
-    Response = hackney:get("http://localhost:3001/compressed",
-                           [{<<"Accept-Encoding">>, Encoding}]),
-    ?assertMatch(200, status(Response)),
-    ?assertHeadersEqual([{<<"Content-Encoding">>, Encoding},
-                  {<<"connection">>, <<"Keep-Alive">>},
-                  {<<"content-length">>, Length}], headers(Response)),
-    ?assertEqual(binary:copy(<<"Hello World!">>, 86),
-                 uncompress(Encoding, body(Response))).
+gzip(_Config) -> compress(<<"gzip">>, <<"41">>).
 
-uncompress(<<"gzip">>,    Data) -> zlib:gunzip(Data);
-uncompress(<<"deflate">>, Data) -> zlib:uncompress(Data).
+deflate(_Config) -> compress(<<"deflate">>, <<"29">>).
 
-gzip() -> compress(<<"gzip">>, <<"41">>).
-
-deflate() -> compress(<<"deflate">>, <<"29">>).
-
-exception_flow() ->
+exception_flow(_Config) ->
     Response = hackney:get("http://localhost:3001/403"),
     ?assertMatch(403, status(Response)),
     ?assertHeadersEqual([{<<"connection">>, <<"Keep-Alive">>},
                   {<<"content-length">>, <<"9">>}], headers(Response)),
     ?assertMatch(<<"Forbidden">>, body(Response)).
 
-hello_iolist() ->
+hello_iolist(_Config) ->
     Url      = "http://localhost:3001/hello/iolist?name=knut",
     Response = hackney:get(Url),
     ?assertMatch(<<"Hello knut">>, body(Response)).
 
-accept_content_type() ->
+accept_content_type(_Config) ->
     Json = hackney:get("http://localhost:3001/type?name=knut",
                        [{"Accept", "application/json"}]),
     ?assertMatch(<<"{\"name\" : \"knut\"}">>, body(Json)),
@@ -287,7 +203,7 @@ accept_content_type() ->
                        [{"Accept", "text/plain"}]),
     ?assertMatch(<<"name: knut">>, body(Text)).
 
-user_connection() ->
+user_connection(_Config) ->
     Url      = "http://localhost:3001/user/defined/behaviour",
     Response = hackney:get(Url),
     ?assertMatch(304, status(Response)),
@@ -295,22 +211,21 @@ user_connection() ->
                          {<<"content-length">>, <<"123">>}], headers(Response)),
     ?assertMatch(<<>>, body(Response)).
 
-
-get_args() ->
+get_args(_Config) ->
     Response = hackney:get("http://localhost:3001/hello?name=knut"),
     ?assertMatch(<<"Hello knut">>, body(Response)).
 
-decoded_get_args() ->
+decoded_get_args(_Config) ->
     Url      = "http://localhost:3001/decoded-hello?name=knut%3D",
     Response = hackney:get(Url),
     ?assertMatch(<<"Hello knut=">>, body(Response)).
 
-decoded_get_args_list() ->
+decoded_get_args_list(_Config) ->
     Url      = "http://localhost:3001/decoded-list?name=knut%3D&foo",
     Response = hackney:get(Url),
     ?assertMatch(<<"Hello knut=">>, body(Response)).
 
-post_args() ->
+post_args(_Config) ->
     Body        = <<"name=foo&city=New%20York">>,
     ContentType = <<"application/x-www-form-urlencoded">>,
 
@@ -320,19 +235,19 @@ post_args() ->
     ?assertMatch(200, status(Response)),
     ?assertMatch(<<"Hello foo of New York">>, body(Response)).
 
-shorthand() ->
+shorthand(_Config) ->
     Response = hackney:get("http://localhost:3001/shorthand"),
     ?assertMatch(200, status(Response)),
     ?assertHeadersEqual([{<<"connection">>, <<"Keep-Alive">>},
                          {<<"content-length">>, <<"5">>}], headers(Response)),
     ?assertMatch(<<"hello">>, body(Response)).
 
-ip() ->
+ip(_Config) ->
     Response = hackney:get("http://localhost:3001/ip"),
     ?assertMatch(200, status(Response)),
     ?assertMatch(<<"127.0.0.1">>, body(Response)).
 
-found() ->
+found(_Config) ->
     Response = hackney:get("http://localhost:3001/302"),
     ?assertMatch(302, status(Response)),
     ?assertHeadersEqual([{<<"Location">>, <<"/hello/world">>},
@@ -340,23 +255,22 @@ found() ->
                          {<<"content-length">>, <<"0">>}], headers(Response)),
     ?assertMatch(<<>>, body(Response)).
 
-too_many_headers() ->
+too_many_headers(_Config) ->
     Headers = lists:duplicate(100, {<<"X-Foo">>, <<"Bar">>}),
     Response = hackney:get("http://localhost:3001/foo", Headers),
     ?assertMatch(400, status(Response)).
 
-too_big_body() ->
+too_big_body(_Config) ->
     Body = binary:copy(<<"x">>, (1024 * 1000) + 1),
     Response = hackney:post("http://localhost:3001/foo", [], Body),
     ?assertMatch(413, status(Response)).
 
-way_too_big_body() ->
+way_too_big_body(_Config) ->
     Body = binary:copy(<<"x">>, (1024 * 2000) + 1),
     ?assertMatch({error, closed},
                  hackney:post("http://localhost:3001/foo", [], Body)).
 
-
-bad_request_line() ->
+bad_request_line(_Config) ->
     {ok, Socket} = gen_tcp:connect("127.0.0.1", 3001,
                                    [{active, false}, binary]),
 
@@ -366,8 +280,7 @@ bad_request_line() ->
                         "content-length: 11\r\n\r\nBad Request">>},
                  gen_tcp:recv(Socket, 0)).
 
-
-content_length() ->
+content_length(_Config) ->
     Response = hackney:get("http://localhost:3001/304"),
 
     ?assertMatch(304, status(Response)),
@@ -376,7 +289,7 @@ content_length() ->
                          {<<"content-length">>, <<"7">>}], headers(Response)),
     ?assertMatch(<<>>, body(Response)).
 
-user_content_length() ->
+user_content_length(_Config) ->
     Headers = <<"Foo: bar\n\n">>,
     Client  = start_slow_client(3001, "/user/content-length"),
     send(Client, Headers, 128),
@@ -387,14 +300,14 @@ user_content_length() ->
                         "foobar">>},
                  gen_tcp:recv(Client, 0)).
 
-headers() ->
+headers_(_Config) ->
     Response = hackney:get("http://localhost:3001/headers.html"),
     Headers = headers(Response),
 
     ?assert(proplists:is_defined(<<"X-Custom">>, Headers)),
     ?assertMatch(<<"foobar">>, proplists:get_value(<<"X-Custom">>, Headers)).
 
-chunked() ->
+chunked(_Config) ->
     Expected = <<"chunk10chunk9chunk8chunk7chunk6chunk5chunk4chunk3chunk2chunk1">>,
 
     Response = hackney:get("http://localhost:3001/chunked"),
@@ -419,7 +332,7 @@ chunked() ->
     ?assertNotMatch(undefined, get_timing_value(send_end)),
     ?assertNotMatch(undefined, get_timing_value(request_end)).
 
-sendfile() ->
+sendfile(_Config) ->
     Response = hackney:get("http://localhost:3001/sendfile"),
     F              = ?README,
     {ok, Expected} = file:read_file(F),
@@ -444,7 +357,7 @@ sendfile() ->
     ?assertNotMatch(undefined, get_timing_value(send_end)),
     ?assertNotMatch(undefined, get_timing_value(request_end)).
 
-send_no_file() ->
+send_no_file(_Config) ->
     Response = hackney:get("http://localhost:3001/send_no_file"),
 
     ?assertMatch(500, status(Response)),
@@ -452,7 +365,7 @@ send_no_file() ->
                  headers(Response)),
     ?assertMatch(<<"Server Error">>, body(Response)).
 
-sendfile_error() ->
+sendfile_error(_Config) ->
     Response = hackney:get("http://localhost:3001/sendfile/error"),
 
     ?assertMatch(500, status(Response)),
@@ -460,7 +373,7 @@ sendfile_error() ->
                  headers(Response)),
     ?assertMatch(<<"Server Error">>, body(Response)).
 
-sendfile_range() ->
+sendfile_range(_Config) ->
     Url            = "http://localhost:3001/sendfile/range",
     Headers        = [{"Range", "bytes=300-699"}],
     Response       = hackney:get(Url, Headers),
@@ -477,7 +390,7 @@ sendfile_range() ->
                         headers(Response)),
     ?assertEqual(Expected, body(Response)).
 
-slow_client() ->
+slow_client(_Config) ->
     Body    = <<"name=foobarbaz">>,
     Headers = <<"content-length: ", (?I2B(size(Body)))/binary, "\r\n\r\n">>,
     Client  = start_slow_client(3001, "/hello"),
@@ -498,8 +411,7 @@ slow_client() ->
     ?assert(?VTB(user_start, user_end, 1, 100)),
     ?assert(?VTB(send_start, send_end, 1, 200)).
 
-
-post_pipeline() ->
+post_pipeline(_Config) ->
     Body         = <<"name=elli&city=New%20York">>,
     Headers      = <<"content-length: ", (?I2B(size(Body)))/binary, "\r\n",
                      "Content-Type: application/x-www-form-urlencoded", "\r\n",
@@ -526,7 +438,7 @@ post_pipeline() ->
     ?assertEqual(binary:copy(ExpectedResponse, 2),
                  Res).
 
-get_pipeline() ->
+get_pipeline(_Config) ->
     Headers      = <<"User-Agent: sloow\r\n\r\n">>,
     Req          = <<"GET /hello?name=elli HTTP/1.1\r\n",
                      Headers/binary>>,
@@ -550,13 +462,13 @@ get_pipeline() ->
     ?assertEqual(binary:copy(ExpectedResponse, 2),
                  Res).
 
-head() ->
+head(_Config) ->
     Response = hackney:head("http://localhost:3001/head"),
     ?assertMatch(200, status(Response)),
     ?assertHeadersEqual([{<<"connection">>, <<"Keep-Alive">>},
                          {<<"content-length">>, <<"20">>}], headers(Response)).
 
-no_body() ->
+no_body(_Config) ->
     Response = hackney:get("http://localhost:3001/304"),
     ?assertMatch(304, status(Response)),
     ?assertHeadersEqual([{<<"connection">>, <<"Keep-Alive">>},
@@ -564,7 +476,7 @@ no_body() ->
                          {<<"Etag">>, <<"foobar">>}], headers(Response)),
     ?assertMatch(<<>>, body(Response)).
 
-sends_continue() ->
+sends_continue(_Config) ->
     {ok, Socket} = gen_tcp:connect("127.0.0.1", 3001, [{active, false}, binary]),
 
     Body = <<"name=elli&city=New%20York">>,
@@ -590,32 +502,7 @@ sends_continue() ->
     ?assertMatch({ok, ExpectedResponse},
                  gen_tcp:recv(Socket, size(ExpectedResponse))).
 
-%%% Slow client, sending only the specified byte size every millisecond
-
-start_slow_client(Port, Url) ->
-    case gen_tcp:connect("127.0.0.1", Port, [{active, false}, binary]) of
-        {ok, Socket} ->
-            gen_tcp:send(Socket, "GET " ++ Url ++ " HTTP/1.1\r\n"),
-            Socket;
-        {error, Reason} ->
-            throw({slow_client_error, Reason})
-    end.
-
-send(_Socket, <<>>, _) ->
-    ok;
-send(Socket, B, ChunkSize) ->
-    {Part, Rest} = case B of
-                       <<P:ChunkSize/binary, R/binary>> -> {P, R};
-                       P -> {P, <<>>}
-                   end,
-    %%?LOG_INFO("~p~n", [Part]),
-    gen_tcp:send(Socket, Part),
-    timer:sleep(1),
-    send(Socket, Rest, ChunkSize).
-
-%%% Unit tests
-
-body_qs_test() ->
+body_qs(_Config) ->
     Expected = [{<<"foo">>, <<"bar">>},
                 {<<"baz">>, <<"bang">>},
                 {<<"found">>, true}],
@@ -625,7 +512,7 @@ body_qs_test() ->
                                                      original_headers = Headers,
                                                      headers = Headers})).
 
-to_proplist_test() ->
+to_proplist(_Config) ->
     Req  = #req{method   = 'GET',
                 path     = [<<"crash">>],
                 args     = [],
@@ -654,24 +541,22 @@ to_proplist_test() ->
             {callback, {mod, []}}],
     ?assertEqual(Prop, elli_request:to_proplist(Req)).
 
-is_request_test() ->
+is_request(_Config) ->
     ?assert(elli_request:is_request(#req{})),
     ?assertNot(elli_request:is_request({req, foobar})).
 
-
-query_str_test_() ->
+query_str(_Config) ->
     MakeReq = fun(Path) -> #req{raw_path = Path} end,
     [
      %% For empty query strings, expect `query_str` to return an empty binary.
-     ?_assertMatch(<<>>, elli_request:query_str(MakeReq(<<"/foo">>))),
-     ?_assertMatch(<<>>, elli_request:query_str(MakeReq(<<"/foo?">>))),
+     ?assertMatch(<<>>, elli_request:query_str(MakeReq(<<"/foo">>))),
+     ?assertMatch(<<>>, elli_request:query_str(MakeReq(<<"/foo?">>))),
      %% Otherwise it should return everything to the right hand side of `?`.
-     ?_assertMatch(<<"bar=baz&baz=bang">>,
+     ?assertMatch(<<"bar=baz&baz=bang">>,
                    elli_request:query_str(MakeReq(<<"/foo?bar=baz&baz=bang">>)))
     ].
 
-
-get_range_test_() ->
+get_range(_Config) ->
     Req       = #req{headers = [{<<"range">>,
                                         <<"bytes=0-99 ,500-999 , -800">>}]},
     OffsetReq = #req{headers = [{<<"range">>, <<"bytes=200-">>}]},
@@ -680,12 +565,12 @@ get_range_test_() ->
 
     ByteRangeSet = [{bytes, 0, 99}, {bytes, 500, 999}, {suffix, 800}],
 
-    [?_assertMatch(ByteRangeSet,    elli_request:get_range(Req)),
-     ?_assertMatch([{offset, 200}], elli_request:get_range(OffsetReq)),
-     ?_assertMatch([],              elli_request:get_range(UndefReq)),
-     ?_assertMatch(parse_error,     elli_request:get_range(BadReq))].
+    [?assertMatch(ByteRangeSet,    elli_request:get_range(Req)),
+     ?assertMatch([{offset, 200}], elli_request:get_range(OffsetReq)),
+     ?assertMatch([],              elli_request:get_range(UndefReq)),
+     ?assertMatch(parse_error,     elli_request:get_range(BadReq))].
 
-normalize_range_test_() ->
+normalize_range(_Config) ->
     Size     = 1000,
 
     Bytes1   = {bytes, 200, 400},
@@ -702,26 +587,25 @@ normalize_range_test_() ->
     Invalid5 = parse_error,
     Invalid6 = [{bytes, 0, 100}, {suffix, 42}],
 
-    [?_assertMatch({200, 201},        elli_util:normalize_range(Bytes1, Size)),
-     ?_assertMatch({0, Size},         elli_util:normalize_range(Bytes2, Size)),
-     ?_assertEqual({Size - 303, 303}, elli_util:normalize_range(Suffix, Size)),
-     ?_assertEqual({42, Size - 42},   elli_util:normalize_range(Offset, Size)),
-     ?_assertMatch({200, 400},        elli_util:normalize_range(Normal, Size)),
-     ?_assertMatch({0, 1000},         elli_util:normalize_range(Set, Size)),
-     ?_assertMatch(undefined,     elli_util:normalize_range(EmptySet, Size)),
-     ?_assertMatch(invalid_range, elli_util:normalize_range(Invalid1, Size)),
-     ?_assertMatch(invalid_range, elli_util:normalize_range(Invalid2, Size)),
-     ?_assertMatch(invalid_range, elli_util:normalize_range(Invalid3, Size)),
-     ?_assertMatch(invalid_range, elli_util:normalize_range(Invalid4, Size)),
-     ?_assertMatch(invalid_range, elli_util:normalize_range(Invalid5, Size)),
-     ?_assertMatch(invalid_range, elli_util:normalize_range(Invalid6, Size))].
+    [?assertMatch({200, 201},        elli_util:normalize_range(Bytes1, Size)),
+     ?assertMatch({0, Size},         elli_util:normalize_range(Bytes2, Size)),
+     ?assertEqual({Size - 303, 303}, elli_util:normalize_range(Suffix, Size)),
+     ?assertEqual({42, Size - 42},   elli_util:normalize_range(Offset, Size)),
+     ?assertMatch({200, 400},        elli_util:normalize_range(Normal, Size)),
+     ?assertMatch({0, 1000},         elli_util:normalize_range(Set, Size)),
+     ?assertMatch(undefined,     elli_util:normalize_range(EmptySet, Size)),
+     ?assertMatch(invalid_range, elli_util:normalize_range(Invalid1, Size)),
+     ?assertMatch(invalid_range, elli_util:normalize_range(Invalid2, Size)),
+     ?assertMatch(invalid_range, elli_util:normalize_range(Invalid3, Size)),
+     ?assertMatch(invalid_range, elli_util:normalize_range(Invalid4, Size)),
+     ?assertMatch(invalid_range, elli_util:normalize_range(Invalid5, Size)),
+     ?assertMatch(invalid_range, elli_util:normalize_range(Invalid6, Size))].
 
-
-encode_range_test() ->
+encode_range(_Config) ->
     Expected = [<<"bytes ">>,<<"*">>,<<"/">>,<<"42">>],
     ?assertMatch(Expected, elli_util:encode_range(invalid_range, 42)).
 
-register_test() ->
+register(_Config) ->
     ?assertMatch(undefined, whereis(elli)),
     Config = [
               {name, {local, elli}},
@@ -735,9 +619,103 @@ register_test() ->
     ?assertMatch(Pid, whereis(elli)),
     ok.
 
-invalid_callback_test() ->
+invalid_callback(_Config) ->
     try
         elli:start_link([{callback, elli}])
-    catch _:E ->
+    catch E ->
         ?assertMatch(invalid_callback, E)
     end.
+
+hello_world2(_Config) ->
+    ?assertMatch({ok, [], <<"Hello World!">>},
+                 elli_test:call('GET', <<"/hello/world/">>, [], <<>>,
+                                ?EXAMPLE_CONF)),
+    ?assertMatch({ok, [], <<"Hello Test1">>},
+                 elli_test:call('GET', <<"/hello/?name=Test1">>, [], <<>>,
+                                ?EXAMPLE_CONF)),
+    ?assertMatch({ok,
+                  [{<<"content-type">>,
+                    <<"application/json; charset=ISO-8859-1">>}],
+                  <<"{\"name\" : \"Test2\"}">>},
+                 elli_test:call('GET', <<"/type?name=Test2">>,
+                                [{<<"accept">>, <<"application/json">>}], <<>>,
+                                ?EXAMPLE_CONF)).
+
+%
+% Private.
+
+time_diff_to_micro_seconds(T1, T2) ->
+    erlang:convert_time_unit(
+      get_timing_value(T2) -
+          get_timing_value(T1),
+      native,
+      micro_seconds).
+
+get_timing_value(Key) ->
+    [{timings, Timings}] = ets:lookup(elli_stat_table, timings),
+    proplists:get_value(Key, Timings).
+
+get_size_value(Key) ->
+    [{sizes, Sizes}] = ets:lookup(elli_stat_table, sizes),
+    proplists:get_value(Key, Sizes).
+
+keep_alive_timings(Status, Headers, HCRef) ->
+    ?assertMatch(200, Status),
+    ?assertHeadersEqual([{<<"connection">>,<<"Keep-Alive">>},
+                         {<<"content-length">>,<<"12">>}], Headers),
+    ?assertMatch({ok, <<"Hello World!">>}, hackney:body(HCRef)),
+    %% sizes
+    ?assertMatch(63, get_size_value(resp_headers)),
+    ?assertMatch(12, get_size_value(resp_body)),
+    %% timings
+    ?assertNotMatch(undefined, get_timing_value(request_start)),
+    ?assertNotMatch(undefined, get_timing_value(headers_start)),
+    ?assertNotMatch(undefined, get_timing_value(headers_end)),
+    ?assertNotMatch(undefined, get_timing_value(body_start)),
+    ?assertNotMatch(undefined, get_timing_value(body_end)),
+    ?assertNotMatch(undefined, get_timing_value(user_start)),
+    ?assertNotMatch(undefined, get_timing_value(user_end)),
+    ?assertNotMatch(undefined, get_timing_value(send_start)),
+    ?assertNotMatch(undefined, get_timing_value(send_end)),
+    ?assertNotMatch(undefined, get_timing_value(request_end)),
+    %% check timings
+    ?assert(?VTB(request_start, request_end, 1000000, 1200000)),
+    ?assert(?VTB(headers_start, headers_end, 1, 100)),
+    ?assert(?VTB(body_start, body_end, 1, 100)),
+    ?assert(?VTB(user_start, user_end, 1000000, 1200000)),
+    ?assert(?VTB(send_start, send_end, 1, 2000)).
+
+compress(Encoding, Length) ->
+    Response = hackney:get("http://localhost:3001/compressed",
+                           [{<<"Accept-Encoding">>, Encoding}]),
+    ?assertMatch(200, status(Response)),
+    ?assertHeadersEqual([{<<"Content-Encoding">>, Encoding},
+                  {<<"connection">>, <<"Keep-Alive">>},
+                  {<<"content-length">>, Length}], headers(Response)),
+    ?assertEqual(binary:copy(<<"Hello World!">>, 86),
+                 uncompress(Encoding, body(Response))).
+
+uncompress(<<"gzip">>,    Data) -> zlib:gunzip(Data);
+uncompress(<<"deflate">>, Data) -> zlib:uncompress(Data).
+
+start_slow_client(Port, Url) ->
+    case gen_tcp:connect("127.0.0.1", Port, [{active, false}, binary]) of
+        {ok, Socket} ->
+            gen_tcp:send(Socket, "GET " ++ Url ++ " HTTP/1.1\r\n"),
+            Socket;
+        {error, Reason} ->
+            throw({slow_client_error, Reason})
+    end.
+
+send(_Socket, <<>>, _) ->
+    ok;
+send(Socket, B, ChunkSize) ->
+    {Part, Rest} = case B of
+                       <<P:ChunkSize/binary, R/binary>> -> {P, R};
+                       P -> {P, <<>>}
+                   end,
+    %%?LOG_INFO("~p~n", [Part]),
+    gen_tcp:send(Socket, Part),
+    timer:sleep(1),
+    send(Socket, Rest, ChunkSize).
+

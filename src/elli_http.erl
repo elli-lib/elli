@@ -27,6 +27,10 @@
 
 -export_type([version/0]).
 
+-ifdef(TEST).
+-export([get_body/5]).
+-endif.
+
 %% @type version(). HTTP version as a tuple, i.e. `{0, 9} | {1, 0} | {1, 1}'.
 -type version() :: {0, 9} | {1, 0} | {1, 1}.
 
@@ -895,21 +899,3 @@ status(510) -> <<"510 Not Extended">>;
 status(511) -> <<"511 Network Authentication Required">>;
 status(I) when is_integer(I), I >= 100, I < 1000 -> list_to_binary(io_lib:format("~B Status", [I]));
 status(B) when is_binary(B) -> B.
-
-
-%%
-%% UNIT TESTS
-%%
-
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
-
-get_body_test() ->
-    Socket   = undefined,
-    Headers  = [{<<"Content-Length">>, <<" 42 ">>}],
-    Buffer   = binary:copy(<<".">>, 42),
-    Opts     = [],
-    Callback = {no_mod, []},
-    ?assertMatch({Buffer, <<>>},
-                 get_body(Socket, Headers, Buffer, Opts, Callback)).
--endif.
