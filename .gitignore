@@ -1,7 +1,6 @@
 .rebar3
-doc/*.html
-!doc/tpl.html
 _build
 .dialyzer.plt
 .rebar
 rebar3.crashdump
+doc

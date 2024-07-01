@@ -10,10 +10,8 @@
 
 %% @doc Send part of a file on a socket.
 %%
-%% Basically, @see file:sendfile/5 but for ssl (i.e. not raw OS sockets).
+%% Basically, see `file:sendfile/5' but for ssl (i.e. not raw OS sockets).
 %% Originally from https://github.com/ninenines/ranch/pull/41/files
-%%
-%% @end
 -spec sendfile(file:fd(), inet:socket() | ssl:sslsocket(),
         non_neg_integer(), non_neg_integer(), sendfile_opts())
     -> {ok, non_neg_integer()} | {error, atom()}.

@@ -1,129 +1,12 @@
-# elli - Erlang web server for HTTP APIs
+# Elli - Overview
 
-[![Hex.pm][hex badge]][hex package]
-[![Documentation][doc badge]][docs]
-[![Erlang][erlang badge]][erlang downloads]
-[![Travis CI][travis badge]][travis builds]
-[![Coverage Status][coveralls badge]][coveralls link]
-[![MIT License][license badge]](LICENSE)
+Copyright (c) 2012-2016 Knut Nesheim, 2016-2018 elli-lib team
 
-[travis builds]: https://travis-ci.org/elli-lib/elli
-[travis badge]: https://travis-ci.org/elli-lib/elli.svg
-[hex badge]: https://img.shields.io/hexpm/v/elli.svg
-[hex package]: https://hex.pm/packages/elli
-[latest release]: https://github.com/elli-lib/elli/releases/latest
-[erlang badge]: https://img.shields.io/badge/erlang-%E2%89%A518.0-red.svg
-[erlang downloads]: http://www.erlang.org/downloads
-[doc badge]: https://img.shields.io/badge/docs-edown-green.svg
-[docs]: doc/README.md
-[coveralls badge]: https://coveralls.io/repos/github/elli-lib/elli/badge.svg?branch=develop
-[coveralls link]: https://coveralls.io/github/elli-lib/elli?branch=develop
-[license badge]: https://img.shields.io/badge/license-MIT-blue.svg
+__Version:__ 3.3.0
 
-Elli is a webserver you can run inside your Erlang application to
-expose an HTTP API. Elli is a aimed exclusively at building
-high-throughput, low-latency HTTP APIs. If robustness and performance
-is more important than general purpose features, then `elli` might be
-for you. If you find yourself digging into the implementation of a
-webserver, `elli` might be for you. If you're building web services,
-not web sites, then `elli` might be for you.
+__Authors:__ Knut Nesheim, elli-lib team.
 
-Elli is used in production at Wooga and Game Analytics. Elli requires
-OTP 18.0 or newer.
-
-
-## Installation
-
-To use `elli` you will need a working installation of Erlang 18.0 (or later).
-
-Add `elli` to your application by adding it as a dependency to your
-[`rebar.config`](http://www.rebar3.org/docs/configuration):
-
-```erlang
-{deps, [elli]}.
-```
-
-Afterwards you can run:
-
-```sh
-$ rebar3 compile
-```
-
-
-## Usage
-```sh
-$ rebar3 shell
-```
-
-```erlang
-%% starting elli
-1> {ok, Pid} = elli:start_link([{callback, elli_example_callback}, {port, 3000}]).
-```
-
-## Examples
-
-### Callback Module
-
-The best source to learn how to write a callback module
-is [src/elli_example_callback.erl](src/elli_example_callback.erl) and
-its [generated documentation](doc/elli_example_callback.md). There are a bunch
-of examples used in the tests as well as descriptions of all the events.
-
-A minimal callback module could look like this:
-
-```erlang
--module(elli_minimal_callback).
--export([handle/2, handle_event/3]).
-
--include_lib("elli/include/elli.hrl").
--behaviour(elli_handler).
-
-handle(Req, _Args) ->
-    %% Delegate to our handler function
-    handle(Req#req.method, elli_request:path(Req), Req).
-
-handle('GET',[<<"hello">>, <<"world">>], _Req) ->
-    %% Reply with a normal response. `ok' can be used instead of `200'
-    %% to signal success.
-    {ok, [], <<"Hello World!">>};
-
-handle(_, _, _Req) ->
-    {404, [], <<"Not Found">>}.
-
-%% @doc Handle request events, like request completed, exception
-%% thrown, client timeout, etc. Must return `ok'.
-handle_event(_Event, _Data, _Args) ->
-    ok.
-```
-
-
-### Supervisor Childspec
-
-To add `elli` to a supervisor you can use the following example and adapt it to
-your needs.
-
-```erlang
--module(fancyapi_sup).
--behaviour(supervisor).
--export([start_link/0]).
--export([init/1]).
-
-start_link() ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, []).
-
-init([]) ->
-    ElliOpts = [{callback, fancyapi_callback}, {port, 3000}],
-    ElliSpec = {
-        fancy_http,
-        {elli, start_link, [ElliOpts]},
-        permanent,
-        5000,
-        worker,
-        [elli]},
-
-    {ok, { {one_for_one, 5, 10}, [ElliSpec]} }.
-```
-
+Erlang web server for HTTP APIs
 
 ## Features
 
@@ -133,7 +16,7 @@ Here's the features Elli _does_ have:
    complete request and returns a complete response. There's no
    messaging, no receiving data directly from the socket, no writing
    responses directly to the socket. It's a very simple and
-   straightforward API. Have a look at [`elli_example_callback`](elli_example_callback.md)
+   straightforward API. Have a look at [`elli_example_callback`](elli_example_callback.html)
 for examples.
 
 * Middlewares allow you to add useful features like compression,
@@ -177,32 +60,36 @@ interfaces, etc. For high volume, you should probably go with
 nginx, stunnel or ELB if you're on AWS.
 
 * Implement your own connection handling, for WebSockets, streaming
-   uploads, etc. See [`elli_example_callback_handover`](elli_example_callback_handover.md).
+   uploads, etc. See [`elli_example_callback_handover`](elli_example_callback_handover.html).
 
 ## Extensions
 
+Here's some ready-to-use extensions for Elli.
+
 * [elli_access_log](https://github.com/elli-lib/elli_access_log):
-Access log 
+Access log
 * [elli_basicauth](https://github.com/elli-lib/elli_basicauth):
-Basic auth 
+Basic auth
 * [elli_chatterbox](https://github.com/elli-lib/elli_chatterbox):
-HTTP/2 support 
+HTTP/2 support
 * [elli_cloudfront](https://github.com/elli-lib/elli_cloudfront):
-CloudFront signed URLs 
+CloudFront signed URLs
 * [elli_cookie](https://github.com/elli-lib/elli_cookie):
-Cookies 
+Cookies
 * [elli_date](https://github.com/elli-lib/elli_date):
-"Date" header 
+"Date" header
 * [elli_fileserve](https://github.com/elli-lib/elli_fileserve):
-Static content 
+Static content
 * [elli_prometheus](https://github.com/elli-lib/elli_prometheus):
-Prometheus 
+Prometheus
 * [elli_stats](https://github.com/elli-lib/elli_stats):
-Real-time statistics dashboard 
+Real-time statistics dashboard
 * [elli_websockets](https://github.com/elli-lib/elli_websocket):
-WebSockets 
+WebSockets
 * [elli_xpblfe](https://github.com/elli-lib/elli_xpblfe):
 X-Powered-By LFE
+
+You can also find a more complete list at <https://github.com/elli-lib>.
 
 ## About
 
@@ -217,7 +104,7 @@ With this in mind we looked at the big names in the Erlang
 community: [Yaws][], [Mochiweb][], [Misultin][] and [Cowboy][]. We
 found [Mochiweb][] to be the best match. However, we also wanted to
 see if we could take the architecture of [Mochiweb][] and improve on
-it. `elli` takes the acceptor-turns-into-request-handler idea found
+it. Elli takes the acceptor-turns-into-request-handler idea found
 in [Mochiweb][], the binaries-only idea from [Cowboy][] and the
 request-response idea from [WSGI][]/[Rack][] (with chunked transfer
 being an exception).
@@ -231,7 +118,7 @@ dashboard and chaining multiple request handlers.
 
 There are a few very mature and robust projects with steady
 development, one recently ceased development and one new kid on the
-block with lots of interest. As `elli` is not a general purpose
+block with lots of interest. As Elli is not a general purpose
 webserver, but more of a specialized tool, we believe it has a very
 different target audience and would not attract effort or users away
 from the big names.
@@ -278,28 +165,3 @@ about benchmarking HTTP servers.
 [Cowboy]: https://github.com/ninenines/cowboy
 [WSGI]: https://www.python.org/dev/peps/pep-3333/
 [Rack]: https://github.com/rack/rack
-
-
-## Modules ##
-
-
-<table width="100%" border="0" summary="list of modules">
-<tr><td><a href="elli.md" class="module">elli</a></td></tr>
-<tr><td><a href="elli_example_callback.md" class="module">elli_example_callback</a></td></tr>
-<tr><td><a href="elli_example_callback_handover.md" class="module">elli_example_callback_handover</a></td></tr>
-<tr><td><a href="elli_handler.md" class="module">elli_handler</a></td></tr>
-<tr><td><a href="elli_http.md" class="module">elli_http</a></td></tr>
-<tr><td><a href="elli_middleware.md" class="module">elli_middleware</a></td></tr>
-<tr><td><a href="elli_middleware_compress.md" class="module">elli_middleware_compress</a></td></tr>
-<tr><td><a href="elli_request.md" class="module">elli_request</a></td></tr>
-<tr><td><a href="elli_sendfile.md" class="module">elli_sendfile</a></td></tr>
-<tr><td><a href="elli_tcp.md" class="module">elli_tcp</a></td></tr>
-<tr><td><a href="elli_test.md" class="module">elli_test</a></td></tr>
-<tr><td><a href="elli_util.md" class="module">elli_util</a></td></tr></table>
-
-
-## License
-
-Elli is licensed under [The MIT License](LICENSE).
-
-Copyright (c) 2012-2016 Knut Nesheim, 2016-2018 elli-lib team
