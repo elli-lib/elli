@@ -3,3 +3,4 @@ _build
 .dialyzer.plt
 .rebar
 rebar3.crashdump
+doc
