@@ -1,7 +1,7 @@
 # Elli - Erlang web server for HTTP APIs
 
 [![Hex.pm](https://img.shields.io/hexpm/v/elli.svg)](https://hex.pm/packages/elli)
-[![Documentation](https://img.shields.io/badge/docs-edown-green.svg)](doc/README.md)
+[![Documentation](https://img.shields.io/badge/docs-edown-green.svg)](https://hexdocs.pm/elli/)
 [![Erlang](https://img.shields.io/badge/erlang-%E2%89%A520.0-red.svg)](http://www.erlang.org/downloads)
 ![Common Test](https://github.com/elli-lib/elli/workflows/Common%20Test/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/elli-lib/elli/badge.svg?branch=develop)](https://coveralls.io/github/elli-lib/elli?branch=develop)
