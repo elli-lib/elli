@@ -70,3 +70,6 @@ jobs:
       with:
         files: _build/test/covertool/elli.covertool.xml
         env_vars: OTP_VERSION
+
+    - name: Generate doc
+      run: rebar3 ex_doc
