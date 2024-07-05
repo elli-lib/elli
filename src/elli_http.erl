@@ -195,22 +195,22 @@ handle_response(Req, Buffer, {file, ResponseCode, UserHeaders,
             case elli_util:normalize_range(Range, Size) of
                 undefined ->
                     send_file(Req, ResponseCode,
-                              [{<<"Content-Length">>, Size} |
-                               ResponseHeaders],
+                              add_headers([{<<"Content-Length">>, Size}],
+                                          ResponseHeaders),
                               Filename, {0, 0});
                 {Offset, Length} ->
                     ERange = elli_util:encode_range({Offset, Length}, Size),
                     send_file(Req, 206,
-                              lists:append(ResponseHeaders,
-                                           [{<<"Content-Length">>, Length},
-                                            {<<"Content-Range">>, ERange}]),
+                              add_headers([{<<"Content-Length">>, Length},
+                                           {<<"Content-Range">>, ERange}],
+                                          ResponseHeaders),
                               Filename, {Offset, Length});
                 invalid_range ->
                     ERange = elli_util:encode_range(invalid_range, Size),
                     send_response(Req, 416,
-                                  lists:append(ResponseHeaders,
-                                               [{<<"Content-Length">>, 0},
-                                                {<<"Content-Range">>, ERange}]),
+                                  add_headers([{<<"Content-Length">>, 0},
+                                               {<<"Content-Range">>, ERange}],
+                                              ResponseHeaders),
                                   [])
             end,
             t(send_end),
@@ -702,6 +702,11 @@ connection(Req, UserHeaders) ->
         _ ->
             []
     end.
+
+add_headers([{Header, _Value} = HeaderField | Tail], Headers) ->
+    add_headers(Tail, [HeaderField | lists:keydelete(Header, 1, Headers)]);
+add_headers([], NewHeaders) ->
+    NewHeaders.
 
 content_length(Headers, Body)->
     ?IF(is_header_defined(?CONTENT_LENGTH_HEADER, Headers), [],
