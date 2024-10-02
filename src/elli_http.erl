@@ -745,7 +745,7 @@ split_path(Path) ->
           P =/= <<>>].
 
 %% @doc Split the URL arguments into a proplist.
-%% Lifted from cowboy_http:x_www_form_urlencoded/2.
+%% Lifted from `cowboy_http:x_www_form_urlencoded/2'.
 -spec split_args(binary()) -> list({binary(), binary() | true}).
 split_args(<<>>) ->
     [];
