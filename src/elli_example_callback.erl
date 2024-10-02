@@ -273,10 +273,8 @@ chunk_loop(Ref, N) ->
 %% Elli is waiting for the request.
 %%
 %% `request_parse_error' fires if the request is invalid and cannot be parsed by
-%% [`erlang:decode_packet/3'][decode_packet/3] or it contains a path Elli cannot
+%% `erlang:decode_packet/3' or it contains a path Elli cannot
 %% parse or does not support.
-%%
-%% [decode_packet/3]: http://erlang.org/doc/man/erlang.html#decode_packet-3
 %%
 %% `client_closed' can be sent from multiple parts of the request
 %% handling. It's sent when the client closes the connection or if for
