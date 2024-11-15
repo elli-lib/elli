@@ -1,10 +1,10 @@
-%%% @doc: Elli example callback
+%%% @doc Elli example callback
 %%%
-%%% Your callback needs to implement two functions, {@link handle/2} and
-%%% {@link handle_event/3}. For every request, Elli will call your handle
+%%% Your callback needs to implement two functions, `handle/2' and
+%%% `handle_event/3'. For every request, Elli will call your handle
 %%% function with the request. When an event happens, like Elli
 %%% completed a request, there was a parsing error or your handler
-%%% threw an error, {@link handle_event/3} is called.
+%%% threw an error, `handle_event/3' is called.
 
 -module(elli_example_callback).
 -export([handle/2, handle_event/3]).
@@ -22,7 +22,7 @@
 
 %% @doc Handle a `Req'uest.
 %% Delegate to our handler function.
-%% @see handle/3
+%% See `handle/3'
 -spec handle(Req, _Args) -> Result when
       Req    :: elli:req(),
       _Args  :: elli_handler:callback_args(),
@@ -38,31 +38,31 @@ handle(Req, _Args) -> handle(Req#req.method, elli_request:path(Req), Req).
 %% If you return any of the following HTTP headers, you can
 %% override the default behaviour of Elli:
 %%
-%%  * **Connection**:     By default Elli will use `keep-alive' if the protocol
-%%                        supports it, setting `<<"close">>' will close the
-%%                        connection immediately after Elli has sent the
-%%                        response. If the client has already sent pipelined
-%%                        requests, these will be discarded.
+%%  * `**Connection**':     By default Elli will use `keep-alive' if the protocol
+%%                          supports it, setting `<<"close">>' will close the
+%%                          connection immediately after Elli has sent the
+%%                          response. If the client has already sent pipelined
+%%                          requests, these will be discarded.
 %%
-%%  * **Content-Length**: By default Elli looks at the size of the body you
-%%                        returned to determine the `Content-Length' header.
-%%                        Explicitly including your own `Content-Length' (with
-%%                        the value as `integer()', `binary()' or `list()')
-%%                        allows you to return an empty body. Useful for
-%%                        implementing the `"304 Not Modified"' response.
+%%  * `**Content-Length**': By default Elli looks at the size of the body you
+%%                          returned to determine the `Content-Length' header.
+%%                          Explicitly including your own `Content-Length' (with
+%%                          the value as `integer()', `binary()' or `list()')
+%%                          allows you to return an empty body. Useful for
+%%                          implementing the `"304 Not Modified"' response.
 %%
-%% @see elli_request:get_arg/3
-%% @see elli_request:post_arg/3
-%% @see elli_request:post_arg_decoded/3
-%% @see elli_request:get_header/3
-%% @see elli_request:get_arg_decoded/3
-%% @see elli_request:get_args_decoded/1
-%% @see elli_util:file_size/1
-%% @see elli_request:get_range/1
-%% @see elli_request:normalize_range/2
-%% @see elli_request:encode_range/2
-%% @see elli_request:chunk_ref/1
-%% @see chunk_loop/1
+%% See `elli_request:get_arg/3'
+%% See `elli_request:post_arg/3'
+%% See `elli_request:post_arg_decoded/3'
+%% See `elli_request:get_header/3'
+%% See `elli_request:get_arg_decoded/3'
+%% See `elli_request:get_args_decoded/1'
+%% See `elli_util:file_size/1'
+%% See `elli_request:get_range/1'
+%% See `elli_request:normalize_range/2'
+%% See `elli_request:encode_range/2'
+%% See `elli_request:chunk_ref/1'
+%% See `chunk_loop/1'
 -spec handle(Method, Path, Req) -> elli_handler:result() when
       Method :: elli:http_method(),
       Path   :: [binary()],
@@ -211,14 +211,14 @@ handle(_, _, _Req) ->
 
 
 %% @doc Send 10 separate chunks to the client.
-%% @equiv chunk_loop(Ref, 10)
+%% The same as `chunk_loop(Ref, 10)'
 chunk_loop(Ref) ->
     chunk_loop(Ref, 10).
 
 %% @doc If `N > 0', send a chunk to the client, checking for errors,
 %% as the user might have disconnected.
-%% When `N == 0', call {@link elli_request:close_chunk/1.
-%% elli_request:close_chunk(Ref)}.
+%% When `N == 0', call `elli_request:close_chunk/1'.
+%% `elli_request:close_chunk(Ref)'.
 chunk_loop(Ref, 0) ->
     elli_request:close_chunk(Ref);
 chunk_loop(Ref, N) ->
@@ -257,7 +257,7 @@ chunk_loop(Ref, N) ->
 %% the user.
 %%
 %% `invalid_return' is sent if the user callback code returns a term not
-%% understood by elli, see {@link elli_http:execute_callback/1}.
+%% understood by elli, see `elli_http:execute_callback/1'.
 %% After triggering this event, a generated response is sent to the user.
 %%
 %% `chunk_complete' fires when a chunked response is completely
@@ -273,10 +273,8 @@ chunk_loop(Ref, N) ->
 %% Elli is waiting for the request.
 %%
 %% `request_parse_error' fires if the request is invalid and cannot be parsed by
-%% [`erlang:decode_packet/3`][decode_packet/3] or it contains a path Elli cannot
+%% `erlang:decode_packet/3' or it contains a path Elli cannot
 %% parse or does not support.
-%%
-%% [decode_packet/3]: http://erlang.org/doc/man/erlang.html#decode_packet-3
 %%
 %% `client_closed' can be sent from multiple parts of the request
 %% handling. It's sent when the client closes the connection or if for

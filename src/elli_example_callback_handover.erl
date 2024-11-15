@@ -37,6 +37,6 @@ handle('GET', [<<"hello">>], Req, _Args) ->
     {ok, [], <<"Hello ", Name/binary>>}.
 
 
-%% @hidden
+%% @private
 handle_event(_, _, _) ->
     ok.

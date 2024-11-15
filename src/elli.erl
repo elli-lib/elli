@@ -1,4 +1,4 @@
-%% @doc: Elli acceptor manager
+%% @doc Elli acceptor manager
 %%
 %% This gen_server owns the listen socket and manages the processes
 %% accepting on that socket. When a process waiting for accept gets a
@@ -26,17 +26,17 @@
 
 -export_type([req/0, http_method/0, body/0, headers/0, response_code/0]).
 
-%% @type req(). A record representing an HTTP request.
 -type req() :: #req{}.
+
 -elvis([{elvis_style, private_data_types, disable}]).
 
-%% @type http_method(). An uppercase atom representing a known HTTP verb or a
-%% binary for other verbs.
+%% A record representing an HTTP request.
 -type http_method() :: 'OPTIONS' | 'GET' | 'HEAD' | 'POST'
                      | 'PUT' | 'DELETE' | 'TRACE' | binary().
+%% An uppercase atom representing a known HTTP verb or a binary for other verbs.
 
-%% @type body(). A binary or iolist.
 -type body() :: binary() | iolist().
+%% A binary or iolist.
 
 -type header()  :: {Key::binary(), Value::binary() | string()}.
 -type headers() :: [header()].
@@ -49,8 +49,8 @@
                 options   = [] :: [{_, _}],     % TODO: refine
                 callback       :: elli_handler:callback()
                }).
-%% @type state(). Internal state.
 -opaque state() :: #state{}.
+%% Internal state.
 -export_type([state/0]).
 
 
@@ -58,13 +58,13 @@
 %%% API
 %%%===================================================================
 
+%% @doc Create an Elli server process as part of a supervision tree, using the
+%% default configuration.
+%% The same as `start_link({callback, elli_example_callback}, {callback_args, []})'.
 -spec start_link() -> Result when
       Result :: {ok, Pid} | ignore | {error, Error},
       Pid    :: pid(),
       Error  :: {already_started, Pid} | term().
-%% @equiv start_link({@EXAMPLE_CONF})
-%% @doc Create an Elli server process as part of a supervision tree, using the
-%% default configuration.
 start_link() -> start_link(?EXAMPLE_CONF).
 
 -spec start_link(Opts) -> Result when
@@ -87,8 +87,8 @@ start_link(Opts) ->
 get_acceptors(S) ->
     gen_server:call(S, get_acceptors).
 
+%% The same as `get_open_reqs(S, 5000)'
 -spec get_open_reqs(S :: atom()) -> {reply, {ok, non_neg_integer()}, state()}.
-%% @equiv get_open_reqs(S, 5000)
 get_open_reqs(S) ->
     get_open_reqs(S, 5000).
 
@@ -116,7 +116,7 @@ stop(S) ->
 %%% gen_server callbacks
 %%%===================================================================
 
-%% @hidden
+%% @private
 -spec init([Opts :: [{_, _}]]) -> {ok, state()}.
 init([Opts]) ->
     %% Use the exit signal from the acceptor processes to know when
@@ -176,7 +176,7 @@ http_start(Socket, Options, Callback, CallbackArgs, Acceptors) ->
     Pid = elli_http:start_link(self(), Socket, Options, {Callback, CallbackArgs}),
     ets:insert(Acceptors, {Pid}).
 
-%% @hidden
+%% @private
 -spec handle_call(get_acceptors, {pid(), _Tag}, state()) ->
                          {reply, {ok, [ets:tid()]}, state()};
                  (get_open_reqs, {pid(), _Tag}, state()) ->
@@ -200,7 +200,7 @@ handle_call({set_callback, Callback, CallbackArgs}, _From, State) ->
 handle_call(stop, _From, State) ->
     {stop, normal, ok, State}.
 
-%% @hidden
+%% @private
 -spec handle_cast(accepted | _Msg, State0) -> {noreply, State1} when
       State0 :: state(),
       State1 :: state().
@@ -211,7 +211,7 @@ handle_cast(_Msg, State) ->
     {noreply, State}.
 
 
-%% @hidden
+%% @private
 -spec handle_info({'EXIT', _Pid, Reason}, State0) -> Result when
       State0 :: state(),
       Reason :: {error, emfile},
@@ -229,13 +229,17 @@ handle_info({'EXIT', Pid, Reason}, State) ->
     {noreply, remove_acceptor(State, Pid)}.
 
 
-%% @hidden
+%% @private
 -spec terminate(_Reason, _State) -> ok.
 terminate(_Reason, _State) ->
     ok.
 
-%% @hidden
--spec code_change(_OldVsn, State, _Extra) -> {ok, State} when State :: state().
+%% @private
+-spec code_change(OldVsn, State, Extra) -> {ok, State}
+      when OldVsn :: Vsn | {down, Vsn},
+           Vsn :: term(),
+           State :: state(),
+           Extra :: term().
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 

@@ -1,4 +1,4 @@
-%% @hidden
+%% @private
 -module(elli_example_middleware).
 -export([handle/2, handle_event/3]).
 -behaviour(elli_handler).

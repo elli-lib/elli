@@ -1,6 +1,6 @@
-%% @doc: Elli HTTP request implementation
+%% @doc Elli HTTP request implementation
 %%
-%% An elli_http process blocks in elli_tcp:accept/2 until a client
+%% An elli_http process blocks in `elli_tcp:accept/3' until a client
 %% connects. It then handles requests on that connection until it's
 %% closed either by the client timing out or explicitly by the user.
 -module(elli_http).
@@ -25,14 +25,14 @@
 %% operating in handler mode.
 -export([close_or_keepalive/2]).
 
--export_type([version/0]).
-
 -ifdef(TEST).
 -export([get_body/5]).
 -endif.
 
-%% @type version(). HTTP version as a tuple, i.e. `{0, 9} | {1, 0} | {1, 1}'.
+-export_type([version/0]).
+
 -type version() :: {0, 9} | {1, 0} | {1, 1}.
+% HTTP version as a tuple, i.e. `{0, 9} | {1, 0} | {1, 1}'.
 
 
 -define(CONTENT_LENGTH_HEADER, <<"content-length">>).
@@ -56,7 +56,7 @@ start_link(Server, ListenSocket, Options, Callback) ->
 
 %% @doc Accept on the socket until a client connects.
 %% Handle the request, then loop if we're using keep alive or chunked transfer.
-%% If {@link elli_tcp:accept/3} doesn't return a socket within a configurable
+%% If `elli_tcp:accept/3' doesn't return a socket within a configurable
 %% timeout, loop to allow code upgrades of this module.
 -spec accept(Server, ListenSocket, Options, Callback) -> ok when
       Server       :: pid(),
@@ -288,7 +288,7 @@ do_send_file(Fd, {Offset, Length}, #req{callback={Mod, Args}} = Req, Headers) ->
     end.
 
 %% @doc To send a response, we must first have received everything the
-%% client is sending. If this is not the case, {@link send_bad_request/1}
+%% client is sending. If this is not the case, `send_bad_request/1'
 %% might reset the client connection.
 send_bad_request(Socket) ->
     send_rescue_response(Socket, 400, <<"Bad Request">>).
