@@ -125,7 +125,7 @@ init([] = _Args) ->
 ## Further reading
 
 For more information about the features and design philosophy of Elli check
-out the [`overview`](overview.html).
+out the [`overview`](OVERVIEW.md).
 
 ## License
 
