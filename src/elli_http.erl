@@ -122,9 +122,15 @@ handle_request(S, PrevB, Opts, {Mod, Args} = Callback) ->
 handle_response(Req, Buffer, {response, Code, UserHeaders, Body}) ->
     #req{callback = {Mod, Args}} = Req,
 
-    Headers = [connection(Req, UserHeaders),
-               content_length(UserHeaders, Body)
-               | UserHeaders],
+   Headers0 = [connection(Req, UserHeaders) | UserHeaders],
+
+   Headers = case Code of
+                 204 ->
+                     Headers0;
+                 _ ->
+                     [content_length(UserHeaders, Body) | Headers0]
+             end,
+
     t(send_start),
     send_response(Req, Code, Headers, Body),
     t(send_end),
