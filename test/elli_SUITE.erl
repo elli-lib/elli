@@ -42,9 +42,7 @@ init_per_suite(Config0) ->
 end_per_suite(Config) ->
     Pids = proplists:get_value(pids, Config),
     [elli:stop(P) || P <- Pids],
-    lists:foreach(fun (App) ->
-                      application:stop(App)
-                  end,
+    lists:foreach(fun application:stop/1,
                   proplists:get_value(started_apps, Config)).
 
 init_per_testcase(_Testcase, Config) ->

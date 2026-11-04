@@ -2,6 +2,8 @@
 
 ## pre-v4.0.0
 
+* Minimum supported OTP is now 27; support for OTP 24-26 has been dropped
+
 * Headers are now properly treated as case-insensitive
 * Original headers that have not had `string:casefold/1` run on each header
 name are still available in the request through `elli_request:original_headers`
